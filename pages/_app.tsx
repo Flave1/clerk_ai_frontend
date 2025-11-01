@@ -5,10 +5,18 @@ import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
 import { useWebSocketStore, useUIStore } from '@/store';
 import wsClient from '@/lib/ws';
+import Header from '@/components/layout/Header';
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps, router }: AppProps) {
   const { setConnected, setConnecting, setError } = useWebSocketStore();
-  const { theme, setTheme } = useUIStore();
+  const { theme, setTheme, sidebarCollapsed } = useUIStore();
+  
+  // Check if current page should have layout
+  const shouldShowLayout = router.pathname !== '/standalone-call' 
+    && router.pathname !== '/landing'
+    && router.pathname !== '/login'
+    && router.pathname !== '/'
+    && !router.pathname.startsWith('/join/');
 
   useEffect(() => {
     // Set up WebSocket event handlers
@@ -70,9 +78,21 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {shouldShowLayout ? (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+          <Header />
+          
+          {/* Main Content Area */}
+          <main className={`transition-all duration-300 ease-in-out ${
+            sidebarCollapsed ? 'ml-0' : 'ml-64'
+          }`}>
+            <Component {...pageProps} />
+          </main>
+        </div>
+      ) : (
+        // Standalone page without layout
         <Component {...pageProps} />
-      </div>
+      )}
       
       <Toaster
         position="top-right"

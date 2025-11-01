@@ -5,10 +5,12 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export interface CallMessage {
-  type: 'user_speech' | 'ai_response' | 'system_message';
+  type: 'user_speech' | 'ai_response' | 'system_message' | 'audio_data' | 'tts_audio';
   content: string;
   timestamp: Date;
   conversationId: string;
+  audioData?: ArrayBuffer;
+  audioFormat?: string;
 }
 
 export interface CallStatus {
@@ -30,6 +32,8 @@ class CallClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private reconnectTimeout?: NodeJS.Timeout;
+  private pingInterval?: NodeJS.Timeout;
 
   // Event handlers
   private messageHandlers: CallEventHandler[] = [];
@@ -84,6 +88,9 @@ class CallClient {
   }
 
   async endCall(): Promise<void> {
+    // Stop ping interval first
+    this.stopPingInterval();
+    
     // Call the backend endpoint first to properly end the conversation
     if (this.conversationId) {
       try {
@@ -108,6 +115,44 @@ class CallClient {
     this.disconnect();
     this.conversationId = null;
     this.updateStatus();
+  }
+
+  async joinCall(conversationId: string): Promise<void> {
+    if (this.isCallActive) {
+      throw new Error('Call is already active');
+    }
+
+    try {
+      const userId = uuidv4();
+      
+      // Join existing conversation on backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${conversationId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to join conversation');
+      }
+      
+      const data = await response.json();
+      this.conversationId = data.conversation_id;
+      console.log('Joined conversation:', this.conversationId);
+      
+      // Connect WebSocket
+      await this.connect();
+      
+      this.isCallActive = true;
+      this.updateStatus();
+      console.log('Successfully joined call');
+      
+    } catch (error) {
+      console.error('Failed to join call:', error);
+      throw error;
+    }
   }
 
   async deleteCall(): Promise<void> {
@@ -154,7 +199,25 @@ class CallClient {
     });
   }
 
-  // Audio streaming removed - we only use text communication
+  // Audio streaming methods
+  async sendAudioChunk(audioChunk: ArrayBuffer, format: string = 'audio/webm'): Promise<void> {
+    if (!this.isConnected || !this.conversationId) {
+      throw new Error('Not connected to call');
+    }
+
+    // Send binary audio data to RT-Gateway
+    this.ws?.send(audioChunk);
+
+    // Emit audio data event for debugging
+    this.emitMessage({
+      type: 'audio_data',
+      content: `Audio chunk: ${audioChunk.byteLength} bytes`,
+      timestamp: new Date(),
+      conversationId: this.conversationId,
+      audioData: audioChunk,
+      audioFormat: format,
+    });
+  }
 
   // Connection management
   private async connect(): Promise<void> {
@@ -177,6 +240,7 @@ class CallClient {
   }
 
   private disconnect(): void {
+    this.stopPingInterval();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -184,6 +248,22 @@ class CallClient {
     this.isConnected = false;
     this.connectionState = 'disconnected';
     this.updateStatus();
+  }
+
+  private startPingInterval(): void {
+    this.stopPingInterval(); // Clear any existing interval
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send('ping');
+      }
+    }, 30000); // Ping every 30 seconds
+  }
+
+  private stopPingInterval(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = undefined;
+    }
   }
 
   private setupEventListeners(): void {
@@ -195,6 +275,9 @@ class CallClient {
       this.connectionState = 'connected';
       this.reconnectAttempts = 0;
       this.updateStatus();
+
+      // Start ping interval for keepalive
+      this.startPingInterval();
 
       // Send initial system message
       this.emitMessage({
@@ -210,6 +293,9 @@ class CallClient {
       this.isConnected = false;
       this.connectionState = 'disconnected';
       this.updateStatus();
+
+      // Stop ping interval
+      this.stopPingInterval();
 
       // If call was active and this wasn't a manual disconnect, end the conversation
       if (this.isCallActive && this.conversationId && event.code !== 1000) {
@@ -232,6 +318,28 @@ class CallClient {
       try {
         // Handle text responses from AI
         if (typeof event.data === 'string') {
+          // Handle pong response for keepalive
+          if (event.data === 'pong') {
+            return; // Don't emit pong as a message
+          }
+          
+          // Try to parse as JSON for structured messages (participant events)
+          try {
+            const parsedMessage = JSON.parse(event.data);
+            if (parsedMessage.type) {
+              // Handle structured messages (participant events)
+              this.emitMessage({
+                type: parsedMessage.type as any,
+                content: JSON.stringify(parsedMessage),
+                timestamp: new Date(),
+                conversationId: this.conversationId!,
+              });
+              return;
+            }
+          } catch (e) {
+            // Not JSON, continue with regular text handling
+          }
+          
           this.emitMessage({
             type: 'ai_response',
             content: event.data,
@@ -239,7 +347,30 @@ class CallClient {
             conversationId: this.conversationId!,
           });
         }
-        // Audio streaming removed - we only handle text messages
+        // Handle binary audio data (TTS responses)
+        else if (event.data instanceof ArrayBuffer) {
+          this.emitMessage({
+            type: 'tts_audio',
+            content: `TTS audio: ${event.data.byteLength} bytes`,
+            timestamp: new Date(),
+            conversationId: this.conversationId!,
+            audioData: event.data,
+            audioFormat: 'audio/mp3',
+          });
+        }
+        // Handle Blob data (alternative binary format)
+        else if (event.data instanceof Blob) {
+          event.data.arrayBuffer().then(buffer => {
+            this.emitMessage({
+              type: 'tts_audio',
+              content: `TTS audio: ${buffer.byteLength} bytes`,
+              timestamp: new Date(),
+              conversationId: this.conversationId!,
+              audioData: buffer,
+              audioFormat: event.data.type || 'audio/mp3',
+            });
+          });
+        }
       } catch (error) {
         console.error('Failed to process message:', error);
       }
@@ -313,6 +444,18 @@ class CallClient {
         this.statusHandlers.splice(index, 1);
       }
     };
+  }
+
+  // Generic event handling methods for participant events
+  on(event: string, handler: CallEventHandler): void {
+    this.messageHandlers.push(handler);
+  }
+
+  off(event: string, handler: CallEventHandler): void {
+    const index = this.messageHandlers.indexOf(handler);
+    if (index > -1) {
+      this.messageHandlers.splice(index, 1);
+    }
   }
 
   // Static method to delete any conversation by ID

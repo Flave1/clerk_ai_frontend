@@ -211,9 +211,9 @@ function SummaryFilters({
 const MeetingSummariesPage: NextPage = () => {
   const { 
     meetingSummaries, 
-    meetingSummariesLoading, 
+    summariesLoading: meetingSummariesLoading, 
     setMeetingSummaries, 
-    setMeetingSummariesLoading 
+    setSummariesLoading: setMeetingSummariesLoading 
   } = useMeetingStore();
   
   const [filters, setFilters] = useState<{ sentiment?: string; date_from?: string; date_to?: string }>({});

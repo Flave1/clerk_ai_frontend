@@ -25,7 +25,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://harlequinesque-nonhereditarily-roni.ngrok-free.dev',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -188,40 +188,40 @@ class ApiClient {
 
   // Meeting Agent API Methods
   async getMeetings(filters?: MeetingFilters): Promise<Meeting[]> {
-    const response = await this.client.get('/api/v1/meetings/meetings', {
+    const response = await this.client.get('/api/v1/meetings', {
       params: filters,
     });
     return response.data;
   }
 
   async getMeeting(id: string): Promise<Meeting> {
-    const response = await this.client.get(`/api/v1/meetings/meetings/${id}`);
+    const response = await this.client.get(`/api/v1/meetings/${id}`);
     return response.data;
   }
 
   async getMeetingSummary(id: string): Promise<MeetingSummary> {
-    const response = await this.client.get(`/api/v1/meetings/meetings/${id}/summary`);
+    const response = await this.client.get(`/api/v1/meetings/${id}/summary`);
     return response.data;
   }
 
   async getMeetingSummaries(limit = 50, offset = 0): Promise<MeetingSummary[]> {
-    const response = await this.client.get('/api/v1/meetings/meetings/summaries', {
+    const response = await this.client.get('/api/v1/meetings/summaries', {
       params: { limit, offset },
     });
     return response.data;
   }
 
   async joinMeeting(id: string): Promise<MeetingJoinResponse> {
-    const response = await this.client.post(`/api/v1/meetings/meetings/${id}/join`);
+    const response = await this.client.post(`/api/v1/meetings/${id}/join`);
     return response.data;
   }
 
   async leaveMeeting(id: string): Promise<void> {
-    await this.client.post(`/api/v1/meetings/meetings/${id}/leave`);
+    await this.client.post(`/api/v1/meetings/${id}/leave`);
   }
 
   async getActiveMeetings(): Promise<Meeting[]> {
-    const response = await this.client.get('/api/v1/meetings/meetings/active');
+    const response = await this.client.get('/api/v1/meetings/active');
     return response.data;
   }
 
@@ -229,7 +229,7 @@ class ApiClient {
     id: string,
     notificationType: 'summary' | 'action_items' | 'reminder'
   ): Promise<void> {
-    await this.client.post(`/api/v1/meetings/meetings/${id}/notify`, {
+    await this.client.post(`/api/v1/meetings/${id}/notify`, {
       notification_type: notificationType,
     });
   }
@@ -239,7 +239,7 @@ class ApiClient {
     participants: any[];
     total_count: number;
   }> {
-    const response = await this.client.get(`/api/v1/meetings/meetings/${id}/participants`);
+    const response = await this.client.get(`/api/v1/meetings/${id}/participants`);
     return response.data;
   }
 
@@ -249,12 +249,12 @@ class ApiClient {
     chunks: string[];
     chunk_count: number;
   }> {
-    const response = await this.client.get(`/api/v1/meetings/meetings/${id}/transcription`);
+    const response = await this.client.get(`/api/v1/meetings/${id}/transcription`);
     return response.data;
   }
 
   async getMeetingActionItems(id: string): Promise<ActionItem[]> {
-    const response = await this.client.get(`/api/v1/meetings/meetings/${id}/action-items`);
+    const response = await this.client.get(`/api/v1/meetings/${id}/action-items`);
     return response.data;
   }
 
@@ -263,32 +263,32 @@ class ApiClient {
     actionItemId: string,
     status: string
   ): Promise<void> {
-    await this.client.put(`/api/v1/meetings/meetings/${meetingId}/action-items/${actionItemId}`, {
+    await this.client.put(`/api/v1/meetings/${meetingId}/action-items/${actionItemId}`, {
       status,
     });
   }
 
   async getMeetingConfig(): Promise<MeetingConfig> {
-    const response = await this.client.get('/api/v1/meetings/meetings/config');
+    const response = await this.client.get('/api/v1/meetings/config');
     return response.data;
   }
 
   async updateMeetingConfig(config: MeetingConfig): Promise<MeetingConfig> {
-    const response = await this.client.put('/api/v1/meetings/meetings/config', config);
+    const response = await this.client.put('/api/v1/meetings/config', config);
     return response.data;
   }
 
   async getMeetingAgentStatus(): Promise<MeetingAgentStatus> {
-    const response = await this.client.get('/api/v1/meetings/meetings/status');
+    const response = await this.client.get('/api/v1/meetings/status');
     return response.data;
   }
 
   async startMeetingScheduler(): Promise<void> {
-    await this.client.post('/api/v1/meetings/meetings/start-scheduler');
+    await this.client.post('/api/v1/meetings/start-scheduler');
   }
 
   async stopMeetingScheduler(): Promise<void> {
-    await this.client.post('/api/v1/meetings/meetings/stop-scheduler');
+    await this.client.post('/api/v1/meetings/stop-scheduler');
   }
 
   async bulkDeleteMeetings(meetingIds: string[]): Promise<{
@@ -297,7 +297,7 @@ class ApiClient {
     total_requested: number;
     failed_deletions: Array<{ meeting_id: string; error: string }>;
   }> {
-    const response = await this.client.delete('/api/v1/meetings/meetings/bulk', {
+    const response = await this.client.delete('/api/v1/meetings/bulk', {
       data: meetingIds,
     });
     return response.data;

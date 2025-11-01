@@ -70,10 +70,7 @@ const CallPage: NextPage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Receptionist Call</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Test the AI Receptionist in real-time. Start a call and have a conversation!
-          </p>
+          
           {currentConversationId && (
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -121,7 +118,7 @@ const CallPage: NextPage = () => {
     
 
         {/* Recent Conversation */}
-        {recentConversationId && (
+        {/* {recentConversationId && (
           <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-green-900 mb-2">Call Completed!</h3>
             <p className="text-green-800 mb-4">
@@ -134,7 +131,7 @@ const CallPage: NextPage = () => {
               View Conversation Details
             </button>
           </div>
-        )}
+        )} */}
       </div>
     </>
   );
