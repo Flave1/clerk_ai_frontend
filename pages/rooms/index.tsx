@@ -3,15 +3,7 @@ import Head from 'next/head';
 import Header from '@/components/layout/Header';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { fetchRooms } from '@/lib/api';
-
-interface Room {
-  id: string;
-  name: string;
-  participant_count: number;
-  is_active: boolean;
-  created_at: string;
-  last_activity: string;
-}
+import { Room } from '@/types';
 
 const RoomsPage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -195,7 +187,7 @@ const RoomsPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rooms.map((room) => (
-                    <tr key={room.id} className="hover:bg-gray-50">
+                    <tr key={room.room_id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
@@ -205,10 +197,10 @@ const RoomsPage: React.FC = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {room.name || `Room ${room.id.slice(0, 8)}`}
+                              {room.name || `Room ${room.room_id.slice(0, 8)}`}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ID: {room.id.slice(0, 8)}...
+                              ID: {room.room_id.slice(0, 8)}...
                             </div>
                           </div>
                         </div>
@@ -233,7 +225,7 @@ const RoomsPage: React.FC = () => {
                         {formatTimestamp(room.created_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatTimestamp(room.last_activity)}
+                        {formatTimestamp(room.created_at)}
                       </td>
                     </tr>
                   ))}

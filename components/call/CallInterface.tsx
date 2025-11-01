@@ -346,7 +346,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
         isMuted: true, // Default to muted
         isSpeaking: false,
         isHost: false,
-        joinedAt: new Date().toISOString()
+        joinedAt: new Date()
       };
       
       setParticipants(prev => {

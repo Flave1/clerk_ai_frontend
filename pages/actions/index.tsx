@@ -4,27 +4,13 @@ import Header from '@/components/layout/Header';
 import StatusBadge from '@/components/ui/StatusBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { fetchActions } from '@/lib/api';
-
-interface Action {
-  id: string;
-  conversation_id: string;
-  turn_id: string;
-  action_type: string;
-  status: string;
-  parameters: Record<string, any>;
-  result?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
+import { Action, ActionFilters, ActionStatus, ActionType } from '@/types';
 
 const ActionsPage: React.FC = () => {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    status: '',
-    action_type: '',
-  });
+  const [filters, setFilters] = useState<ActionFilters>({});
 
   useEffect(() => {
     loadActions();
@@ -100,8 +86,8 @@ const ActionsPage: React.FC = () => {
                 Status
               </label>
               <select
-                value={filters.status}
-                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                value={filters.status || ''}
+                onChange={(e) => setFilters(prev => ({ ...prev, status: (e.target.value as ActionStatus) || undefined }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
@@ -117,8 +103,8 @@ const ActionsPage: React.FC = () => {
                 Action Type
               </label>
               <select
-                value={filters.action_type}
-                onChange={(e) => setFilters(prev => ({ ...prev, action_type: e.target.value }))}
+                value={filters.action_type || ''}
+                onChange={(e) => setFilters(prev => ({ ...prev, action_type: (e.target.value as ActionType) || undefined }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Types</option>
@@ -209,9 +195,11 @@ const ActionsPage: React.FC = () => {
                         <div>
                           Conv: {action.conversation_id.slice(0, 8)}...
                         </div>
-                        <div className="text-gray-500">
-                          Turn: {action.turn_id.slice(0, 8)}...
-                        </div>
+                        {action.turn_id && (
+                          <div className="text-gray-500">
+                            Turn: {action.turn_id.slice(0, 8)}...
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 max-w-xs truncate">
