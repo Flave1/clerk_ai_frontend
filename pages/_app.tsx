@@ -3,18 +3,42 @@ import Head from 'next/head';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
-import { useWebSocketStore, useUIStore } from '@/store';
+import { useWebSocketStore, useUIStore, useAuthStore } from '@/store';
 import wsClient from '@/lib/ws';
 import Header from '@/components/layout/Header';
+import TopBar from '@/components/layout/TopBar';
+import { getUser, isAuthenticated } from '@/lib/auth';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function App({ Component, pageProps, router }: AppProps) {
   const { setConnected, setConnecting, setError } = useWebSocketStore();
   const { theme, setTheme, sidebarCollapsed } = useUIStore();
+  const { setUser, setIsAuthenticated } = useAuthStore();
+  
+  // Initialize auth state from localStorage (without verifying token - let useAuth handle that)
+  // This prevents duplicate getCurrentUser calls
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = getUser();
+      const hasToken = isAuthenticated();
+      
+      if (storedUser && hasToken) {
+        setUser(storedUser);
+        setIsAuthenticated(true);
+        // Don't call getCurrentUser here - let useAuth hook handle token verification
+        // This prevents duplicate API calls and race conditions
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    }
+  }, [setUser, setIsAuthenticated]);
   
   // Check if current page should have layout
   const shouldShowLayout = router.pathname !== '/standalone-call' 
     && router.pathname !== '/landing'
     && router.pathname !== '/login'
+    && router.pathname !== '/register'
     && router.pathname !== '/'
     && !router.pathname.startsWith('/join/');
 
@@ -84,9 +108,12 @@ export default function App({ Component, pageProps, router }: AppProps) {
           
           {/* Main Content Area */}
           <main className={`transition-all duration-300 ease-in-out ${
-            sidebarCollapsed ? 'ml-0' : 'ml-64'
+            sidebarCollapsed ? 'ml-0' : 'ml-80'
           }`}>
-            <Component {...pageProps} />
+            <ProtectedRoute>
+              <TopBar />
+              <Component {...pageProps} />
+            </ProtectedRoute>
           </main>
         </div>
       ) : (

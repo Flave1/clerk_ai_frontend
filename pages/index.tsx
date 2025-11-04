@@ -142,12 +142,6 @@ export default function Landing() {
         <title>Auray - Your Voice in Every Meeting</title>
         <meta name="description" content="Auray joins your meetings, listens, speaks, and acts — just like you." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
       </Head>
 
       <div className="min-h-screen bg-[#0a0b1a] text-white overflow-x-hidden">

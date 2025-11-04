@@ -1,38 +1,151 @@
-import Axios from 'axios';
+import Axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getAccessToken, removeAccessToken } from './auth';
 
-// NEXT_PUBLIC_API_BASE_URL may or may not include "/api/v1".
+// NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_API_URL may or may not include "/api/v1".
 // Normalize so our instance baseURL ALWAYS ends with "/api/v1" exactly once.
 function resolveBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  // Try NEXT_PUBLIC_API_BASE_URL first, then NEXT_PUBLIC_API_URL, then default
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   // Strip any trailing slashes
   let base = raw.replace(/\/$/, '');
   if (!/\/api\/v1$/.test(base)) {
     base = `${base}/api/v1`;
   }
+  
+  // Log the resolved URL in development
+  // if (process.env.NODE_ENV !== 'production') {
+  //   console.log('[Axios Config] Resolved base URL:', base);
+  //   console.log('[Axios Config] NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+  //   console.log('[Axios Config] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+  // }
+  
   return base;
 }
 
 const axiosInstance = Axios.create({
   baseURL: resolveBaseUrl(),
-  timeout: 15000,
+  timeout: 60000, // Increased to 60 seconds to prevent premature timeouts
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-axiosInstance.interceptors.response.use(
-  (res) => res,
+// Request interceptor to add access token to headers
+axiosInstance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    // Don't add auth token for public auth endpoints (register, signin, google oauth)
+    // But DO add it for protected endpoints like /auth/me
+    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google'];
+    const isPublicAuthEndpoint = config.url && publicAuthEndpoints.some(endpoint => config.url?.startsWith(endpoint));
+    
+    if (!isPublicAuthEndpoint) {
+      // Get token from localStorage
+      const token = getAccessToken();
+      
+      // Add Authorization header if token exists
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    
+    // Build full URL for logging
+    const fullUrl = `${config.baseURL}${config.url}`;
+    
+    // Log request in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`);
+      console.log('[API Request] Headers:', config.headers);
+      console.log('[API Request] Data:', config.data);
+    }
+    
+    return config;
+  },
   (error) => {
+    console.error('[API Request Error]', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling and token expiration
+axiosInstance.interceptors.response.use(
+  (res) => {
+    // Log successful response in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API Response] ${res.config.method?.toUpperCase()} ${res.config.url} - ${res.status}`);
+    }
+    return res;
+  },
+  (error: AxiosError) => {
+    // Build full URL for logging
+    const fullUrl = error?.config ? `${error.config.baseURL}${error.config.url}` : 'unknown';
+    
+    // Handle network errors (CORS, connection refused, etc.)
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      console.error('[API Network Error]', {
+        fullUrl,
+        method: error?.config?.method,
+        code: error.code,
+        message: error.message,
+        baseURL: error?.config?.baseURL,
+        url: error?.config?.url,
+      });
+      
+      // Provide helpful error message
+      const networkError = {
+        ...error,
+        message: `Network error: Unable to connect to ${error?.config?.baseURL || 'the server'}. Please check if the server is running and accessible.`,
+        isNetworkError: true,
+      };
+      
+      return Promise.reject(networkError);
+    }
+    
+    // Handle timeout errors
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      console.error('[API Timeout]', {
+        fullUrl,
+        method: error?.config?.method,
+        timeout: error?.config?.timeout,
+      });
+      // Don't redirect on timeout, just return error
+      return Promise.reject({
+        ...error,
+        message: 'Request timeout. Please try again.',
+        timeout: true,
+      });
+    }
+    
+    // Handle 401 Unauthorized and 403 Forbidden - token expired, invalid, or insufficient permissions
+    // But don't redirect if it's a public auth endpoint (register/signin)
+    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google'];
+    const isPublicAuthEndpoint = error?.config?.url && publicAuthEndpoints.some(endpoint => error.config.url?.startsWith(endpoint));
+    
+    if ((error.response?.status === 401 || error.response?.status === 403) && !isPublicAuthEndpoint) {
+      console.warn(`[API Auth Error] ${error.response?.status} - Clearing token and redirecting to login`);
+      // Remove invalid token
+      removeAccessToken();
+      
+      // Redirect to login if not already there (only on client side)
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    
     // Surface useful debug info in dev
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
-      console.warn('Axios error', {
-        url: error?.config?.url,
+      console.warn('[API Error]', {
+        fullUrl,
         method: error?.config?.method,
         status: error?.response?.status,
-        data: error?.response?.data
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: error?.message,
+        code: error.code,
+        request: error?.request,
       });
     }
+    
     return Promise.reject(error);
   }
 );

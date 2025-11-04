@@ -1,10 +1,8 @@
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import {
-  Conversation,
   Action,
   Room,
-  ConversationFilters,
   ActionFilters,
   Meeting,
   MeetingSummary,
@@ -16,65 +14,54 @@ import {
 // Dashboard Store
 interface DashboardState {
   // Data
-  conversations: Conversation[];
   actions: Action[];
   rooms: Room[];
   meetings: Meeting[];
   meetingSummaries: MeetingSummary[];
   
   // Loading states
-  conversationsLoading: boolean;
   actionsLoading: boolean;
   roomsLoading: boolean;
   meetingsLoading: boolean;
   meetingSummariesLoading: boolean;
   
   // Filters
-  conversationFilters: ConversationFilters;
   actionFilters: ActionFilters;
   meetingFilters: MeetingFilters;
   
   // UI state
-  selectedConversationId: string | null;
   selectedActionId: string | null;
   selectedMeetingId: string | null;
   sidebarOpen: boolean;
   
   // Actions
-  setConversations: (conversations: Conversation[]) => void;
   setActions: (actions: Action[]) => void;
   setRooms: (rooms: Room[]) => void;
   setMeetings: (meetings: Meeting[]) => void;
   setMeetingSummaries: (summaries: MeetingSummary[]) => void;
-  setConversationsLoading: (loading: boolean) => void;
   setActionsLoading: (loading: boolean) => void;
   setRoomsLoading: (loading: boolean) => void;
   setMeetingsLoading: (loading: boolean) => void;
   setMeetingSummariesLoading: (loading: boolean) => void;
-  setConversationFilters: (filters: ConversationFilters) => void;
   setActionFilters: (filters: ActionFilters) => void;
   setMeetingFilters: (filters: MeetingFilters) => void;
-  setSelectedConversationId: (id: string | null) => void;
   setSelectedActionId: (id: string | null) => void;
   setSelectedMeetingId: (id: string | null) => void;
   setSidebarOpen: (open: boolean) => void;
   
   // Data updates
-  updateConversation: (conversation: Conversation) => void;
   updateAction: (action: Action) => void;
   updateRoom: (room: Room) => void;
   updateMeeting: (meeting: Meeting) => void;
   updateMeetingSummary: (summary: MeetingSummary) => void;
   
   // Add new items
-  addConversation: (conversation: Conversation) => void;
   addAction: (action: Action) => void;
   addRoom: (room: Room) => void;
   addMeeting: (meeting: Meeting) => void;
   addMeetingSummary: (summary: MeetingSummary) => void;
   
   // Remove items
-  removeConversation: (id: string) => void;
   removeAction: (id: string) => void;
   removeRoom: (id: string) => void;
   removeMeeting: (id: string) => void;
@@ -85,50 +72,36 @@ export const useDashboardStore = create<DashboardState>()(
   devtools(
     subscribeWithSelector((set, get) => ({
       // Initial state
-      conversations: [],
       actions: [],
       rooms: [],
       meetings: [],
       meetingSummaries: [],
-      conversationsLoading: false,
       actionsLoading: false,
       roomsLoading: false,
       meetingsLoading: false,
       meetingSummariesLoading: false,
-      conversationFilters: {},
       actionFilters: {},
       meetingFilters: {},
-      selectedConversationId: null,
       selectedActionId: null,
       selectedMeetingId: null,
       sidebarOpen: true,
       
       // Setters
-      setConversations: (conversations) => set({ conversations }),
       setActions: (actions) => set({ actions }),
       setRooms: (rooms) => set({ rooms }),
       setMeetings: (meetings) => set({ meetings }),
       setMeetingSummaries: (meetingSummaries) => set({ meetingSummaries }),
-      setConversationsLoading: (conversationsLoading) => set({ conversationsLoading }),
       setActionsLoading: (actionsLoading) => set({ actionsLoading }),
       setRoomsLoading: (roomsLoading) => set({ roomsLoading }),
       setMeetingsLoading: (meetingsLoading) => set({ meetingsLoading }),
       setMeetingSummariesLoading: (meetingSummariesLoading) => set({ meetingSummariesLoading }),
-      setConversationFilters: (conversationFilters) => set({ conversationFilters }),
       setActionFilters: (actionFilters) => set({ actionFilters }),
       setMeetingFilters: (meetingFilters) => set({ meetingFilters }),
-      setSelectedConversationId: (selectedConversationId) => set({ selectedConversationId }),
       setSelectedActionId: (selectedActionId) => set({ selectedActionId }),
       setSelectedMeetingId: (selectedMeetingId) => set({ selectedMeetingId }),
       setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
       
       // Data updates
-      updateConversation: (updatedConversation) => set((state) => ({
-        conversations: state.conversations.map(conv =>
-          conv.id === updatedConversation.id ? updatedConversation : conv
-        ),
-      })),
-      
       updateAction: (updatedAction) => set((state) => ({
         actions: state.actions.map(action =>
           action.id === updatedAction.id ? updatedAction : action
@@ -154,10 +127,6 @@ export const useDashboardStore = create<DashboardState>()(
       })),
       
       // Add new items
-      addConversation: (conversation) => set((state) => ({
-        conversations: [conversation, ...state.conversations],
-      })),
-      
       addAction: (action) => set((state) => ({
         actions: [action, ...state.actions],
       })),
@@ -175,10 +144,6 @@ export const useDashboardStore = create<DashboardState>()(
       })),
       
       // Remove items
-      removeConversation: (id) => set((state) => ({
-        conversations: state.conversations.filter(conv => conv.id !== id),
-      })),
-      
       removeAction: (id) => set((state) => ({
         actions: state.actions.filter(action => action.id !== id),
       })),
@@ -283,6 +248,47 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-store',
+    }
+  )
+);
+
+// Auth Store
+interface AuthState {
+  user: {
+    user_id: string;
+    email: string;
+    name: string;
+  } | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  
+  // Actions
+  setUser: (user: { user_id: string; email: string; name: string } | null) => void;
+  setIsAuthenticated: (isAuthenticated: boolean) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  devtools(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+      setIsLoading: (isLoading) => set({ isLoading }),
+      logout: () => {
+        set({ user: null, isAuthenticated: false });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('clerk_access_token');
+          localStorage.removeItem('clerk_user');
+        }
+      },
+    }),
+    {
+      name: 'auth-store',
     }
   )
 );

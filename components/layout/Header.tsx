@@ -5,15 +5,10 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChatBubbleLeftRightIcon,
-  CogIcon,
   ChartBarIcon,
-  UsersIcon,
-  SignalIcon,
-  SignalSlashIcon,
   PhoneIcon,
-  SunIcon,
-  MoonIcon,
   VideoCameraIcon,
+  MicrophoneIcon,
   PuzzlePieceIcon,
   AdjustmentsHorizontalIcon,
   CodeBracketIcon,
@@ -23,17 +18,17 @@ import {
   BellIcon,
   KeyIcon,
   GlobeAltIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { useWebSocketStore, useUIStore } from '@/store';
+import { useUIStore } from '@/store';
+import { useAuth } from '@/hooks/useAuth';
 
 const mainNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Start Meeting', href: '/select-meeting', icon: PhoneIcon },
-  { name: 'Conversations', href: '/conversations', icon: ChatBubbleLeftRightIcon },
   { name: 'Meetings', href: '/meetings', icon: VideoCameraIcon },
-  // { name: 'Actions', href: '/actions', icon: CogIcon },
-  // { name: 'Rooms', href: '/rooms', icon: UsersIcon },
+  { name: 'Voice Profile', href: '/voice-profile', icon: MicrophoneIcon },
 ];
 
 const integrationsNavigation = [
@@ -55,17 +50,8 @@ const developerNavigation = [
 
 export default function Header() {
   const router = useRouter();
-  const { isConnected } = useWebSocketStore();
-  const { sidebarCollapsed, setSidebarCollapsed, theme, setTheme } = useUIStore();
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
-  const handleSignOut = () => {
-    // Add sign out logic here
-    router.push('/login');
-  };
+  const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  const { signOut: handleSignOut } = useAuth();
 
   const renderNavItem = (item: typeof mainNavigation[0]) => {
     const isActive = router.pathname === item.href;
@@ -99,14 +85,14 @@ export default function Header() {
   return (
     <>
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
         sidebarCollapsed ? '-translate-x-full' : 'translate-x-0'
       }`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
+            <Link href="/dashboard" className="flex items-center space-x-2">
+              <div className="h-8 w-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Auray</span>
@@ -119,7 +105,7 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Navigation */}
+          {/* Main Navigation */}
           <nav className="flex-1 px-4 py-4 overflow-y-auto">
             {renderNavSection('Main', mainNavigation)}
             {renderNavSection('Integrations', integrationsNavigation)}
@@ -127,38 +113,8 @@ export default function Header() {
             {renderNavSection('Developer', developerNavigation)}
           </nav>
 
-          {/* Connection Status and Theme Toggle */}
-          {/* <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                {isConnected ? (
-                  <SignalIcon className="h-5 w-5 text-success-600" />
-                ) : (
-                  <SignalSlashIcon className="h-5 w-5 text-danger-600" />
-                )}
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {isConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
-            </div> */}
-
-            {/* Theme Toggle Button */}
-            {/* <button
-              onClick={toggleTheme}
-              className="w-full flex items-center justify-center px-3 py-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-gray-200 transition-colors duration-200"
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
-            >
-              {theme === 'light' ? (
-                <MoonIcon className="h-5 w-5 mr-2" />
-              ) : (
-                <SunIcon className="h-5 w-5 mr-2" />
-              )}
-              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </button> 
-          </div>*/}
-
           {/* Sign Out Button */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleSignOut}
               className="w-full flex items-center justify-center px-3 py-2 rounded-md text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors duration-200"
@@ -178,15 +134,15 @@ export default function Header() {
         />
       )}
 
-      {/* Floating Sidebar Toggle Button */}
-      <button
-        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className={`fixed top-4 z-50 p-2 rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-gray-200 transition-all duration-300 ${
-          sidebarCollapsed ? 'left-4' : 'left-72'
-        }`}
-      >
-        <Bars3Icon className="h-5 w-5" />
-      </button>
+      {/* Floating Sidebar Toggle Button - Only show when sidebar is closed */}
+      {sidebarCollapsed && (
+        <button
+          onClick={() => setSidebarCollapsed(false)}
+          className="fixed top-4 left-4 z-50 p-2 rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-gray-200 transition-all duration-300"
+        >
+          <Bars3Icon className="h-5 w-5" />
+        </button>
+      )}
     </>
   );
 }

@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { Conversation } from '@/types';
+import apiClient from '@/lib/api';
 import InviteModal from './InviteModal';
 import ParticipantList from './ParticipantList';
 
@@ -305,12 +306,9 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
   // Load participants from database
   const loadMeetingParticipants = async (meetingId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/meetings/${meetingId}/participants`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.participants && data.participants.length > 0) {
-          setParticipants(data.participants);
-        }
+      const data = await apiClient.getMeetingParticipants(meetingId);
+      if (data.participants && data.participants.length > 0) {
+        setParticipants(data.participants);
       }
     } catch (error) {
       console.error('Failed to load meeting participants:', error);

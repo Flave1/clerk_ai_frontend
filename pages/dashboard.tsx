@@ -1,272 +1,91 @@
 import { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { 
-  ChartBarIcon, 
-  ChatBubbleLeftRightIcon, 
-  CogIcon,
-  UsersIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   VideoCameraIcon,
+  PhoneIcon,
   DocumentTextIcon,
-  PuzzlePieceIcon,
-  AdjustmentsHorizontalIcon,
-  CodeBracketIcon,
-  ArrowRightOnRectangleIcon
+  CalendarIcon,
+  ClockIcon,
+  UserGroupIcon,
+  SparklesIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  LinkIcon,
+  CheckCircleIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 import { useDashboardStore } from '@/store';
 import apiClient from '@/lib/api';
-import { DashboardStats } from '@/types';
+import { Meeting } from '@/types';
 import toast from 'react-hot-toast';
 import Header from '@/components/layout/Header';
-
-// Stat Card Component
-interface StatCardProps {
-  title: string;
-  value: number | string;
-  icon: React.ComponentType<any>;
-  color: string;
-  change?: string;
-  changeType?: 'increase' | 'decrease' | 'neutral';
-}
-
-function StatCard({ title, value, icon: Icon, color, change, changeType }: StatCardProps) {
-  const changeColor = {
-    increase: 'text-success-600 dark:text-success-400',
-    decrease: 'text-danger-600 dark:text-danger-400',
-    neutral: 'text-gray-600 dark:text-gray-400',
-  }[changeType || 'neutral'];
-
-  return (
-    <div className="card">
-      <div className="card-body">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className={`p-3 rounded-lg ${color}`}>
-              <Icon className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <div className="ml-4 flex-1">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{value}</p>
-            {change && (
-              <p className={`text-sm ${changeColor}`}>
-                {change}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Recent Activity Component
-function RecentActivity({ loadingStates }: { loadingStates: any }) {
-  const { conversations, actions } = useDashboardStore();
-
-  const recentConversations = conversations
-    .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
-    .slice(0, 5);
-
-  const recentActions = actions
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Recent Conversations */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Recent Conversations</h3>
-        </div>
-        <div className="card-body">
-          {loadingStates.conversations ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
-              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading conversations...</span>
-            </div>
-          ) : recentConversations.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No conversations yet</p>
-          ) : (
-            <div className="space-y-4">
-              {recentConversations.map((conversation) => (
-                <div key={conversation.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <ChatBubbleLeftRightIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Conversation {conversation.id.slice(-8)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {conversation.turn_count} turns
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`status-badge ${
-                      conversation.status === 'active' ? 'status-active' :
-                      conversation.status === 'completed' ? 'status-completed' :
-                      conversation.status === 'failed' ? 'status-failed' : 'status-pending'
-                    }`}>
-                      {conversation.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Actions */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Recent Actions</h3>
-        </div>
-        <div className="card-body">
-          {loadingStates.actions ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
-              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading actions...</span>
-            </div>
-          ) : recentActions.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No actions yet</p>
-          ) : (
-            <div className="space-y-4">
-              {recentActions.map((action) => (
-                <div key={action.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-warning-100 dark:bg-warning-900 flex items-center justify-center">
-                        <CogIcon className="h-4 w-4 text-warning-600 dark:text-warning-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {action.action_type.replace('_', ' ')}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {action.conversation_id.slice(-8)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`status-badge ${
-                      action.status === 'completed' ? 'status-completed' :
-                      action.status === 'failed' ? 'status-failed' :
-                      action.status === 'in_progress' ? 'status-active' : 'status-pending'
-                    }`}>
-                      {action.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+import { format, isToday, isTomorrow, parseISO, differenceInMinutes } from 'date-fns';
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [loadingStates, setLoadingStates] = useState({
-    conversations: false,
-    actions: false,
-    rooms: false,
-    meetings: false,
-    stats: false
-  });
-  const { 
-    conversations, 
-    actions, 
-    rooms,
-    meetings,
-    setConversations, 
-    setActions, 
-    setRooms,
-    setMeetings
-  } = useDashboardStore();
+  const [loading, setLoading] = useState(true);
+  const { meetings, setMeetings } = useDashboardStore();
 
-  const handleSignOut = () => {
-    router.push('/login');
-  };
-
-  // Load critical data first (stats)
+  // Load meetings
   useEffect(() => {
-    const loadCriticalData = async () => {
+    const loadData = async () => {
       try {
-        setLoadingStates(prev => ({ ...prev, stats: true }));
-        const statsData = await apiClient.getDashboardStats();
-        setStats(statsData);
+        setLoading(true);
+        const meetingsData = await apiClient.getMeetings().catch(() => []);
+        setMeetings(meetingsData);
       } catch (error) {
-        console.error('Failed to load stats:', error);
-        toast.error('Failed to load dashboard stats');
+        console.error('Failed to load data:', error);
+        toast.error('Failed to load dashboard data');
       } finally {
-        setLoadingStates(prev => ({ ...prev, stats: false }));
-        setInitialLoading(false);
+        setLoading(false);
       }
     };
 
-    loadCriticalData();
-  }, []);
+    loadData();
+  }, [setMeetings]);
 
-  // Load other data in background after initial render
-  useEffect(() => {
-    if (!initialLoading) {
-      const loadBackgroundData = async () => {
-        try {
-          // Load conversations first (most important)
-          setLoadingStates(prev => ({ ...prev, conversations: true }));
-          const conversationsData = await apiClient.getConversations();
-          setConversations(conversationsData);
-          setLoadingStates(prev => ({ ...prev, conversations: false }));
+  // Get upcoming meetings (next 7 days)
+  const upcomingMeetings = meetings
+    .filter(m => {
+      const startTime = parseISO(m.start_time);
+      const now = new Date();
+      return startTime > now && startTime < new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    })
+    .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+    .slice(0, 5);
 
-          // Load actions, rooms, and meetings in parallel
-          const [actionsData, roomsData, meetingsData] = await Promise.all([
-            apiClient.getActions().catch(err => {
-              console.error('Failed to load actions:', err);
-              return [];
-            }),
-            apiClient.getRooms().catch(err => {
-              console.error('Failed to load rooms:', err);
-              return [];
-            }),
-            apiClient.getMeetings().catch(err => {
-              console.error('Failed to load meetings:', err);
-              return [];
-            })
-          ]);
+  // Get recent meetings with summaries
+  const recentMeetings = meetings
+    .filter(m => m.summary)
+    .sort((a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime())
+    .slice(0, 5);
 
-          setActions(actionsData);
-          setRooms(roomsData);
-          setMeetings(meetingsData);
-          setLoadingStates(prev => ({ ...prev, actions: false, rooms: false, meetings: false }));
-          
-        } catch (error) {
-          console.error('Failed to load background data:', error);
-          setLoadingStates(prev => ({ ...prev, conversations: false, actions: false, rooms: false, meetings: false }));
-        }
-      };
-
-      loadBackgroundData();
+  // Format meeting time
+  const formatMeetingTime = (dateString: string) => {
+    const date = parseISO(dateString);
+    if (isToday(date)) {
+      return `Today, ${format(date, 'h:mm a')}`;
+    } else if (isTomorrow(date)) {
+      return `Tomorrow, ${format(date, 'h:mm a')}`;
+    } else {
+      return format(date, 'MMM d, h:mm a');
     }
-  }, [initialLoading, setConversations, setActions, setRooms]);
+  };
 
-  // Show minimal loading only for critical stats
-  if (initialLoading) {
+  // Get meeting status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
+      case 'scheduled': return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+      case 'ended': return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -286,210 +105,250 @@ const Dashboard: NextPage = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Auray Dashboard</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Monitor meetings, conversations, actions, and system performance in real-time.
-          </p>
-        </div>
-
-        {/* Quick Navigation Menu */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Integrations Card */}
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow duration-300" onClick={() => router.push('/integrations')}>
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="p-3 rounded-lg bg-purple-500">
-                    <PuzzlePieceIcon className="h-6 w-6 text-white" />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => router.push('/select-meeting')}
+                className="group relative overflow-hidden bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                      <VideoCameraIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <ArrowRightIcon className="h-5 w-5 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                   </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Start Meeting</h3>
+                  <p className="text-white/90 text-sm">Join or create a new meeting</p>
                 </div>
-                <div className="ml-4 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Integrations</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage connected apps</p>
-                </div>
-              </div>
-            </div>
-          </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              </button>
 
-          {/* Settings Card */}
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow duration-300" onClick={() => router.push('/settings')}>
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="p-3 rounded-lg bg-blue-500">
-                    <AdjustmentsHorizontalIcon className="h-6 w-6 text-white" />
+              <button
+                onClick={() => router.push('/call')}
+                className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                      <PhoneIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <ArrowRightIcon className="h-5 w-5 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                   </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Start Call</h3>
+                  <p className="text-white/90 text-sm">Begin a new conversation</p>
                 </div>
-                <div className="ml-4 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Settings</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Configure preferences</p>
-                </div>
-              </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              </button>
             </div>
-          </div>
 
-          {/* Developer Card */}
-          <div className="card cursor-pointer hover:shadow-lg transition-shadow duration-300" onClick={() => router.push('/developer')}>
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="p-3 rounded-lg bg-green-500">
-                    <CodeBracketIcon className="h-6 w-6 text-white" />
+            {/* Recent Meetings with Summaries */}
+            <div className="card">
+              <div className="card-header flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <DocumentTextIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Meeting Summaries</h2>
+                </div>
+                <button
+                  onClick={() => router.push('/meetings')}
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                >
+                  View All
+                </button>
+              </div>
+              <div className="card-body">
+                {recentMeetings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">No meeting summaries yet</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">Start a meeting to generate summaries</p>
                   </div>
-                </div>
-                <div className="ml-4 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Developer</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">API keys & webhooks</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats ? (
-            <>
-              <StatCard
-                title="Total Conversations"
-                value={stats.total_conversations}
-                icon={ChatBubbleLeftRightIcon}
-                color="bg-primary-500"
-              />
-              <StatCard
-                title="Active Conversations"
-                value={stats.active_conversations}
-                icon={UsersIcon}
-                color="bg-success-500"
-              />
-              <StatCard
-                title="Pending Actions"
-                value={stats.pending_actions}
-                icon={ClockIcon}
-                color="bg-warning-500"
-              />
-              <StatCard
-                title="Completed Actions"
-                value={stats.completed_actions}
-                icon={CheckCircleIcon}
-                color="bg-success-500"
-              />
-            </>
-          ) : (
-            // Skeleton loading for stats
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card">
-                <div className="card-body">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="p-3 rounded-lg bg-gray-300 dark:bg-gray-600 animate-pulse">
-                        <div className="h-6 w-6"></div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentMeetings.map((meeting) => (
+                      <div
+                        key={meeting.id}
+                        onClick={() => router.push(`/meetings/${meeting.id}`)}
+                        className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mb-1">
+                              {meeting.title}
+                            </h3>
+                            <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="flex items-center">
+                                <CalendarIcon className="h-4 w-4 mr-1" />
+                                {formatMeetingTime(meeting.start_time)}
+                              </span>
+                              <span className="flex items-center">
+                                <UserGroupIcon className="h-4 w-4 mr-1" />
+                                {meeting.participants.length} participants
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
+                            {meeting.status}
+                          </span>
+                        </div>
+                        {meeting.summary && (
+                          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                            {meeting.summary.key_points?.[0] || meeting.summary.summary || 'No summary available'}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    <div className="ml-4 flex-1">
-                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mb-2"></div>
-                      <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
-                    </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AI Assistant Active */}
+            <div className="card bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-700">
+              <div className="card-body">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-500 rounded-lg">
+                    <CheckCircleIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Assistant Active</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Ready to help with your meetings</p>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Meeting Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Meetings"
-            value={meetings.length}
-            icon={VideoCameraIcon}
-            color="bg-blue-500"
-          />
-          <StatCard
-            title="Active Meetings"
-            value={meetings.filter(m => m.status === 'active').length}
-            icon={UsersIcon}
-            color="bg-green-500"
-          />
-          <StatCard
-            title="Scheduled Meetings"
-            value={meetings.filter(m => m.status === 'scheduled').length}
-            icon={ClockIcon}
-            color="bg-yellow-500"
-          />
-          <StatCard
-            title="Meeting Summaries"
-            value={meetings.filter(m => m.summary).length}
-            icon={DocumentTextIcon}
-            color="bg-purple-500"
-          />
-        </div>
+          </div>
 
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats ? (
-            <>
-              <StatCard
-                title="Failed Actions"
-                value={stats.failed_actions}
-                icon={XCircleIcon}
-                color="bg-danger-500"
-              />
-              <StatCard
-                title="Total Actions"
-                value={stats.total_actions}
-                icon={CogIcon}
-                color="bg-gray-500"
-              />
-              <StatCard
-                title="Active Rooms"
-                value={stats.active_rooms}
-                icon={UsersIcon}
-                color="bg-primary-500"
-              />
-              <StatCard
-                title="Success Rate"
-                value={`${stats.total_actions > 0 ? Math.round((stats.completed_actions / stats.total_actions) * 100) : 0}%`}
-                icon={ChartBarIcon}
-                color="bg-success-500"
-              />
-            </>
-          ) : (
-            // Skeleton loading for additional stats
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card">
-                <div className="card-body">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="p-3 rounded-lg bg-gray-300 dark:bg-gray-600 animate-pulse">
-                        <div className="h-6 w-6"></div>
-                      </div>
+          {/* Right Column - Calendar Settings, Upcoming Meetings & Quick Info */}
+          <div className="space-y-6">
+            {/* Calendar Meeting Settings */}
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center space-x-2">
+                  <CalendarIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendar Settings</h2>
+                </div>
+              </div>
+              <div className="card-body">
+                <Link
+                  href="/settings"
+                  className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <CogIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Auto-join & Preferences</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Configure meeting settings</p>
                     </div>
-                    <div className="ml-4 flex-1">
-                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mb-2"></div>
-                      <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
-                    </div>
+                  </div>
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Upcoming Meetings Card */}
+            <div className="card">
+              <div className="card-header flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <ClockIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming Meetings</h2>
+                </div>
+                <button
+                  onClick={() => router.push('/select-meeting')}
+                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <PlusIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+              <div className="card-body">
+                {upcomingMeetings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CalendarIcon className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">No upcoming meetings</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Schedule a meeting to get started</p>
+                    <button
+                      onClick={() => router.push('/select-meeting')}
+                      className="mt-4 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                    >
+                      Schedule Meeting
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingMeetings.map((meeting) => {
+                      const startTime = parseISO(meeting.start_time);
+                      const now = new Date();
+                      const minutesUntil = differenceInMinutes(startTime, now);
+                      const isStartingSoon = minutesUntil <= 15 && minutesUntil > 0;
+
+                      return (
+                        <div
+                          key={meeting.id}
+                          onClick={() => router.push(`/meetings/${meeting.id}`)}
+                          className={`p-4 rounded-lg border transition-all cursor-pointer ${
+                            isStartingSoon
+                              ? 'border-orange-300 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                              {meeting.title}
+                            </h3>
+                            {isStartingSoon && (
+                              <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
+                                Soon
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                            <p className="flex items-center">
+                              <ClockIcon className="h-3.5 w-3.5 mr-1.5" />
+                              {formatMeetingTime(meeting.start_time)}
+                            </p>
+                            <p className="flex items-center">
+                              <VideoCameraIcon className="h-3.5 w-3.5 mr-1.5" />
+                              {meeting.platform}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="card bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-primary-200 dark:border-primary-700">
+              <div className="card-body">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-primary-500 rounded-lg">
+                    <SparklesIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Quick Stats</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Overview</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Total Meetings</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{meetings.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Summaries</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{recentMeetings.length}</span>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Recent Activity */}
-        <RecentActivity loadingStates={loadingStates} />
-
-        {/* Sign Out Button */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-          <button
-            onClick={handleSignOut}
-            className="flex items-center px-6 py-3 rounded-lg text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors duration-200 font-medium"
-          >
-            <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-            Sign Out
-          </button>
+            </div>
+          </div>
         </div>
       </div>
     </>

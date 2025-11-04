@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { VideoCameraIcon, UserIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import axiosInstance from '@/lib/axios';
 
 const JoinMeetingPage: React.FC = () => {
   const router = useRouter();
@@ -31,22 +32,13 @@ const JoinMeetingPage: React.FC = () => {
       const participantId = `participant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       // Join meeting via API to establish connection
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/meetings/${meetingId}/participants/join`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participant_name: name,
-          participant_id: participantId
-        })
+      // Note: This endpoint may require auth - adjust backend if this should be public
+      const response = await axiosInstance.post(`/meetings/${meetingId}/participants/join`, {
+        participant_name: name,
+        participant_id: participantId
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to join meeting');
-      }
-      
-      const joinResult = await response.json();
+      const joinResult = response.data;
       console.log('Successfully joined meeting:', joinResult);
       
       // Redirect to meeting with established connection

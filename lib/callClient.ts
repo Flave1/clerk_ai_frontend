@@ -39,14 +39,29 @@ class CallClient {
   private messageHandlers: CallEventHandler[] = [];
   private statusHandlers: StatusEventHandler[] = [];
 
-  // RT-Gateway WebSocket URL
+  // Unified service WebSocket URL (convert HTTP to WebSocket protocol)
   private get wsUrl(): string {
-    const baseUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'ws://localhost:8001';
+    // Get base URL from environment, default to API URL, fallback to localhost:8000
+    const httpUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
+      || process.env.NEXT_PUBLIC_API_BASE_URL 
+      || process.env.NEXT_PUBLIC_API_URL 
+      || 'http://localhost:8000';
+    
+    // Convert HTTP/HTTPS to WS/WSS
+    const wsBaseUrl = httpUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
     const url = this.conversationId 
-      ? `${baseUrl}/ws/${this.conversationId}`
-      : `${baseUrl}/ws/temp-${Date.now()}`;
+      ? `${wsBaseUrl}/ws/${this.conversationId}`
+      : `${wsBaseUrl}/ws/temp-${Date.now()}`;
     console.log('WebSocket URL:', url);
     return url;
+  }
+  
+  // Unified service HTTP URL
+  private get httpBaseUrl(): string {
+    return process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
+      || process.env.NEXT_PUBLIC_API_BASE_URL 
+      || process.env.NEXT_PUBLIC_API_URL 
+      || 'http://localhost:8000';
   }
 
   // Public methods
@@ -58,7 +73,7 @@ class CallClient {
     // Start conversation on backend first to get the real conversation ID
     try {
       const tempConversationId = uuidv4();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/start`, {
+      const response = await fetch(`${this.httpBaseUrl}/conversations/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,7 +109,7 @@ class CallClient {
     // Call the backend endpoint first to properly end the conversation
     if (this.conversationId) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${this.conversationId}/end`, {
+        const response = await fetch(`${this.httpBaseUrl}/conversations/${this.conversationId}/end`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -126,7 +141,7 @@ class CallClient {
       const userId = uuidv4();
       
       // Join existing conversation on backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${conversationId}/join`, {
+      const response = await fetch(`${this.httpBaseUrl}/conversations/${conversationId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +174,7 @@ class CallClient {
     // Call the backend endpoint to delete the conversation and all related data
     if (this.conversationId) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${this.conversationId}`, {
+        const response = await fetch(`${this.httpBaseUrl}/conversations/${this.conversationId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -394,7 +409,7 @@ class CallClient {
     if (!this.conversationId) return;
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${this.conversationId}/end`, {
+      const response = await fetch(`${this.httpBaseUrl}/conversations/${this.conversationId}/end`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -460,8 +475,12 @@ class CallClient {
 
   // Static method to delete any conversation by ID
   static async deleteConversation(conversationId: string): Promise<void> {
+    const httpBaseUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
+      || process.env.NEXT_PUBLIC_API_BASE_URL 
+      || process.env.NEXT_PUBLIC_API_URL 
+      || 'http://localhost:8000';
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/${conversationId}`, {
+      const response = await fetch(`${httpBaseUrl}/conversations/${conversationId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -483,8 +502,12 @@ class CallClient {
     total_requested: number;
     failed_deletions: Array<{conversation_id: string; error: string}>;
   }> {
+    const httpBaseUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
+      || process.env.NEXT_PUBLIC_API_BASE_URL 
+      || process.env.NEXT_PUBLIC_API_URL 
+      || 'http://localhost:8000';
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RT_GATEWAY_URL || 'http://localhost:8001'}/conversations/bulk-delete`, {
+      const response = await fetch(`${httpBaseUrl}/conversations/bulk-delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_ids: conversationIds })

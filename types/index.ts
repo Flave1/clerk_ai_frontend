@@ -5,44 +5,9 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-// Conversation Types
-export interface Conversation {
-  id: string;
-  user_id: string;
-  room_id: string;
-  status: ConversationStatus;
-  started_at: string;
-  ended_at?: string;
-  summary?: string;
-  metadata: Record<string, any>;
-  turn_count: number;
-}
-
-export type ConversationStatus = 'active' | 'completed' | 'failed' | 'paused';
-
-export interface ConversationCreate {
-  user_id: string;
-  room_id: string;
-  metadata?: Record<string, any>;
-}
-
-// Turn Types
-export interface Turn {
-  id: string;
-  conversation_id: string;
-  turn_number: number;
-  turn_type: TurnType;
-  content: string;
-  confidence_score?: number;
-  timestamp: string;
-}
-
-export type TurnType = 'user_speech' | 'ai_response' | 'system_message' | 'error';
-
 // Action Types
 export interface Action {
   id: string;
-  conversation_id: string;
   turn_id?: string;
   action_type: ActionType;
   status: ActionStatus;
@@ -89,16 +54,9 @@ export interface WebSocketMessage {
   timestamp: string;
 }
 
-export interface ConversationUpdate extends WebSocketMessage {
-  type: 'conversation_update';
-  conversation_id: string;
-  update_type: string;
-}
-
 export interface ActionUpdate extends WebSocketMessage {
   type: 'action_update';
   action_id: string;
-  conversation_id: string;
   update_type: string;
 }
 
@@ -110,9 +68,6 @@ export interface RoomUpdate extends WebSocketMessage {
 
 // Dashboard Stats
 export interface DashboardStats {
-  total_conversations: number;
-  active_conversations: number;
-  completed_conversations: number;
   total_actions: number;
   pending_actions: number;
   completed_actions: number;
@@ -123,31 +78,13 @@ export interface DashboardStats {
 // Chart Data Types
 export interface ChartDataPoint {
   date: string;
-  conversations: number;
   actions: number;
 }
 
-export interface ConversationTrend {
-  date: string;
-  count: number;
-  completed: number;
-  failed: number;
-}
-
 // Filter Types
-export interface ConversationFilters {
-  status?: ConversationStatus;
-  user_id?: string;
-  date_from?: string;
-  date_to?: string;
-  limit?: number;
-  offset?: number;
-}
-
 export interface ActionFilters {
   status?: ActionStatus;
   action_type?: ActionType;
-  conversation_id?: string;
   date_from?: string;
   date_to?: string;
   limit?: number;
@@ -292,4 +229,55 @@ export interface MeetingFilters {
   date_to?: string;
   limit?: number;
   offset?: number;
+}
+
+// API Key Types
+export interface ApiKey {
+  id: string;
+  user_id: string;
+  name: string;
+  key_prefix: string;
+  status: 'active' | 'revoked' | 'expired';
+  last_used_at?: string;
+  expires_at?: string;
+  scopes: string[];
+  created_at: string;
+  updated_at: string;
+  plain_key?: string; // Only present on creation
+}
+
+// Webhook Types
+export interface WebhookEndpoint {
+  id: string;
+  name: string;
+  url: string;
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE';
+  description?: string;
+  payload: Record<string, any>;
+}
+
+export interface JoinMeetingRequest {
+  meeting_url: string;
+  type: string; // 'zoom' | 'google_meet' | 'microsoft_teams'
+  transcript: boolean;
+  audio_record: boolean;
+  video_record: boolean;
+  voice_id: string;
+  bot_name: string;
+}
+
+export interface JoinMeetingResponse {
+  success: boolean;
+  message: string;
+  status: string;
+  timestamp: string;
+  meeting_id?: string;
+  meeting_url?: string;
+  platform?: string;
+  voice_id?: string;
+  capabilities?: {
+    transcript_enabled?: boolean;
+    audio_recording_enabled?: boolean;
+    video_recording_enabled?: boolean;
+  };
 }
