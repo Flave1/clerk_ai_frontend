@@ -192,9 +192,6 @@ const ActionsPage: React.FC = () => {
                         <StatusBadge status={action.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div>
-                          Conv: {action.conversation_id.slice(0, 8)}...
-                        </div>
                         {action.turn_id && (
                           <div className="text-gray-500">
                             Turn: {action.turn_id.slice(0, 8)}...

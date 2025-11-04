@@ -1,4 +1,4 @@
-import { WebSocketMessage, ConversationUpdate, ActionUpdate, RoomUpdate } from '@/types';
+import { WebSocketMessage, ActionUpdate, RoomUpdate } from '@/types';
 
 type WebSocketEventHandler = (message: WebSocketMessage) => void;
 type ConnectionEventHandler = () => void;

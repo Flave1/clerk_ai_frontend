@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import CallInterface from '@/components/call/CallInterface';
-import { Conversation } from '@/types';
 
 const StandaloneCallPage: React.FC = () => {
-  const [existingConversation, setExistingConversation] = useState<Conversation | null>(null);
+  const [existingConversation, setExistingConversation] = useState<{ status?: string } | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
   const [participantInfo, setParticipantInfo] = useState<{id: string, name: string} | null>(null);
 

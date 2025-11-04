@@ -5,26 +5,25 @@ import { useRouter } from 'next/router';
 import CallInterface from '@/components/call/CallInterface';
 import Header from '@/components/layout/Header';
 import apiClient from '@/lib/api';
-import { Conversation } from '@/types';
 import toast from 'react-hot-toast';
 
 const CallPage: NextPage = () => {
   const router = useRouter();
   const [recentConversationId, setRecentConversationId] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [existingConversation, setExistingConversation] = useState<Conversation | null>(null);
+  const [existingConversation, setExistingConversation] = useState<{ status?: string; turn_count?: number; started_at?: string; summary?: string } | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
 
-  // Fetch existing conversation by ID
+  // Fetch existing conversation by ID (disabled - conversations removed)
   const fetchExistingConversation = async (conversationId: string) => {
     try {
       setLoadingConversation(true);
-      const conversation = await apiClient.getConversation(conversationId);
-      setExistingConversation(conversation);
-      console.log('Loaded existing conversation:', conversation);
+      // Conversations feature has been removed
+      setExistingConversation(null);
+      console.log('Conversation feature disabled');
     } catch (error) {
       console.error('Failed to fetch conversation:', error);
-      toast.error('Failed to load conversation. It may not exist or you may not have access.');
+      toast.error('Conversation feature is no longer available.');
       // Clear the conversation ID from URL if it doesn't exist
       router.push('/call', undefined, { shallow: true });
       setCurrentConversationId(null);

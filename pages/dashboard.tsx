@@ -197,7 +197,7 @@ const Dashboard: NextPage = () => {
                         </div>
                         {meeting.summary && (
                           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                            {meeting.summary.key_points?.[0] || meeting.summary.summary || 'No summary available'}
+                            {meeting.summary.summary_text || meeting.summary.topics_discussed?.[0] || 'No summary available'}
                           </p>
                         )}
                       </div>

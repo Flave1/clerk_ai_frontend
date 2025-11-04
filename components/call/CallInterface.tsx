@@ -18,7 +18,6 @@ import {
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/solid';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
-import { Conversation } from '@/types';
 import apiClient from '@/lib/api';
 import InviteModal from './InviteModal';
 import ParticipantList from './ParticipantList';
@@ -26,7 +25,7 @@ import ParticipantList from './ParticipantList';
 interface CallInterfaceProps {
   onCallStart?: (conversationId: string) => void;
   onCallEnd?: (conversationId: string) => void;
-  existingConversation?: Conversation | null;
+  existingConversation?: { status?: string } | null;
   loadingConversation?: boolean;
 }
 
@@ -658,7 +657,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                   (ID: {status.conversationId.slice(0, 8)}...)
                 </span>
               )}
-              {existingConversation && !loadingConversation && (
+              {existingConversation && !loadingConversation && existingConversation.status && (
                 <span className="ml-1 sm:ml-2 text-blue-400">
                   (Existing: {existingConversation.status})
                 </span>
