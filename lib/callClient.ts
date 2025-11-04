@@ -40,15 +40,25 @@ class CallClient {
   private statusHandlers: StatusEventHandler[] = [];
 
   // Unified service WebSocket URL (convert HTTP to WebSocket protocol)
+  // Note: WebSockets can't be proxied like HTTP requests, so we need the backend URL
+  // For production HTTPS sites, backend should support WSS (WebSocket Secure)
   private get wsUrl(): string {
-    // Get base URL from environment, default to API URL, fallback to localhost:8000
-    const httpUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
-      || process.env.NEXT_PUBLIC_API_BASE_URL 
-      || process.env.NEXT_PUBLIC_API_URL 
-      || 'http://localhost:8000';
+    // Use environment variable or default to the backend IP
+    // In production, this should be set to the backend WebSocket endpoint
+    const backendWsUrl = process.env.NEXT_PUBLIC_WS_URL 
+      || process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
+      || 'ws://3.235.168.161:8000';
     
-    // Convert HTTP/HTTPS to WS/WSS
-    const wsBaseUrl = httpUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+    // If NEXT_PUBLIC_API_URL is a relative path, construct WebSocket URL from backend
+    let wsBaseUrl = backendWsUrl;
+    if (backendWsUrl.startsWith('/')) {
+      // If it's a relative path, we can't use it for WebSocket - use default backend
+      wsBaseUrl = 'ws://3.235.168.161:8000';
+    } else {
+      // Convert HTTP/HTTPS to WS/WSS
+      wsBaseUrl = backendWsUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+    }
+    
     const url = this.conversationId 
       ? `${wsBaseUrl}/ws/${this.conversationId}`
       : `${wsBaseUrl}/ws/temp-${Date.now()}`;

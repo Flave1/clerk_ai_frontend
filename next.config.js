@@ -6,14 +6,9 @@ const nextConfig = {
     // Frontend should only call relative paths (no http://)
     NEXT_PUBLIC_API_URL: '/api',
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://3.235.168.161:8000/api/v1/:path*', // backend over HTTP
-      },
-    ];
-  },
+  // Using Next.js API routes as reverse proxy instead of rewrites
+  // This gives us better control over CORS and request handling
+  // API routes are at: pages/api/[...path].ts and pages/api/v1/[...path].ts
 };
 
 module.exports = nextConfig;
