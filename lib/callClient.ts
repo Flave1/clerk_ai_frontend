@@ -56,12 +56,9 @@ class CallClient {
     return url;
   }
   
-  // Unified service HTTP URL
+  // Unified service HTTP URL - use relative path /api for Next.js rewrites
   private get httpBaseUrl(): string {
-    return process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
-      || process.env.NEXT_PUBLIC_API_BASE_URL 
-      || process.env.NEXT_PUBLIC_API_URL 
-      || 'http://localhost:8000';
+    return '/api';
   }
 
   // Public methods
@@ -475,12 +472,8 @@ class CallClient {
 
   // Static method to delete any conversation by ID
   static async deleteConversation(conversationId: string): Promise<void> {
-    const httpBaseUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
-      || process.env.NEXT_PUBLIC_API_BASE_URL 
-      || process.env.NEXT_PUBLIC_API_URL 
-      || 'http://localhost:8000';
     try {
-      const response = await fetch(`${httpBaseUrl}/conversations/${conversationId}`, {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -502,12 +495,8 @@ class CallClient {
     total_requested: number;
     failed_deletions: Array<{conversation_id: string; error: string}>;
   }> {
-    const httpBaseUrl = process.env.NEXT_PUBLIC_RT_GATEWAY_URL 
-      || process.env.NEXT_PUBLIC_API_BASE_URL 
-      || process.env.NEXT_PUBLIC_API_URL 
-      || 'http://localhost:8000';
     try {
-      const response = await fetch(`${httpBaseUrl}/conversations/bulk-delete`, {
+      const response = await fetch(`/api/conversations/bulk-delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_ids: conversationIds })

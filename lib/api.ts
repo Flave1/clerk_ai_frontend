@@ -284,9 +284,11 @@ class ApiClient {
     bot_name: string;
   }, apiKey?: string): Promise<JoinMeetingResponse> {
     // Webhook endpoints are at /v1/api.auray.net (not /api/v1)
-    // So we need to use the base URL without /api/v1
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const cleanBase = baseURL.replace(/\/$/, '').replace(/\/api\/v1$/, '');
+    // This endpoint is not under /api/v1, so we need to use absolute URL
+    // Since NEXT_PUBLIC_API_URL is now '/api', use hardcoded backend URL for webhooks
+    // TODO: Consider adding a Next.js rewrite rule for /v1/* if needed
+    const backendBaseUrl = 'http://3.235.168.161:8000';
+    const webhookUrl = `${backendBaseUrl}/v1/api.auray.net/join_meeting`;
     
     // Use API key if provided, otherwise fall back to access token
     const authHeader = apiKey 
@@ -295,7 +297,7 @@ class ApiClient {
           ? { Authorization: `Bearer ${localStorage.getItem('clerk_access_token')}` }
           : {});
     
-    const response = await Axios.post(`${cleanBase}/v1/api.auray.net/join_meeting`, data, {
+    const response = await Axios.post(webhookUrl, data, {
       headers: {
         'Content-Type': 'application/json',
         ...authHeader,

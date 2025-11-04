@@ -1,25 +1,10 @@
 import Axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken, removeAccessToken } from './auth';
 
-// NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_API_URL may or may not include "/api/v1".
-// Normalize so our instance baseURL ALWAYS ends with "/api/v1" exactly once.
+// Use relative path '/api' - Next.js rewrites handle forwarding to backend
+// This allows simple API calls like: fetch('/api/auth/signin')
 function resolveBaseUrl(): string {
-  // Try NEXT_PUBLIC_API_BASE_URL first, then NEXT_PUBLIC_API_URL, then default
-  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  // Strip any trailing slashes
-  let base = raw.replace(/\/$/, '');
-  if (!/\/api\/v1$/.test(base)) {
-    base = `${base}/api/v1`;
-  }
-  
-  // Log the resolved URL in development
-  // if (process.env.NODE_ENV !== 'production') {
-  //   console.log('[Axios Config] Resolved base URL:', base);
-  //   console.log('[Axios Config] NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-  //   console.log('[Axios Config] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-  // }
-  
-  return base;
+  return '/api';
 }
 
 const axiosInstance = Axios.create({
