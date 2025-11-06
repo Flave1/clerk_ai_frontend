@@ -16,7 +16,13 @@ import {
   ExclamationTriangleIcon,
   ArrowLeftIcon,
   ShareIcon,
-  BellIcon
+  BellIcon,
+  MicrophoneIcon,
+  SpeakerWaveIcon,
+  LinkIcon,
+  InformationCircleIcon,
+  CogIcon,
+  ClipboardDocumentIcon
 } from '@heroicons/react/24/outline';
 import { useMeetingStore } from '@/store';
 import apiClient from '@/lib/api';
@@ -558,27 +564,250 @@ const MeetingDetailPage: NextPage = () => {
                 </div>
               )}
               
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Meeting Statistics</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Meeting Statistics */}
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Meeting Statistics</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{meeting.join_attempts}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Join Attempts</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          {meeting.transcription_chunks.length}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Transcription Chunks</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          {actionItems.length}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Action Items</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="card-body">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{meeting.join_attempts}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Join Attempts</p>
+
+                {/* Bot Status */}
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Bot Status</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Bot Joined</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          meeting.bot_joined 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                        }`}>
+                          {meeting.bot_joined ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      {meeting.last_join_attempt && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Last Join Attempt</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
+                            {formatDate(meeting.last_join_attempt)}
+                          </span>
+                        </div>
+                      )}
+                      {meeting.joined_at && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Joined At</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
+                            {formatDate(meeting.joined_at)}
+                          </span>
+                        </div>
+                      )}
+                      {meeting.ended_at && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Ended At</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
+                            {formatDate(meeting.ended_at)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        {meeting.transcription_chunks.length}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Transcription Chunks</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meeting Configuration and Metadata */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Meeting Configuration */}
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                      <CogIcon className="h-5 w-5 mr-2" />
+                      Meeting Configuration
+                    </h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="space-y-4">
+                      {meeting.bot_name && (
+                        <div className="flex items-center space-x-3">
+                          <UsersIcon className="h-5 w-5 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Bot Name</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{meeting.bot_name}</p>
+                          </div>
+                        </div>
+                      )}
+                      {meeting.voice_id && (
+                        <div className="flex items-center space-x-3">
+                          <SpeakerWaveIcon className="h-5 w-5 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Voice Profile</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{meeting.voice_id}</p>
+                          </div>
+                        </div>
+                      )}
+                      {meeting.context_id && (
+                        <div className="flex items-center space-x-3">
+                          <InformationCircleIcon className="h-5 w-5 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Context ID</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{meeting.context_id}</p>
+                          </div>
+                        </div>
+                      )}
+                      {meeting.transcript !== undefined && (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Transcription</span>
+                          </div>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            meeting.transcript 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                          }`}>
+                            {meeting.transcript ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <MicrophoneIcon className="h-5 w-5 text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Audio Recording</span>
+                        </div>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          meeting.audio_enabled 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                        }`}>
+                          {meeting.audio_enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <VideoCameraIcon className="h-5 w-5 text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Video Recording</span>
+                        </div>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          meeting.video_enabled 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                        }`}>
+                          {meeting.video_enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        {actionItems.length}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Action Items</p>
+                  </div>
+                </div>
+
+                {/* Meeting Metadata */}
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                      <InformationCircleIcon className="h-5 w-5 mr-2" />
+                      Meeting Metadata
+                    </h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Meeting ID</span>
+                        <div className="flex items-center space-x-2">
+                          <code className="text-sm text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {meeting.id}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(meeting.id);
+                              toast.success('Meeting ID copied to clipboard');
+                            }}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            title="Copy Meeting ID"
+                          >
+                            <ClipboardDocumentIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {meeting.meeting_id_external && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">External Meeting ID</span>
+                          <code className="text-sm text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {meeting.meeting_id_external}
+                          </code>
+                        </div>
+                      )}
+                      {meeting.calendar_event_id && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Calendar Event ID</span>
+                          <code className="text-sm text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {meeting.calendar_event_id}
+                          </code>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Platform</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100 capitalize">
+                          {meeting.platform.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Created At</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {formatDate(meeting.created_at)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Last Updated</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {formatDate(meeting.updated_at)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Meeting URL</span>
+                        <div className="flex items-center space-x-2">
+                          <a
+                            href={meeting.meeting_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center"
+                          >
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            Open
+                          </a>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(meeting.meeting_url);
+                              toast.success('Meeting URL copied to clipboard');
+                            }}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            title="Copy URL"
+                          >
+                            <ClipboardDocumentIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

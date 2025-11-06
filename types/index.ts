@@ -150,6 +150,11 @@ export interface Meeting {
   audio_enabled: boolean;
   video_enabled: boolean;
   recording_enabled: boolean;
+  bot_joined?: boolean;
+  transcript?: boolean;
+  voice_id?: string;
+  bot_name?: string;
+  context_id?: string;
 }
 
 export interface TranscriptionChunk {
@@ -280,4 +285,32 @@ export interface JoinMeetingResponse {
     audio_recording_enabled?: boolean;
     video_recording_enabled?: boolean;
   };
+}
+
+// Meeting Context Types
+export type MeetingRole = 'listener' | 'participant' | 'presenter';
+export type TonePersonality = 'formal' | 'friendly' | 'confident' | 'empathetic' | 'analytical' | 'custom';
+
+export interface MeetingContext {
+  id: string;
+  name: string;
+  voice_id: string;
+  context_description: string;
+  tools_integrations: string[];
+  meeting_role: MeetingRole;
+  tone_personality: TonePersonality;
+  custom_tone?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface MeetingContextCreate {
+  name: string;
+  voice_id: string;
+  context_description: string;
+  tools_integrations: string[];
+  meeting_role: MeetingRole;
+  tone_personality: TonePersonality;
+  custom_tone?: string;
 }

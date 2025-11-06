@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { apiClient } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface EarlyAccessModalProps {
   isOpen: boolean;
@@ -80,14 +82,26 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await apiClient.signupNewsletter({
+        name: formData.name,
+        email: formData.email,
+        country: formData.country,
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-
-    // TODO: Implement actual API call to submit early access request
-    console.log('Early access request submitted:', formData);
+      if (response.success) {
+        setIsSubmitted(true);
+        toast.success(response.message || 'Successfully added to waiting list!');
+      } else {
+        toast.error(response.message || 'Failed to join waiting list. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Failed to sign up for newsletter:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to join waiting list. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

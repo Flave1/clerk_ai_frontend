@@ -18,10 +18,10 @@ const axiosInstance = Axios.create({
 // Request interceptor to add access token to headers
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Don't add auth token for public auth endpoints (register, signin, google oauth)
+    // Don't add auth token for public auth endpoints (register, signin, google oauth, newsletter)
     // But DO add it for protected endpoints like /auth/me
-    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google'];
-    const isPublicAuthEndpoint = config.url && publicAuthEndpoints.some(endpoint => config.url?.startsWith(endpoint));
+    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google', '/newsletter'];
+    const isPublicAuthEndpoint = config.url && publicAuthEndpoints.some(endpoint => config.url?.includes(endpoint));
     
     if (!isPublicAuthEndpoint) {
       // Get token from localStorage
@@ -101,9 +101,9 @@ axiosInstance.interceptors.response.use(
     }
     
     // Handle 401 Unauthorized and 403 Forbidden - token expired, invalid, or insufficient permissions
-    // But don't redirect if it's a public auth endpoint (register/signin)
-    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google'];
-    const isPublicAuthEndpoint = error?.config?.url && publicAuthEndpoints.some(endpoint => error.config.url?.startsWith(endpoint));
+    // But don't redirect if it's a public auth endpoint (register/signin/newsletter)
+    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google', '/newsletter'];
+    const isPublicAuthEndpoint = error?.config?.url && publicAuthEndpoints.some(endpoint => error.config.url?.includes(endpoint));
     
     if ((error.response?.status === 401 || error.response?.status === 403) && !isPublicAuthEndpoint) {
       console.warn(`[API Auth Error] ${error.response?.status} - Clearing token and redirecting to login`);

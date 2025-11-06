@@ -36,7 +36,6 @@ export default function App({ Component, pageProps, router }: AppProps) {
   
   // Check if current page should have layout
   const shouldShowLayout = router.pathname !== '/standalone-call' 
-    && router.pathname !== '/landing'
     && router.pathname !== '/login'
     && router.pathname !== '/register'
     && router.pathname !== '/'
