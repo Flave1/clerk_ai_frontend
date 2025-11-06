@@ -6,12 +6,14 @@ import Link from 'next/link';
 // Google button disabled - removed import
 import toast from 'react-hot-toast';
 import { signIn, isAuthenticated } from '@/lib/auth';
+import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
 
   // Redirect if already authenticated
   if (typeof window !== 'undefined' && isAuthenticated()) {
@@ -142,6 +144,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="off"
                   className="w-full px-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50"
                   placeholder="you@example.com"
                 />
@@ -159,6 +162,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="off"
                   className="w-full px-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50"
                   placeholder="••••••••"
                 />
@@ -197,9 +201,12 @@ export default function Login() {
             <div className="mt-6 text-center">
               <span className="text-gray-400 text-sm">
                 Don't have an account?{' '}
-                <Link href="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200">
+                <button
+                  onClick={() => setIsEarlyAccessModalOpen(true)}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200"
+                >
                   Sign up
-                </Link>
+                </button>
               </span>
             </div>
           </motion.div>
@@ -227,6 +234,12 @@ export default function Login() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
       `}</style>
+
+      {/* Early Access Modal */}
+      <EarlyAccessModal
+        isOpen={isEarlyAccessModalOpen}
+        onClose={() => setIsEarlyAccessModalOpen(false)}
+      />
     </>
   );
 }

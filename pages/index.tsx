@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import {
   MicrophoneIcon,
   CalendarIcon,
@@ -15,22 +16,19 @@ import {
   ChatBubbleLeftRightIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
-import { SiGoogle, SiSlack, SiZoom, SiSalesforce, SiGooglemeet } from 'react-icons/si';
-import { FaMicrosoft } from 'react-icons/fa';
-
-// Microsoft Teams SVG Icon Component
-const MicrosoftTeamsIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M19.536 9.146c-.006 0-.004 0-.004.004v.004c0 .004-.002.003-.002.004l-.002.003h-.002l-2.58 2.582c-.008.008-.014.016-.023.023l-.007.008-.007.01-.006.014-.01.018-.015.04 0 .017v.01c0 .017 0 .012.002.022l-.002.003c0 .005 0 .01-.002.017 0 .007.004.014.007.02.004.008.004.017.01.026.003.004.005.008.008.014.006.012.012.023.02.035.006.008.013.015.02.024.004.003.006.008.01.013.01.015.024.032.037.046.009.009.017.017.026.027.012.011.027.02.04.031.01.008.018.019.03.027.018.012.038.022.058.03.01.003.016.01.026.013.008.003.018.005.027.005.01 0 .018-.004.028-.006.01-.003.017-.01.026-.014.018-.008.036-.017.053-.028.01-.007.017-.016.026-.026.011-.01.023-.02.033-.033.008-.008.014-.017.02-.026.009-.01.016-.022.021-.033.006-.012.01-.025.015-.038 0-.007.003-.013.005-.021.003-.01.005-.018.005-.029 0-.007 0-.013-.003-.02l.003-.003v-.003c.002-.01 0-.004 0-.023v-.011l-.003-.017c-.003-.012-.008-.021-.012-.035-.006-.014-.013-.025-.02-.037-.006-.01-.011-.022-.019-.031-.005-.006-.01-.012-.015-.02-.006-.008-.013-.016-.02-.024l-.04-.047c-.008-.008-.012-.015-.02-.023-.005-.006-.01-.01-.016-.016l-2.59-2.592h-.003l-.008-.006c-.009-.007-.016-.016-.025-.025-.009-.009-.017-.02-.027-.032-.01-.013-.023-.024-.034-.037-.011-.014-.026-.027-.04-.04-.014-.014-.03-.027-.047-.04-.017-.014-.037-.027-.056-.038-.01-.006-.018-.013-.028-.018-.01-.005-.02-.01-.03-.014-.013-.005-.025-.01-.04-.014-.01-.002-.016-.007-.026-.009-.01-.002-.02-.004-.03-.004h-10.92c-.638 0-1.155.516-1.155 1.154v10.918c0 .638.517 1.154 1.155 1.154h10.918c.638 0 1.154-.516 1.154-1.154V9.304c-.003-.01-.01-.018-.013-.03-.004-.013-.008-.025-.013-.04-.005-.014-.012-.024-.018-.038-.006-.013-.013-.026-.02-.038-.01-.016-.022-.028-.033-.044-.009-.01-.014-.02-.025-.03-.009-.008-.02-.015-.03-.024-.01-.008-.02-.018-.03-.025-.02-.014-.04-.027-.06-.04-.01-.006-.02-.013-.03-.02-.01-.005-.02-.01-.03-.016-.012-.005-.024-.01-.036-.015-.013-.005-.024-.01-.037-.014-.01-.003-.02-.007-.03-.01-.01-.003-.02-.004-.03-.006-.01-.002-.02-.003-.03-.003z"/>
-  </svg>
-);
+import VideoModal from '@/components/ui/VideoModal';
+import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
 
 export default function Landing() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
   const y = useTransform(scrollY, [0, 300], [0, -50]);
+
+  console.log('Landing component render - isVideoModalOpen:', isVideoModalOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -77,8 +75,8 @@ export default function Landing() {
   const steps = [
     {
       number: '01',
-      title: 'Invite Auray to your meeting',
-      description: 'Simply add Auray as a participant when you create or join any meeting.',
+      title: 'Connect Auray to your workflow',
+      description: 'Invite Auray to your meeting as a participant, or integrate directly into your applications using our powerful API.',
       icon: LinkIcon,
     },
     {
@@ -96,13 +94,41 @@ export default function Landing() {
   ];
 
   const integrations = [
-    { name: 'Google Workspace', tooltip: 'Automated scheduling', icon: SiGoogle, color: '#4285F4' },
-    { name: 'Google Meet', tooltip: 'Video conferencing', icon: SiGooglemeet, color: '#00832D' },
-    { name: 'Microsoft 365', tooltip: 'Calendar integration', icon: FaMicrosoft, color: '#0078D4' },
-    { name: 'Microsoft Teams', tooltip: 'Team collaboration', icon: MicrosoftTeamsIcon, color: '#6264A7' },
-    { name: 'Slack', tooltip: 'Live voice updates', icon: SiSlack, color: '#4A154B' },
-    { name: 'Zoom', tooltip: 'Native integration', icon: SiZoom, color: '#2D8CFF' },
-    { name: 'Salesforce', tooltip: 'CRM sync', icon: SiSalesforce, color: '#00A1E0' },
+    { 
+      name: 'Google Workspace', 
+      tooltip: 'Automated scheduling', 
+      image: '/images/integrations/google.png' 
+    },
+    { 
+      name: 'Google Meet', 
+      tooltip: 'Video conferencing', 
+      image: '/images/integrations/meet.png' 
+    },
+    { 
+      name: 'Microsoft 365', 
+      tooltip: 'Calendar integration', 
+      image: '/images/integrations/microsoft-office.png' 
+    },
+    { 
+      name: 'Microsoft Teams', 
+      tooltip: 'Team collaboration', 
+      image: '/images/integrations/teams.png' 
+    },
+    { 
+      name: 'Slack', 
+      tooltip: 'Live voice updates', 
+      image: '/images/integrations/slack.png' 
+    },
+    { 
+      name: 'Zoom', 
+      tooltip: 'Native integration', 
+      image: '/images/integrations/zoom.png' 
+    },
+    { 
+      name: 'Salesforce', 
+      tooltip: 'CRM sync', 
+      image: '/images/integrations/salesforce.png' 
+    },
   ];
 
   const testimonials = [
@@ -114,15 +140,15 @@ export default function Landing() {
     },
     {
       quote: 'The AI is impressively natural. It felt like having a brilliant colleague in every meeting.',
-      author: 'James Rodriguez',
-      role: 'CEO',
-      company: 'Innovate Labs',
+      author: 'David Kings',
+      role: 'Founder',
+      company: 'Mobile Law',
     },
     {
       quote: 'Finally, an AI that actually understands context and business needs. Game changer.',
       author: 'Emily Watson',
       role: 'Sales Director',
-      company: 'Growth Co',
+      company: 'Enspiral',
     },
   ];
 
@@ -142,6 +168,9 @@ export default function Landing() {
         <title>Auray - Your Voice in Every Meeting</title>
         <meta name="description" content="Auray joins your meetings, listens, speaks, and acts — just like you." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/images/logo/logo.png" type="image/png" />
+        <link rel="shortcut icon" href="/images/logo/logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/images/logo/logo.png" />
       </Head>
 
       <div className="min-h-screen bg-[#0a0b1a] text-white overflow-x-hidden">
@@ -156,15 +185,19 @@ export default function Landing() {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="text-2xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent"
+                style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
               >
-                Auray
+                AURAY
               </motion.div>
               <div className="hidden md:flex space-x-8">
                 {['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map(
                   (item) => (
                     <button
                       key={item}
-                      onClick={() => scrollToSection(item.toLowerCase().replace(' ', ''))}
+                      onClick={() => {
+                        const id = item.toLowerCase().replace(/\s+/g, '');
+                        scrollToSection(id);
+                      }}
                       className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
                     >
                       {item}
@@ -184,7 +217,7 @@ export default function Landing() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => scrollToSection('contact')}
+                  onClick={() => setIsEarlyAccessModalOpen(true)}
                   className="px-6 py-2 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-lg font-semibold hover:from-[#6f6fff] hover:to-[#b865ff] transition-all duration-300"
                 >
                   Get Early Access
@@ -240,6 +273,7 @@ export default function Landing() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsEarlyAccessModalOpen(true)}
                   className="px-8 py-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-bold text-lg shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 flex items-center gap-2"
                 >
                   Get Early Access
@@ -248,6 +282,12 @@ export default function Landing() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    console.log('Watch Demo button clicked - current state:', isVideoModalOpen);
+                    console.log('Setting isVideoModalOpen to true');
+                    setIsVideoModalOpen(true);
+                    console.log('State set, new value should be true');
+                  }}
                   className="px-8 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
                 >
                   <PlayIcon className="w-5 h-5" />
@@ -425,7 +465,6 @@ export default function Landing() {
 
             <div className="flex flex-wrap justify-center gap-8">
               {integrations.map((integration, index) => {
-                const Icon = integration.icon;
                 return (
                   <motion.div
                     key={index}
@@ -437,8 +476,15 @@ export default function Landing() {
                     className="group relative"
                   >
                     <div className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl px-8 py-6 w-32 text-center">
-                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-white/5 flex items-center justify-center group-hover:rotate-12 group-hover:bg-white/10 transition-all duration-300">
-                        <Icon className="w-7 h-7" style={{ color: integration.color }} />
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/5 flex items-center justify-center group-hover:rotate-12 group-hover:bg-white/10 transition-all duration-300 p-2">
+                        <Image
+                          src={integration.image}
+                          alt={integration.name}
+                          width={48}
+                          height={48}
+                          className="object-contain"
+                          unoptimized
+                        />
                       </div>
                       <p className="text-sm font-semibold">{integration.name}</p>
                     </div>
@@ -518,7 +564,7 @@ export default function Landing() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => scrollToSection('contact')}
+                onClick={() => setIsEarlyAccessModalOpen(true)}
                 className="px-8 py-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-bold text-lg shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 flex items-center gap-2 mx-auto"
               >
                 Join the Waitlist
@@ -593,6 +639,23 @@ export default function Landing() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
       `}</style>
+
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => {
+          console.log('VideoModal onClose called');
+          setIsVideoModalOpen(false);
+          console.log('isVideoModalOpen set to false');
+        }}
+        videoUrl="https://www.youtube.com/watch?v=FbG2LXDd0js"
+      />
+
+      {/* Early Access Modal */}
+      <EarlyAccessModal
+        isOpen={isEarlyAccessModalOpen}
+        onClose={() => setIsEarlyAccessModalOpen(false)}
+      />
     </>
   );
 }
