@@ -6,6 +6,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { register } from '@/lib/auth';
 import { isAuthenticated } from '@/lib/auth';
+import LaunchingSoonBanner from '@/components/ui/LaunchingSoonBanner';
+import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
 
 export default function Register() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
 
   // Redirect if already authenticated
   if (typeof window !== 'undefined' && isAuthenticated()) {
@@ -165,6 +168,11 @@ export default function Register() {
             transition={{ delay: 0.3 }}
             className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8 shadow-xl"
           >
+            {/* Launching Soon Banner */}
+            <div className="mb-6">
+              <LaunchingSoonBanner onJoinWaitlist={() => setIsEarlyAccessModalOpen(true)} />
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name Field */}
               <div>
@@ -332,6 +340,12 @@ export default function Register() {
           </div>
         </motion.div>
       </div>
+
+      {/* Early Access Modal */}
+      <EarlyAccessModal
+        isOpen={isEarlyAccessModalOpen}
+        onClose={() => setIsEarlyAccessModalOpen(false)}
+      />
     </>
   );
 }

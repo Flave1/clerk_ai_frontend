@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { SiGoogle, SiSlack, SiZoom, SiSalesforce, SiGooglemeet } from 'react-icons/si';
 import { FaMicrosoft } from 'react-icons/fa';
+import VideoModal from '@/components/ui/VideoModal';
 
 // Microsoft Teams SVG Icon Component
 const MicrosoftTeamsIcon = ({ className }: { className?: string }) => (
@@ -28,9 +29,12 @@ const MicrosoftTeamsIcon = ({ className }: { className?: string }) => (
 export default function Landing() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
   const y = useTransform(scrollY, [0, 300], [0, -50]);
+
+  console.log('Landing component render - isVideoModalOpen:', isVideoModalOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -248,6 +252,12 @@ export default function Landing() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    console.log('Watch Demo button clicked - current state:', isVideoModalOpen);
+                    console.log('Setting isVideoModalOpen to true');
+                    setIsVideoModalOpen(true);
+                    console.log('State set, new value should be true');
+                  }}
                   className="px-8 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
                 >
                   <PlayIcon className="w-5 h-5" />
@@ -593,6 +603,17 @@ export default function Landing() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
       `}</style>
+
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => {
+          console.log('VideoModal onClose called');
+          setIsVideoModalOpen(false);
+          console.log('isVideoModalOpen set to false');
+        }}
+        videoUrl="https://www.youtube.com/watch?v=FbG2LXDd0js"
+      />
     </>
   );
 }
