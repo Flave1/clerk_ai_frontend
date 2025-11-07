@@ -4,12 +4,24 @@
 
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, -apple-system, 'Inter', 'Plus Jakarta Sans', sans-serif;
+  }
+  
+  /* Light mode base styles */
+  :root {
+    --bg-color: #F7FAFC;
+    --text-color: #1C1C1C;
   }
   
   /* Dark mode base styles */
   .dark {
     color-scheme: dark;
+    --bg-color: #0D1117;
+    --text-color: #E5E7EB;
+  }
+  
+  body {
+    @apply bg-[#F7FAFC] dark:bg-[#0D1117] text-[#1C1C1C] dark:text-[#E5E7EB] transition-colors duration-200;
   }
 }
 
@@ -19,7 +31,7 @@
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600;
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-400 dark:bg-primary-500 dark:hover:bg-primary-400;
   }
   
   .btn-secondary {
@@ -39,7 +51,7 @@
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700;
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-[#161B22] dark:border-gray-700/50;
   }
   
   .card-header {
@@ -51,7 +63,7 @@
   }
   
   .card-footer {
-    @apply px-6 py-4 border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700;
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50 dark:border-gray-700/50 dark:bg-[#0D1117];
   }
   
   .status-badge {
@@ -80,14 +92,14 @@
   
   /* Dark mode specific components */
   .dark-input {
-    @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500;
+    @apply bg-[#161B22] border-gray-700/50 text-[#E5E7EB] placeholder-gray-500 focus:border-primary-400 focus:ring-primary-400/50;
   }
   
   .dark-select {
-    @apply bg-gray-800 border-gray-600 text-gray-100;
+    @apply bg-[#161B22] border-gray-700/50 text-[#E5E7EB];
   }
   
   .dark-textarea {
-    @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500;
+    @apply bg-[#161B22] border-gray-700/50 text-[#E5E7EB] placeholder-gray-500 focus:border-primary-400 focus:ring-primary-400/50;
   }
 }

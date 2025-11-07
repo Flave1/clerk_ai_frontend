@@ -12,8 +12,8 @@ export default function ComingSoon({
   title = "Working on it",
   description = "We're building something amazing! This page is under development and will be available soon.",
   icon: Icon,
-  iconBgColor = "bg-purple-100 dark:bg-purple-900",
-  iconColor = "text-purple-600 dark:text-purple-400"
+  iconBgColor = "bg-primary-100 dark:bg-primary-900",
+  iconColor = "text-primary-600 dark:text-primary-400"
 }: ComingSoonProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center py-16">
@@ -30,9 +30,9 @@ export default function ComingSoon({
       </p>
       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
         <div className="flex gap-1">
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
         </div>
         <span>Coming soon</span>
       </div>

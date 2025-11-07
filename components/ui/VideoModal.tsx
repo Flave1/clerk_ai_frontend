@@ -99,10 +99,10 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
               e.stopPropagation();
             }}
           >
-            <div className="relative bg-[#151632]/95 backdrop-blur-lg border border-purple-500/20 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative bg-white/95 dark:bg-[#161B22]/95 backdrop-blur-lg border border-primary-500/20 dark:border-primary-500/20 rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
-                <h3 className="text-xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+              <div className="flex items-center justify-between p-6 border-b border-primary-500/20 dark:border-primary-500/20">
+                <h3 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   Watch Demo
                 </h3>
                 <button

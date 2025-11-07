@@ -18,6 +18,8 @@ import {
   ApiKey,
   JoinMeetingRequest,
   JoinMeetingResponse,
+  MeetingContext,
+  MeetingContextCreate,
 } from '@/types';
 
 class ApiClient {
@@ -302,6 +304,69 @@ class ApiClient {
       },
       timeout: 60000,
     });
+    return response.data;
+  }
+
+  // Integrations
+  async getIntegrations(): Promise<any[]> {
+    const response = await this.client.get('/integrations');
+    return response.data;
+  }
+
+  async getIntegration(integrationId: string): Promise<any> {
+    const response = await this.client.get(`/integrations/${integrationId}`);
+    return response.data;
+  }
+
+  async getConnectedIntegrations(): Promise<any[]> {
+    const response = await this.client.get('/integrations/connected');
+    return response.data;
+  }
+
+  async getIntegrationOAuthUrl(integrationId: string): Promise<{ oauth_url: string; state: string }> {
+    const response = await this.client.get(`/integrations/${integrationId}/oauth/authorize`);
+    return response.data;
+  }
+
+  async disconnectIntegration(integrationId: string): Promise<void> {
+    await this.client.post(`/integrations/${integrationId}/disconnect`);
+  }
+
+  async getIntegrationStatus(integrationId: string): Promise<any> {
+    const response = await this.client.get(`/integrations/${integrationId}/status`);
+    return response.data;
+  }
+
+  // Meeting Contexts
+  async getMeetingContexts(): Promise<MeetingContext[]> {
+    const response = await this.client.get('/meeting-contexts');
+    return response.data;
+  }
+
+  async getMeetingContext(contextId: string): Promise<MeetingContext> {
+    const response = await this.client.get(`/meeting-contexts/${contextId}`);
+    return response.data;
+  }
+
+  async createMeetingContext(data: MeetingContextCreate): Promise<MeetingContext> {
+    const response = await this.client.post('/meeting-contexts', data);
+    return response.data;
+  }
+
+  async updateMeetingContext(contextId: string, data: Partial<MeetingContextCreate>): Promise<MeetingContext> {
+    const response = await this.client.put(`/meeting-contexts/${contextId}`, data);
+    return response.data;
+  }
+
+  async deleteMeetingContext(contextId: string): Promise<void> {
+    await this.client.delete(`/meeting-contexts/${contextId}`);
+  }
+
+  // Newsletter/Waiting List
+  async signupNewsletter(data: { name: string; email: string; country: string }): Promise<{ success: boolean; message: string; timestamp: string }> {
+    // Newsletter endpoint is public, so we use Axios directly without auth
+    // The proxy will add /api/v1/ prefix, so we just need /newsletter
+    const response = await Axios.post('/api/newsletter', data);
     return response.data;
   }
 }

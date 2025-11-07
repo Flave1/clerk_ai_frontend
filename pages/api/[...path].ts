@@ -1,28 +1,53 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://3.235.168.161:8000';
+// Remove trailing slash from BACKEND_URL to avoid double slashes
+//http://3.235.168.161
+const BACKEND_URL = (process.env.BACKEND_URL || 'http://3.235.199.221:8000').replace(/\/$/, '');
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle OPTIONS requests for CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(200).end();
+    return;
+  }
+
   // Get the path from the URL (everything after /api/)
   const path = Array.isArray(req.query.path) 
     ? req.query.path.join('/') 
     : req.query.path || '';
 
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[API Proxy] ${req.method} /api/${path}`);
+  }
+
   // Handle special webhook paths like /api/v1/api.auray.net/*
   // These should go to /v1/api.auray.net/* on backend
   let backendPath: string;
-  if (path.startsWith('v1/')) {
-    // Already has v1 prefix, use as-is but change to /v1/ instead of /api/v1/
-    backendPath = path; // e.g., v1/api.auray.net/join_meeting → /v1/api.auray.net/join_meeting
+  if (path.startsWith('v1/api.auray.net/')) {
+    // Webhook path, use as-is (e.g., v1/api.auray.net/join_meeting)
+    backendPath = path;
+  } else if (path.startsWith('v1/')) {
+    // Already has v1 prefix, use as-is
+    backendPath = path;
   } else {
     // Regular API path, add api/v1 prefix
     backendPath = `api/v1/${path}`;
   }
   
+  // Construct target URL (ensure single slash between base URL and path)
   const targetUrl = `${BACKEND_URL}/${backendPath}`;
+  
+  // Debug logging
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[API Proxy] Forwarding to: ${targetUrl}`);
+  }
 
   try {
     // Forward the request to the backend
@@ -34,7 +59,7 @@ export default async function handler(
         ...(req.headers.authorization && { Authorization: req.headers.authorization }),
       },
       // Forward body for POST, PUT, PATCH requests
-      ...(req.method !== 'GET' && req.method !== 'HEAD' && {
+      ...(req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' && {
         body: JSON.stringify(req.body),
       }),
     });
@@ -57,10 +82,16 @@ export default async function handler(
       res.end();
     }
   } catch (error: any) {
-    console.error('Proxy error:', error);
+    console.error('[API Proxy] Error:', error);
+    console.error('[API Proxy] Target URL was:', targetUrl);
+    console.error('[API Proxy] Request method:', req.method);
+    console.error('[API Proxy] Request path:', path);
+    
     res.status(500).json({ 
       detail: error.message || 'Failed to proxy request to backend',
-      error: 'ProxyError'
+      error: 'ProxyError',
+      targetUrl: targetUrl,
+      path: path
     });
   }
 }

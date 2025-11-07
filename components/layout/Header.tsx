@@ -19,7 +19,8 @@ import {
   KeyIcon,
   GlobeAltIcon,
   DocumentTextIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  BeakerIcon
 } from '@heroicons/react/24/outline';
 import { useUIStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,10 +30,10 @@ const mainNavigation = [
   { name: 'Start Meeting', href: '/select-meeting', icon: PhoneIcon },
   { name: 'Meetings', href: '/meetings', icon: VideoCameraIcon },
   { name: 'Voice Profile', href: '/voice-profile', icon: MicrophoneIcon },
+  { name: 'Context Lab', href: '/context-lab', icon: BeakerIcon },
 ];
 
 const integrationsNavigation = [
-  { name: 'All Integrations', href: '/integrations', icon: PuzzlePieceIcon },
   { name: 'Connected Apps', href: '/integrations/connected', icon: LinkIcon },
 ];
 

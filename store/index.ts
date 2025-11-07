@@ -222,7 +222,7 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   devtools(
     (set, get) => ({
-      theme: 'dark',
+      theme: 'light',
       sidebarCollapsed: false,
       notifications: [],
       

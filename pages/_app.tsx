@@ -36,7 +36,6 @@ export default function App({ Component, pageProps, router }: AppProps) {
   
   // Check if current page should have layout
   const shouldShowLayout = router.pathname !== '/standalone-call' 
-    && router.pathname !== '/landing'
     && router.pathname !== '/login'
     && router.pathname !== '/register'
     && router.pathname !== '/'
@@ -75,8 +74,8 @@ export default function App({ Component, pageProps, router }: AppProps) {
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
-      // Default to dark theme
-      setTheme('dark');
+      // Default to light theme
+      setTheme('light');
     }
   }, [setTheme]);
 
@@ -103,7 +102,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </Head>
       
       {shouldShowLayout ? (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <div className="min-h-screen bg-[#F7FAFC] dark:bg-[#0D1117] transition-colors duration-200">
           <Header />
           
           {/* Main Content Area */}

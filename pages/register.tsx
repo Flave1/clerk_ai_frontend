@@ -8,9 +8,11 @@ import { register } from '@/lib/auth';
 import { isAuthenticated } from '@/lib/auth';
 import LaunchingSoonBanner from '@/components/ui/LaunchingSoonBanner';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
+import { useUIStore } from '@/store';
 
 export default function Register() {
   const router = useRouter();
+  const { theme } = useUIStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -97,11 +99,27 @@ export default function Register() {
       console.error('Registration error:', error);
       
       let errorMessage = 'Registration failed';
+      let detailString = '';
       
       if (error.timeout) {
         errorMessage = 'Request timeout. Please check your connection and try again.';
       } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
+        const detail = error.response.data.detail;
+        // Handle different detail formats
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+          detailString = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          // Extract messages from validation errors
+          errorMessage = detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+          detailString = detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+        } else if (typeof detail === 'object') {
+          errorMessage = detail.msg || detail.message || JSON.stringify(detail);
+          detailString = String(detail.msg || detail.message || JSON.stringify(detail));
+        } else {
+          errorMessage = String(detail);
+          detailString = String(detail);
+        }
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.isNetworkError) {
@@ -111,14 +129,14 @@ export default function Register() {
       toast.error(errorMessage);
       
       // Set field-specific errors if available
-      if (error.response?.data?.detail) {
-        const detail = error.response.data.detail.toLowerCase();
-        if (detail.includes('email') || detail.includes('already exists')) {
-          setErrors({ email: error.response.data.detail });
-        } else if (detail.includes('password')) {
-          setErrors({ password: error.response.data.detail });
-        } else if (detail.includes('name')) {
-          setErrors({ name: error.response.data.detail });
+      if (detailString) {
+        const detailLower = detailString.toLowerCase();
+        if (detailLower.includes('email') || detailLower.includes('already exists')) {
+          setErrors({ email: detailString });
+        } else if (detailLower.includes('password')) {
+          setErrors({ password: detailString });
+        } else if (detailLower.includes('name')) {
+          setErrors({ name: detailString });
         }
       }
     } finally {
@@ -133,12 +151,16 @@ export default function Register() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-[#0a0b1a] text-white flex items-center justify-center relative overflow-hidden">
+      <div className={`min-h-screen flex items-center justify-center relative overflow-hidden transition-colors duration-200 ${
+        theme === 'dark'
+          ? 'bg-[#0D1117] text-[#E5E7EB]'
+          : 'bg-[#F7FAFC] text-[#1C1C1C]'
+      }`}>
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#5f5fff]/10 via-[#a855f7]/10 to-transparent" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#5f5fff]/20 rounded-full filter blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#a855f7]/20 rounded-full filter blur-3xl animate-pulse delay-700" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-accent-500/10 to-transparent" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/20 rounded-full filter blur-3xl animate-pulse delay-700" />
         </div>
 
         {/* Register Form */}
@@ -154,11 +176,13 @@ export default function Register() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-4xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent mb-2"
+              className="text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-2"
             >
               Auray
             </motion.h1>
-            <p className="text-gray-400">Create your account to get started</p>
+            <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+              Create your account to get started
+            </p>
           </div>
 
           {/* Register Card */}
@@ -166,7 +190,11 @@ export default function Register() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8 shadow-xl"
+            className={`backdrop-blur-lg border rounded-2xl p-8 shadow-xl ${
+              theme === 'dark'
+                ? 'bg-[#161B22]/50 border-primary-500/20'
+                : 'bg-white border-primary-500/30'
+            }`}
           >
             {/* Launching Soon Banner */}
             <div className="mb-6">
@@ -176,7 +204,9 @@ export default function Register() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="name" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Full Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -189,8 +219,12 @@ export default function Register() {
                   }}
                   required
                   disabled={loading}
-                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
-                    errors.name ? 'border-red-500/50' : 'border-purple-500/20'
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    errors.name
+                      ? 'border-red-500/50'
+                      : theme === 'dark'
+                        ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                        : 'bg-white border-primary-500/30 text-gray-900'
                   }`}
                   placeholder="John Doe"
                 />
@@ -201,7 +235,9 @@ export default function Register() {
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Email <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -214,8 +250,12 @@ export default function Register() {
                   }}
                   required
                   disabled={loading}
-                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
-                    errors.email ? 'border-red-500/50' : 'border-purple-500/20'
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    errors.email
+                      ? 'border-red-500/50'
+                      : theme === 'dark'
+                        ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                        : 'bg-white border-primary-500/30 text-gray-900'
                   }`}
                   placeholder="you@example.com"
                 />
@@ -226,8 +266,12 @@ export default function Register() {
 
               {/* Phone Field */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium mb-2 text-gray-300">
-                  Phone <span className="text-gray-500 text-xs">(Optional)</span>
+                <label htmlFor="phone" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Phone <span className={`text-xs ${
+                    theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>(Optional)</span>
                 </label>
                 <input
                   type="tel"
@@ -235,14 +279,20 @@ export default function Register() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50"
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    theme === 'dark'
+                      ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                      : 'bg-white border-primary-500/30 text-gray-900'
+                  }`}
                   placeholder="+1234567890"
                 />
               </div>
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="password" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Password <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -257,15 +307,21 @@ export default function Register() {
                   minLength={6}
                   maxLength={72}
                   disabled={loading}
-                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
-                    errors.password ? 'border-red-500/50' : 'border-purple-500/20'
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    errors.password
+                      ? 'border-red-500/50'
+                      : theme === 'dark'
+                        ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                        : 'bg-white border-primary-500/30 text-gray-900'
                   }`}
                   placeholder="••••••••"
                 />
                 {errors.password ? (
                   <p className="mt-1 text-xs text-red-400">{errors.password}</p>
                 ) : (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className={`mt-1 text-xs ${
+                    theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>
                     Must be 6-72 characters with letters, numbers, and/or special characters
                   </p>
                 )}
@@ -273,7 +329,9 @@ export default function Register() {
 
               {/* Confirm Password Field */}
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Confirm Password <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -286,8 +344,12 @@ export default function Register() {
                   }}
                   required
                   disabled={loading}
-                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
-                    errors.confirmPassword ? 'border-red-500/50' : 'border-purple-500/20'
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    errors.confirmPassword
+                      ? 'border-red-500/50'
+                      : theme === 'dark'
+                        ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                        : 'bg-white border-primary-500/30 text-gray-900'
                   }`}
                   placeholder="••••••••"
                 />
@@ -302,7 +364,7 @@ export default function Register() {
                 whileHover={{ scale: loading ? 1 : 1.02 }}
                 whileTap={{ scale: loading ? 1 : 0.98 }}
                 disabled={loading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -317,9 +379,11 @@ export default function Register() {
 
             {/* Sign In Link */}
             <div className="mt-6 text-center">
-              <span className="text-gray-400 text-sm">
+              <span className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 Already have an account?{' '}
-                <Link href="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200">
+                <Link href="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors duration-200">
                   Sign in
                 </Link>
               </span>
@@ -330,7 +394,11 @@ export default function Register() {
           <div className="mt-6 text-center">
             <Link
               href="/"
-              className="text-gray-400 hover:text-white text-sm transition-colors duration-200 flex items-center justify-center gap-2"
+              className={`text-sm transition-colors duration-200 flex items-center justify-center gap-2 ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

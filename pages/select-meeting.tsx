@@ -1,59 +1,125 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from '@/lib/axios';
-import { ClipboardIcon, RocketLaunchIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { SiZoom, SiGooglemeet } from 'react-icons/si';
-
-// Microsoft Teams SVG Icon
-const MicrosoftTeamsIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M19.536 9.146c-.006 0-.004 0-.004.004v.004c0 .004-.002.003-.002.004l-.002.003h-.002l-2.58 2.582c-.008.008-.014.016-.023.023l-.007.008-.007.01-.006.014-.01.018-.015.04 0 .017v.01c0 .017 0 .012.002.022l-.002.003c0 .005 0 .01-.002.017 0 .007.004.014.007.02.004.008.004.017.01.026.003.004.005.008.008.014.006.012.012.023.02.035.006.008.013.015.02.024.004.003.006.008.01.013.01.015.024.032.037.046.009.009.017.017.026.027.012.011.027.02.04.031.01.008.018.019.03.027.018.012.038.022.058.03.01.003.016.01.026.013.008.003.018.005.027.005.01 0 .018-.004.028-.006.01-.003.017-.01.026-.014.018-.008.036-.017.053-.028.01-.007.017-.016.026-.026.011-.01.023-.02.033-.033.008-.008.014-.017.02-.026.009-.01.016-.022.021-.033.006-.012.01-.025.015-.038 0-.007.003-.013.005-.021.003-.01.005-.018.005-.029 0-.007 0-.013-.003-.02l.003-.003v-.003c.002-.01 0-.004 0-.023v-.011l-.003-.017c-.003-.012-.008-.021-.012-.035-.006-.014-.013-.025-.02-.037-.006-.01-.011-.022-.019-.031-.005-.006-.01-.012-.015-.02-.006-.008-.013-.016-.02-.024l-.04-.047c-.008-.008-.012-.015-.02-.023-.005-.006-.01-.01-.016-.016l-2.59-2.592h-.003l-.008-.006c-.009-.007-.016-.016-.025-.025-.009-.009-.017-.02-.027-.032-.01-.013-.023-.024-.034-.037-.011-.014-.026-.027-.04-.04-.014-.014-.03-.027-.047-.04-.017-.014-.037-.027-.056-.038-.01-.006-.018-.013-.028-.018-.01-.005-.02-.01-.03-.014-.013-.005-.025-.01-.04-.014-.01-.002-.016-.007-.026-.009-.01-.002-.02-.004-.03-.004h-10.92c-.638 0-1.155.516-1.155 1.154v10.918c0 .638.517 1.154 1.155 1.154h10.918c.638 0 1.154-.516 1.154-1.154V9.304c-.003-.01-.01-.018-.013-.03-.004-.013-.008-.025-.013-.04-.005-.014-.012-.024-.018-.038-.006-.013-.013-.026-.02-.038-.01-.016-.022-.028-.033-.044-.009-.01-.014-.02-.025-.03-.009-.008-.02-.015-.03-.024-.01-.008-.02-.018-.03-.025-.02-.014-.04-.027-.06-.04-.01-.006-.02-.013-.03-.02-.01-.005-.02-.01-.03-.016-.012-.005-.024-.01-.036-.015-.013-.005-.024-.01-.037-.014-.01-.003-.02-.007-.03-.01-.01-.003-.02-.004-.03-.006-.01-.002-.02-.003-.03-.003z"/>
-  </svg>
-);
+import toast from 'react-hot-toast';
+import { ClipboardIcon, RocketLaunchIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { useUIStore } from '@/store';
+import ComingSoonModal from '@/components/ui/ComingSoonModal';
 
 type PlatformKey = 'clerk' | 'teams' | 'zoom' | 'google_meet';
 
-const PLATFORMS: Array<{ key: PlatformKey; name: string; icon: any; color: string; gradient: string }> = [
-	{ key: 'clerk', name: 'Auray Meeting', icon: null, color: '#5f5fff', gradient: 'from-purple-500 to-indigo-500' },
-	{ key: 'teams', name: 'Teams Meeting', icon: MicrosoftTeamsIcon, color: '#6264A7', gradient: 'from-purple-500 to-indigo-500' },
-	{ key: 'zoom', name: 'Zoom Meeting', icon: SiZoom, color: '#2D8CFF', gradient: 'from-blue-500 to-cyan-500' },
-	{ key: 'google_meet', name: 'Google Meet', icon: SiGooglemeet, color: '#00832D', gradient: 'from-green-500 to-emerald-500' },
+interface PlatformOption {
+	key: PlatformKey;
+	name: string;
+	image: string;
+	gradient: string;
+	tag?: string;
+	description: string;
+}
+
+const PLATFORMS: PlatformOption[] = [
+	{
+		key: 'clerk',
+		name: 'Auray Meeting',
+		image: '/images/logo/logo.png',
+		gradient: 'from-primary-500/20 via-accent-500/10 to-transparent',
+		description: 'Spin up a native Auray environment with real-time AI note-taking, action item tracking, and automated follow-ups built in.',
+	},
+	{
+		key: 'teams',
+		name: 'Microsoft Teams',
+		image: '/images/integrations/teams.png',
+		gradient: 'from-[#4F46E5]/20 via-[#6366F1]/10 to-transparent',
+		description: 'Generate a Teams meeting link that keeps all participants in sync with advanced note sharing and meeting intelligence.',
+	},
+	{
+		key: 'zoom',
+		name: 'Zoom',
+		image: '/images/integrations/zoom.png',
+		gradient: 'from-[#38BDF8]/20 via-[#0EA5E9]/10 to-transparent',
+		description: 'Launch a Zoom call with embedded Auray insights so every conversation is searchable, actionable, and archived instantly.',
+	},
+	{
+		key: 'google_meet',
+		name: 'Google Meet',
+		image: '/images/integrations/meet.png',
+		gradient: 'from-[#10B981]/20 via-[#34D399]/10 to-transparent',
+		description: 'Create a Meet link that plugs directly into your Google Workspace with automated docs, notes, and calendar updates.',
+	},
 ];
 
 export default function SelectMeetingPage() {
-	const router = useRouter();
+	const { theme } = useUIStore();
 	const [loadingKey, setLoadingKey] = useState<PlatformKey | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [generated, setGenerated] = useState<{ platform: string; meeting_id: string; meeting_url: string } | null>(null);
+	const [comingSoonModal, setComingSoonModal] = useState<{ isOpen: boolean; platformName: string; platformImage?: string }>({
+		isOpen: false,
+		platformName: '',
+		platformImage: undefined,
+	});
+
+	const isDark = theme === 'dark';
+	const pageBackground = isDark
+		? 'from-[#05060f] via-[#0f1324] to-[#090b16]'
+		: 'from-white via-[#f8fafc] to-[#eef2ff]';
+	const activePlatform = generated ? PLATFORMS.find((platform) => platform.key === (generated.platform as PlatformKey)) : undefined;
 
 	async function handleSelect(key: PlatformKey) {
+		// Check if Zoom or Google Meet (temporarily down)
+		if (key === 'zoom' || key === 'google_meet') {
+			const platform = PLATFORMS.find((platform) => platform.key === key);
+			const platformName = platform?.name || 'This service';
+			setComingSoonModal({
+				isOpen: true,
+				platformName: platformName,
+				platformImage: platform?.image,
+			});
+			return;
+		}
+
 		try {
 			setLoadingKey(key);
 			const res = await axios.post('/meetings/generate-url', { platform: key });
 			const data = res.data;
 			setGenerated(data);
 			setDialogOpen(true);
+			toast.success(`${PLATFORMS.find((platform) => platform.key === key)?.name || 'Meeting'} link ready`);
 		} catch (e) {
 			const err = e as any;
-			const msg = err?.response?.data?.detail || err?.message || 'Failed to generate URL';
-			alert(msg);
+			const detail = err?.response?.data?.detail;
+			const msg = typeof detail === 'string' ? detail : err?.message || 'Failed to generate meeting link';
+			toast.error(msg);
 		} finally {
 			setLoadingKey(null);
 		}
 	}
 
+	const resolveMeetingUrl = (url: string) => {
+		try {
+			const fullUrl = new URL(url, window.location.origin);
+			return fullUrl.toString();
+		} catch {
+			const normalized = url.startsWith('/') ? url : `/${url}`;
+			return `${window.location.origin}${normalized}`;
+		}
+	};
+
 	async function copyToClipboard() {
 		if (!generated?.meeting_url) return;
 		try {
-			await navigator.clipboard.writeText(generated.meeting_url);
+			const resolved = resolveMeetingUrl(generated.meeting_url);
+			await navigator.clipboard.writeText(resolved);
+			toast.success('Meeting link copied to clipboard');
 		} catch {}
 	}
 
 	function startNow() {
 		if (!generated?.meeting_url) return;
-		window.open(generated.meeting_url, '_blank');
+		const resolved = resolveMeetingUrl(generated.meeting_url);
+		window.open(resolved, '_blank');
 	}
 
 	return (
@@ -61,7 +127,7 @@ export default function SelectMeetingPage() {
 			<Head>
 				<title>Select Meeting - AI Receptionist</title>
 			</Head>
-			<div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 px-4 py-12">
+			<div className={`min-h-screen w-full flex items-center justify-center px-4 py-12 bg-gradient-to-br ${pageBackground} transition-colors duration-300`}>
 				<div className="max-w-5xl w-full">
 					<motion.div
 						initial={{ opacity: 0, y: -20 }}
@@ -77,42 +143,64 @@ export default function SelectMeetingPage() {
 						</p>
 					</motion.div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-						{PLATFORMS.map(({ key, name, icon: Icon, gradient }, index) => (
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+					{PLATFORMS.map(({ key, name, image, gradient, tag, description }, index) => (
 							<motion.button
 								key={key}
 								initial={{ opacity: 0, y: 20 }}
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ delay: index * 0.1, duration: 0.5 }}
-								whileHover={{ scale: 1.05, y: -5 }}
+								whileHover={{ y: -6 }}
 								whileTap={{ scale: 0.95 }}
 								onClick={() => handleSelect(key)}
 								disabled={loadingKey === key}
-								className={`relative group w-full p-8 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 text-center overflow-hidden ${
-									loadingKey === key ? 'opacity-70 pointer-events-none' : ''
+								className={`relative group w-full overflow-hidden rounded-2xl border ${
+									isDark ? 'border-primary-500/10 bg-[#0f172a]/60 shadow-[0_20px_45px_-20px_rgba(8,145,178,0.45)]' : 'border-primary-500/10 bg-white/80 shadow-[0_25px_55px_-25px_rgba(59,130,246,0.45)]'
+								} backdrop-blur-xl transition-all duration-500 ${
+									loadingKey === key ? 'opacity-70 pointer-events-none' : 'hover:-translate-y-1 hover:shadow-2xl'
 								}`}
 							>
-								{/* Gradient overlay on hover */}
-								<div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+								{/* Animated gradient flare */}
+								<div className="absolute inset-0 overflow-hidden">
+									<div
+										className={`absolute -inset-[40%] blur-3xl opacity-0 group-hover:opacity-80 transition-opacity duration-700 bg-gradient-to-br ${gradient}`}
+									/>
+								</div>
 								
-								<div className="relative z-10">
-									{Icon ? (
-										<div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-											<Icon className="w-8 h-8 text-white" />
+								<div className="relative z-10 flex flex-col gap-4 text-left p-8">
+									<div className="flex w-full items-center justify-between gap-3">
+										<div className="flex items-center gap-4">
+											<div className="relative h-14 w-14 rounded-2xl bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-inner">
+												<Image
+													src={image}
+													alt={`${name} logo`}
+													width={48}
+													height={48}
+													className="object-contain"
+													priority={index === 0}
+												/>
+											</div>
+											<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+												{name}
+											</h3>
 										</div>
-									) : (
-										<div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-											<span className="text-2xl font-bold text-white">C</span>
-										</div>
-									)}
-									<h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{name}</h3>
-									<p className="text-sm text-gray-500 dark:text-gray-400">Click to generate</p>
-									
+										{tag && (
+											<span className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-400">
+												<SparklesIcon className="h-4 w-4" />
+												{tag}
+											</span>
+										)}
+									</div>
+
+									<p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+										{description}
+									</p>
+
 									{loadingKey === key && (
-										<div className="mt-4">
-											<div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-												<div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
-												<span className="text-xs text-gray-600 dark:text-gray-400">Generating...</span>
+										<div className="absolute inset-0 z-20 flex items-end justify-end p-4">
+											<div className="inline-flex items-center gap-2 rounded-full bg-gray-900/80 px-4 py-2 text-xs text-white shadow-lg">
+												<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+												Generating...
 											</div>
 										</div>
 									)}
@@ -130,55 +218,95 @@ export default function SelectMeetingPage() {
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
-							className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+							className="absolute inset-0 bg-black/60 backdrop-blur-sm"
 							onClick={() => setDialogOpen(false)}
 						/>
 						<motion.div
-							initial={{ opacity: 0, scale: 0.9, y: 20 }}
+							initial={{ opacity: 0, scale: 0.92, y: 20 }}
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, scale: 0.9, y: 20 }}
-							transition={{ duration: 0.3 }}
-							className="relative z-10 w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-2xl p-6"
+							transition={{ duration: 0.25 }}
+							className={`relative z-10 w-full max-w-xl overflow-hidden rounded-2xl border ${
+								isDark ? 'border-primary-500/10 bg-[#0b1220]' : 'border-primary-500/10 bg-white'
+							} shadow-[0_30px_70px_-35px_rgba(59,130,246,0.45)] p-6`}
 						>
-							<div className="flex items-center justify-between mb-6">
-								<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Meeting Ready!</h2>
-								<button 
-									onClick={() => setDialogOpen(false)} 
-									className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+							<div className="absolute inset-0 opacity-60">
+								<div className="absolute -inset-1 bg-gradient-to-br from-primary-500/20 via-accent-500/10 to-transparent" />
+							</div>
+
+							<div className="relative z-10 flex items-center justify-between">
+								<div>
+									<p className="text-sm font-semibold text-primary-400">Meeting link generated</p>
+									<h2 className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+										{activePlatform?.name || generated.platform}
+									</h2>
+								</div>
+								<button
+									onClick={() => setDialogOpen(false)}
+									className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
 								>
-									<XMarkIcon className="h-5 w-5 text-gray-500" />
+									<XMarkIcon className="h-5 w-5" />
 								</button>
 							</div>
-							
-							<div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 rounded-xl p-6 mb-6 border border-purple-200 dark:border-purple-900">
-								<div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Generated {generated.platform} link:</div>
-								<div className="text-sm text-gray-600 dark:text-gray-400 break-all font-mono bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-									{generated.meeting_url}
+
+							<div className="relative z-10 mt-6 flex flex-col gap-5 rounded-2xl border border-primary-500/10 bg-white/70 p-5 dark:bg-white/5">
+								<div className="flex items-start gap-4">
+									<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-inner dark:bg-white/10">
+										{activePlatform && (
+											<Image
+												src={activePlatform.image}
+												alt={`${activePlatform.name} logo`}
+												width={48}
+												height={48}
+												className="object-contain"
+											/>
+										)}
+									</div>
+									<div className="flex-1">
+										<p className="text-sm text-gray-600 dark:text-gray-400">
+											{activePlatform?.description}
+										</p>
+									</div>
+								</div>
+								<div className="rounded-xl border border-dashed border-primary-500/40 bg-primary-500/5 p-4">
+									<div className="text-xs uppercase tracking-wide text-primary-400">Shareable link</div>
+									<div className="mt-2 break-all rounded-lg bg-white/80 p-3 font-mono text-sm text-gray-700 shadow-inner dark:bg-black/40 dark:text-gray-200">
+										{generated.meeting_url}
+									</div>
 								</div>
 							</div>
 
-							<div className="flex items-center justify-end gap-3">
+							<div className="relative z-10 mt-6 flex flex-wrap items-center justify-end gap-3">
 								<motion.button
 									whileHover={{ scale: 1.05 }}
 									whileTap={{ scale: 0.95 }}
-									onClick={copyToClipboard} 
-									className="inline-flex items-center px-5 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+									onClick={copyToClipboard}
+									className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
 								>
-									<ClipboardIcon className="h-5 w-5 mr-2" /> Copy Link
+									<ClipboardIcon className="h-5 w-5" /> Copy Link
 								</motion.button>
 								<motion.button
 									whileHover={{ scale: 1.05 }}
 									whileTap={{ scale: 0.95 }}
-									onClick={startNow} 
-									className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-lg"
+									onClick={startNow}
+									className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-primary-600 hover:to-accent-600"
 								>
-									<RocketLaunchIcon className="h-5 w-5 mr-2" /> Start Now
+									<RocketLaunchIcon className="h-5 w-5" /> Start Now
 								</motion.button>
 							</div>
 						</motion.div>
 					</div>
 				)}
 			</AnimatePresence>
+
+			{/* Coming Soon Modal for Zoom and Google Meet */}
+			<ComingSoonModal
+				isOpen={comingSoonModal.isOpen}
+				onClose={() => setComingSoonModal({ isOpen: false, platformName: '', platformImage: undefined })}
+				title={`${comingSoonModal.platformName} Temporarily Unavailable`}
+				message={`We recently brought down ${comingSoonModal.platformName}. We are working really hard to return it. Please use Auray or Microsoft Teams for your meeting.`}
+				image={comingSoonModal.platformImage}
+			/>
 		</>
 	);
 }

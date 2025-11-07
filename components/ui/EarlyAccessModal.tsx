@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { apiClient } from '@/lib/api';
+import toast from 'react-hot-toast';
+import { useUIStore } from '@/store';
 
 interface EarlyAccessModalProps {
   isOpen: boolean;
@@ -9,6 +12,7 @@ interface EarlyAccessModalProps {
 }
 
 const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) => {
+  const { theme } = useUIStore();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -80,14 +84,45 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await apiClient.signupNewsletter({
+        name: formData.name,
+        email: formData.email,
+        country: formData.country,
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-
-    // TODO: Implement actual API call to submit early access request
-    console.log('Early access request submitted:', formData);
+      if (response.success) {
+        setIsSubmitted(true);
+        toast.success(response.message || 'Successfully added to waiting list!');
+      } else {
+        toast.error(response.message || 'Failed to join waiting list. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Failed to sign up for newsletter:', error);
+      
+      let errorMessage = 'Failed to join waiting list. Please try again.';
+      
+      if (error?.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        // Handle different detail formats
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          // Extract messages from validation errors
+          errorMessage = detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+        } else if (typeof detail === 'object') {
+          errorMessage = detail.msg || detail.message || JSON.stringify(detail);
+        } else {
+          errorMessage = String(detail);
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -158,14 +193,14 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
             className="relative z-[10000] w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative bg-[#151632]/95 backdrop-blur-lg border border-purple-500/20 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative bg-white/95 dark:bg-[#161B22]/95 backdrop-blur-lg border border-primary-500/20 dark:border-primary-500/20 rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
+              <div className="flex items-center justify-between p-6 border-b border-primary-500/20 dark:border-primary-500/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5f5fff] to-[#a855f7] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                     <SparklesIcon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                     Get Early Access
                   </h3>
                 </div>
@@ -180,16 +215,16 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
               {/* Content */}
               <div className="p-6">
                 {/* Launching Soon Alert */}
-                <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 backdrop-blur-sm">
+                <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary-500/20 to-accent-500/20 border border-primary-500/30 dark:border-primary-500/30 backdrop-blur-sm">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5f5fff] to-[#a855f7] flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                         <SparklesIcon className="w-5 h-5 text-white" />
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-white mb-1">We're Launching Soon! 🚀</h4>
-                      <p className="text-sm text-gray-300 leading-relaxed">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">We're Launching Soon! 🚀</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                         Be among the first to experience Auray. Join our early access program and get notified when we launch.
                       </p>
                     </div>
@@ -206,13 +241,13 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                     >
                       <CheckCircleIcon className="w-10 h-10 text-white" />
                     </motion.div>
-                    <h4 className="text-xl font-bold text-white mb-2">You're on the list! ✨</h4>
-                    <p className="text-gray-300 mb-6">
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">You're on the list! ✨</h4>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
                       We'll notify you as soon as Auray is ready.
                     </p>
                     <button
                       onClick={onClose}
-                      className="px-6 py-3 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-lg font-semibold hover:from-[#6f6fff] hover:to-[#b865ff] transition-all duration-300"
+                      className="px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"
                     >
                       Close
                     </button>
@@ -221,7 +256,7 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                   <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Name Field */}
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Full Name <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -230,11 +265,11 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-lg bg-[#0a0b1a]/50 border ${
+                        className={`w-full px-4 py-3 rounded-lg bg-white/5 dark:bg-[#0D1117]/50 border ${
                           errors.name
                             ? 'border-red-500 focus:border-red-500'
-                            : 'border-purple-500/30 focus:border-purple-500'
-                        } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300`}
+                            : 'border-primary-500/30 dark:border-primary-500/30 focus:border-primary-500 dark:focus:border-primary-500'
+                        } text-[#1C1C1C] dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-500/50 transition-all duration-300`}
                         placeholder="John Doe"
                       />
                       {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
@@ -242,7 +277,9 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
 
                     {/* Email Field */}
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                         Email Address <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -251,11 +288,13 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-lg bg-[#0a0b1a]/50 border ${
+                        className={`w-full px-4 py-3 rounded-lg border placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all duration-300 ${
                           errors.email
                             ? 'border-red-500 focus:border-red-500'
-                            : 'border-purple-500/30 focus:border-purple-500'
-                        } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300`}
+                            : theme === 'dark'
+                              ? 'bg-[#0D1117]/50 border-primary-500/30 focus:border-primary-500 text-white'
+                              : 'bg-white border-primary-500/30 focus:border-primary-500 text-gray-900'
+                        }`}
                         placeholder="john@example.com"
                       />
                       {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
@@ -263,7 +302,7 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
 
                     {/* Country Field */}
                     <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Country <span className="text-red-400">*</span>
                       </label>
                       <select
@@ -271,17 +310,17 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                         name="country"
                         value={formData.country}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-lg bg-[#0a0b1a]/50 border ${
+                        className={`w-full px-4 py-3 rounded-lg bg-white/5 dark:bg-[#0D1117]/50 border ${
                           errors.country
                             ? 'border-red-500 focus:border-red-500'
-                            : 'border-purple-500/30 focus:border-purple-500'
-                        } text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 appearance-none cursor-pointer`}
+                            : 'border-primary-500/30 dark:border-primary-500/30 focus:border-primary-500 dark:focus:border-primary-500'
+                        } text-[#1C1C1C] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-500/50 transition-all duration-300 appearance-none cursor-pointer`}
                       >
-                        <option value="" className="bg-[#0a0b1a]">
+                        <option value="" className="bg-white dark:bg-[#0D1117]">
                           Select your country
                         </option>
                         {countries.map((country) => (
-                          <option key={country} value={country} className="bg-[#0a0b1a]">
+                          <option key={country} value={country} className="bg-white dark:bg-[#0D1117]">
                             {country}
                           </option>
                         ))}
@@ -293,7 +332,7 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-lg font-semibold hover:from-[#6f6fff] hover:to-[#b865ff] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-purple-500/30"
+                      className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-primary-500/30"
                     >
                       {isSubmitting ? (
                         <span className="flex items-center justify-center gap-2">
