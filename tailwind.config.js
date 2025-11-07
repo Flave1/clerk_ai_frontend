@@ -10,16 +10,38 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#e6f7f9',
+          100: '#b8eaef',
+          200: '#8adde5',
+          300: '#5cd0db',
+          400: '#3ac2d0',
+          500: '#1DA2B4', // Main primary color
+          600: '#18919f',
+          700: '#147f8a',
+          800: '#106d75',
+          900: '#0c4b52',
+        },
+        accent: {
+          50: '#e6fffb',
+          100: '#b3fff4',
+          200: '#80ffed',
+          300: '#4dffe6',
+          400: '#26ffdf',
+          500: '#00C6AE', // Main accent color (aqua green)
+          600: '#00b29c',
+          700: '#009e8a',
+          800: '#008a78',
+          900: '#006256',
+        },
+        surface: {
+          light: '#E3E8F2',
+          DEFAULT: '#E3E8F2',
+        },
+        brand: {
+          bgLight: '#F7FAFC',
+          bgDark: '#0D1117',
+          textLight: '#1C1C1C',
+          textDark: '#E5E7EB',
         },
         success: {
           50: '#f0fdf4',

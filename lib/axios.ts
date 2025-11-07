@@ -101,11 +101,14 @@ axiosInstance.interceptors.response.use(
     }
     
     // Handle 401 Unauthorized and 403 Forbidden - token expired, invalid, or insufficient permissions
-    // But don't redirect if it's a public auth endpoint (register/signin/newsletter)
-    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google', '/newsletter'];
+    // But don't redirect if it's a public auth endpoint (register/signin/newsletter) or /auth/me (used to check auth status)
+    // Also don't redirect if we're on the landing page or other public pages
+    const publicAuthEndpoints = ['/auth/register', '/auth/signin', '/auth/google', '/newsletter', '/auth/me'];
     const isPublicAuthEndpoint = error?.config?.url && publicAuthEndpoints.some(endpoint => error.config.url?.includes(endpoint));
+    const publicPages = ['/', '/login', '/register'];
+    const isPublicPage = typeof window !== 'undefined' && publicPages.some(page => window.location.pathname === page);
     
-    if ((error.response?.status === 401 || error.response?.status === 403) && !isPublicAuthEndpoint) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !isPublicAuthEndpoint && !isPublicPage) {
       console.warn(`[API Auth Error] ${error.response?.status} - Clearing token and redirecting to login`);
       // Remove invalid token
       removeAccessToken();

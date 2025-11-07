@@ -7,9 +7,11 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { signIn, isAuthenticated } from '@/lib/auth';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
+import { useUIStore } from '@/store';
 
 export default function Login() {
   const router = useRouter();
+  const { theme } = useUIStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,18 @@ export default function Login() {
       if (error.timeout) {
         errorMessage = 'Request timeout. Please check your connection and try again.';
       } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
+        const detail = error.response.data.detail;
+        // Handle different detail formats
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          // Extract messages from validation errors
+          errorMessage = detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+        } else if (typeof detail === 'object') {
+          errorMessage = detail.msg || detail.message || JSON.stringify(detail);
+        } else {
+          errorMessage = String(detail);
+        }
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.isNetworkError) {
@@ -66,12 +79,16 @@ export default function Login() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-[#0a0b1a] text-white flex items-center justify-center relative overflow-hidden">
+      <div className={`min-h-screen flex items-center justify-center relative overflow-hidden transition-colors duration-200 ${
+        theme === 'dark'
+          ? 'bg-[#0D1117] text-[#E5E7EB]'
+          : 'bg-[#F7FAFC] text-[#1C1C1C]'
+      }`}>
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#5f5fff]/10 via-[#a855f7]/10 to-transparent" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#5f5fff]/20 rounded-full filter blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#a855f7]/20 rounded-full filter blur-3xl animate-pulse delay-700" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-accent-500/10 to-transparent" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/20 rounded-full filter blur-3xl animate-pulse delay-700" />
         </div>
 
         {/* Login Form */}
@@ -87,11 +104,13 @@ export default function Login() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-4xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent mb-2"
+              className="text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-2"
             >
               Auray
             </motion.h1>
-            <p className="text-gray-400">Welcome back! Sign in to continue.</p>
+            <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+              Welcome back! Sign in to continue.
+            </p>
           </div>
 
           {/* Login Card */}
@@ -99,7 +118,11 @@ export default function Login() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8 shadow-xl"
+            className={`backdrop-blur-lg border rounded-2xl p-8 shadow-xl ${
+              theme === 'dark'
+                ? 'bg-[#161B22]/50 border-primary-500/20'
+                : 'bg-white border-primary-500/30'
+            }`}
           >
             {/* Google Sign-in Button - Disabled */}
             <motion.button
@@ -110,7 +133,11 @@ export default function Login() {
                 toast.error('Google sign-in is currently disabled');
               }}
               disabled={true}
-              className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl font-medium flex items-center justify-center gap-3 transition-all duration-300 mb-6 opacity-50 cursor-not-allowed"
+              className={`w-full py-3 px-4 border rounded-xl font-medium flex items-center justify-center gap-3 transition-all duration-300 mb-6 opacity-50 cursor-not-allowed ${
+                theme === 'dark'
+                  ? 'bg-white/5 border-white/10'
+                  : 'bg-gray-100 border-gray-300'
+              }`}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#4285F4' }}>
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -123,10 +150,16 @@ export default function Login() {
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600"></div>
+                <div className={`w-full border-t ${
+                  theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                }`}></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-[#151632]/50 text-gray-400">Or continue with email</span>
+                <span className={`px-4 ${
+                  theme === 'dark'
+                    ? 'bg-[#161B22]/50 text-gray-400'
+                    : 'bg-white text-gray-600'
+                }`}>Or continue with email</span>
               </div>
             </div>
 
@@ -134,7 +167,9 @@ export default function Login() {
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Email/Username Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Email or Username
                 </label>
                 <input
@@ -145,14 +180,20 @@ export default function Login() {
                   required
                   disabled={loading}
                   autoComplete="off"
-                  className="w-full px-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50"
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    theme === 'dark'
+                      ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                      : 'bg-white border-primary-500/30 text-gray-900'
+                  }`}
                   placeholder="you@example.com"
                 />
               </div>
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-2 text-gray-300">
+                <label htmlFor="password" className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Password
                 </label>
                 <input
@@ -163,7 +204,11 @@ export default function Login() {
                   required
                   disabled={loading}
                   autoComplete="off"
-                  className="w-full px-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50"
+                  className={`w-full px-4 py-3 border rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-300 disabled:opacity-50 ${
+                    theme === 'dark'
+                      ? 'bg-[#0D1117]/50 border-primary-500/20 text-white'
+                      : 'bg-white border-primary-500/30 text-gray-900'
+                  }`}
                   placeholder="••••••••"
                 />
               </div>
@@ -172,7 +217,7 @@ export default function Login() {
               <div className="flex items-center justify-end">
                 <a
                   href="#"
-                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200"
+                  className="text-sm text-primary-400 hover:text-primary-300 transition-colors duration-200"
                 >
                   Forgot password?
                 </a>
@@ -184,7 +229,7 @@ export default function Login() {
                 whileHover={{ scale: loading ? 1 : 1.02 }}
                 whileTap={{ scale: loading ? 1 : 0.98 }}
                 disabled={loading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -199,11 +244,13 @@ export default function Login() {
 
             {/* Sign Up Link */}
             <div className="mt-6 text-center">
-              <span className="text-gray-400 text-sm">
+              <span className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 Don't have an account?{' '}
                 <button
                   onClick={() => setIsEarlyAccessModalOpen(true)}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200"
+                  className="text-primary-400 hover:text-primary-300 font-medium transition-colors duration-200"
                 >
                   Sign up
                 </button>
@@ -215,7 +262,11 @@ export default function Login() {
           <div className="mt-6 text-center">
             <a
               href="/"
-              className="text-gray-400 hover:text-white text-sm transition-colors duration-200 flex items-center justify-center gap-2"
+              className={`text-sm transition-colors duration-200 flex items-center justify-center gap-2 ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

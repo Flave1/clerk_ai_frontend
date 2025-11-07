@@ -14,6 +14,7 @@ import {
 import apiClient from '@/lib/api';
 import toast from 'react-hot-toast';
 import Axios from 'axios';
+import { useUIStore } from '@/store';
 
 interface WebhookResponse {
   success?: boolean;
@@ -22,6 +23,7 @@ interface WebhookResponse {
 
 const WebhookDetailPage: NextPage = () => {
   const router = useRouter();
+  const { theme } = useUIStore();
   const { webhookId } = router.query;
   const [manualApiKey, setManualApiKey] = useState<string>('');
   const [response, setResponse] = useState<WebhookResponse | null>(null);
@@ -127,9 +129,13 @@ const WebhookDetailPage: NextPage = () => {
           <title>Webhook Not Found - Auray</title>
         </Head>
         <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className={`min-h-screen flex items-center justify-center ${
+          theme === 'dark' ? 'bg-[#0D1117]' : 'bg-[#F7FAFC]'
+        }`}>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h1 className={`text-2xl font-bold mb-4 ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
               Webhook Not Found
             </h1>
             <Link href="/developer/webhooks">
@@ -150,11 +156,17 @@ const WebhookDetailPage: NextPage = () => {
       </Head>
       <Header />
       
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className={`min-h-screen ${
+        theme === 'dark' ? 'bg-[#0D1117]' : 'bg-[#F7FAFC]'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Back Button */}
           <Link href="/developer/webhooks">
-            <button className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-6">
+            <button className={`inline-flex items-center text-sm mb-6 ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}>
               <ArrowLeftIcon className="h-4 w-4 mr-2" />
               Back to Webhooks
             </button>
@@ -163,27 +175,43 @@ const WebhookDetailPage: NextPage = () => {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <h1 className={`text-3xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
                 {webhookInfo.name}
               </h1>
               <span className={`px-3 py-1 text-sm font-medium rounded ${
-                webhookInfo.method === 'GET' 
-                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
-                  : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                webhookInfo.method === 'GET'
+                  ? theme === 'dark'
+                    ? 'bg-blue-900 text-blue-200'
+                    : 'bg-blue-100 text-blue-800'
+                  : theme === 'dark'
+                    ? 'bg-green-900 text-green-200'
+                    : 'bg-green-100 text-green-800'
               }`}>
                 {webhookInfo.method}
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
+            <p className={`mb-2 ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               {webhookInfo.description}
             </p>
             <div className="flex items-center space-x-2">
-              <code className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono text-gray-900 dark:text-gray-100">
+              <code className={`px-3 py-1.5 rounded text-sm font-mono ${
+                theme === 'dark'
+                  ? 'bg-[#161B22] text-gray-100'
+                  : 'bg-gray-100 text-gray-900'
+              }`}>
                 {webhookInfo.url}
               </code>
               <button
                 onClick={() => copyToClipboard(webhookInfo.url)}
-                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className={`p-1.5 ${
+                  theme === 'dark'
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
                 title="Copy URL"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
@@ -192,8 +220,14 @@ const WebhookDetailPage: NextPage = () => {
           </div>
 
           {/* API Key Input */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className={`rounded-lg shadow-sm border p-6 mb-6 ${
+            theme === 'dark'
+              ? 'bg-[#161B22] border-gray-700/50'
+              : 'bg-white border-gray-200'
+          }`}>
+            <label className={`block text-sm font-medium mb-2 ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               API Key <span className="text-red-500">*</span>
             </label>
             <input
@@ -201,17 +235,29 @@ const WebhookDetailPage: NextPage = () => {
               value={manualApiKey}
               onChange={(e) => setManualApiKey(e.target.value)}
               placeholder="Enter your API key (sk_live_...)"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm font-mono ${
+                theme === 'dark'
+                  ? 'bg-[#0D1117] border-gray-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className={`mt-1 text-xs ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               Your API key is used to authenticate requests to this endpoint
             </p>
           </div>
 
           {/* Request Payload (for POST requests) */}
           {webhookInfo.method === 'POST' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <div className={`rounded-lg shadow-sm border p-6 mb-6 ${
+              theme === 'dark'
+                ? 'bg-[#161B22] border-gray-700/50'
+                : 'bg-white border-gray-200'
+            }`}>
+              <h2 className={`text-lg font-semibold mb-4 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
                 Request Payload
               </h2>
               <textarea
@@ -224,7 +270,11 @@ const WebhookDetailPage: NextPage = () => {
                   }
                 }}
                 rows={12}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm font-mono ${
+                  theme === 'dark'
+                    ? 'bg-[#0D1117] border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               />
             </div>
           )}
@@ -252,21 +302,35 @@ const WebhookDetailPage: NextPage = () => {
 
           {/* Response */}
           {response && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className={`rounded-lg shadow-sm border p-6 ${
+              theme === 'dark'
+                ? 'bg-[#161B22] border-gray-700/50'
+                : 'bg-white border-gray-200'
+            }`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <h2 className={`text-lg font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
                   Response
                 </h2>
                 <button
                   onClick={() => copyToClipboard(JSON.stringify(response, null, 2))}
-                  className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  className={`inline-flex items-center text-sm ${
+                    theme === 'dark'
+                      ? 'text-gray-400 hover:text-gray-100'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
                   Copy
                 </button>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                <pre className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+              <div className={`rounded-lg p-4 overflow-x-auto ${
+                theme === 'dark' ? 'bg-[#0D1117]' : 'bg-gray-50'
+              }`}>
+                <pre className={`text-sm whitespace-pre-wrap ${
+                  theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                }`}>
                   {JSON.stringify(response, null, 2)}
                 </pre>
               </div>

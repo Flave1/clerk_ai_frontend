@@ -15,6 +15,8 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import apiClient from '@/lib/api';
+import ComingSoonModal from '@/components/ui/ComingSoonModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface Integration {
   id: string;
@@ -33,6 +35,18 @@ const IntegrationsPage: NextPage = () => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [comingSoonModal, setComingSoonModal] = useState<{
+    isOpen: boolean;
+    integrationName: string;
+  }>({ isOpen: false, integrationName: '' });
+  const [disconnectDialog, setDisconnectDialog] = useState<{
+    isOpen: boolean;
+    integration: Integration | null;
+  }>({
+    isOpen: false,
+    integration: null,
+  });
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // Load all integrations
   useEffect(() => {
@@ -52,6 +66,15 @@ const IntegrationsPage: NextPage = () => {
   }, []);
 
   const handleConnect = async (integration: Integration) => {
+    // Show coming soon modal for unconnected integrations
+    if (!integration.connected) {
+      setComingSoonModal({
+        isOpen: true,
+        integrationName: integration.name,
+      });
+      return;
+    }
+
     try {
       setConnecting(integration.id);
       
@@ -125,23 +148,42 @@ const IntegrationsPage: NextPage = () => {
     }
   };
 
-  const handleDisconnect = async (integration: Integration) => {
+  const handleDisconnect = (integration: Integration) => {
+    setDisconnectDialog({
+      isOpen: true,
+      integration,
+    });
+  };
+
+  const handleDisconnectConfirm = async () => {
+    if (!disconnectDialog.integration) return;
+
     try {
-      await apiClient.disconnectIntegration(integration.id);
-      toast.success(`${integration.name} disconnected successfully!`);
+      setIsDisconnecting(true);
+      await apiClient.disconnectIntegration(disconnectDialog.integration.id);
+      toast.success(`${disconnectDialog.integration.name} disconnected successfully!`);
       
       // Update local state
       setIntegrations(prev => 
         prev.map(integ => 
-          integ.id === integration.id 
+          integ.id === disconnectDialog.integration!.id 
             ? { ...integ, connected: false }
             : integ
         )
       );
+      
+      // Close dialog
+      setDisconnectDialog({ isOpen: false, integration: null });
     } catch (error: any) {
-      console.error(`Failed to disconnect ${integration.name}:`, error);
-      toast.error(error?.response?.data?.detail || `Failed to disconnect ${integration.name}`);
+      console.error(`Failed to disconnect ${disconnectDialog.integration.name}:`, error);
+      toast.error(error?.response?.data?.detail || `Failed to disconnect ${disconnectDialog.integration.name}`);
+    } finally {
+      setIsDisconnecting(false);
     }
+  };
+
+  const handleDisconnectCancel = () => {
+    setDisconnectDialog({ isOpen: false, integration: null });
   };
 
   // Filter integrations
@@ -383,6 +425,30 @@ const IntegrationsPage: NextPage = () => {
           </div>
         )}
       </div>
+
+      {/* Coming Soon Modal */}
+      <ComingSoonModal
+        isOpen={comingSoonModal.isOpen}
+        onClose={() => setComingSoonModal({ isOpen: false, integrationName: '' })}
+        title="Coming Soon"
+        featureName={comingSoonModal.integrationName ? `${comingSoonModal.integrationName} Integration` : undefined}
+        message="We're working hard to bring you this integration. Stay tuned for updates!"
+      />
+
+      {/* Disconnect Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={disconnectDialog.isOpen}
+        onClose={handleDisconnectCancel}
+        onConfirm={handleDisconnectConfirm}
+        title={disconnectDialog.integration ? `Disconnect ${disconnectDialog.integration.name}?` : 'Disconnect Integration?'}
+        message={disconnectDialog.integration 
+          ? `Are you sure you want to disconnect ${disconnectDialog.integration.name}? You will need to reconnect it to use its features again.`
+          : 'Are you sure you want to disconnect this integration?'}
+        confirmText="Disconnect"
+        cancelText="Cancel"
+        confirmButtonColor="red"
+        isLoading={isDisconnecting}
+      />
     </>
   );
 };

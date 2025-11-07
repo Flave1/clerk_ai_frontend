@@ -15,23 +15,50 @@ import {
   LinkIcon,
   ChatBubbleLeftRightIcon,
   SparklesIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
+import { getCurrentUser } from '@/lib/auth';
+import { useUIStore } from '@/store';
 
 export default function Landing() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const { theme, setTheme } = useUIStore();
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
   const y = useTransform(scrollY, [0, 300], [0, -50]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   console.log('Landing component render - isVideoModalOpen:', isVideoModalOpen);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Check authentication status by calling the me endpoint
+    const checkAuth = async () => {
+      try {
+        setIsCheckingAuth(true);
+        await getCurrentUser();
+        setIsAuthenticated(true);
+      } catch (error) {
+        // User is not authenticated
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -50,13 +77,13 @@ export default function Landing() {
       icon: CalendarIcon,
       title: 'Auto-scheduling & follow-ups',
       description: 'Automatically manage your calendar and send follow-ups without lifting a finger.',
-      gradient: 'from-purple-500 to-pink-500',
+      gradient: 'from-primary-500 to-accent-500',
     },
     {
       icon: CpuChipIcon,
       title: 'Context-aware CRM updates',
       description: 'Intelligently sync meeting insights to your CRM with full context.',
-      gradient: 'from-indigo-500 to-purple-500',
+      gradient: 'from-primary-400 to-accent-400',
     },
     {
       icon: ChatBubbleLeftRightIcon,
@@ -173,19 +200,27 @@ export default function Landing() {
         <link rel="apple-touch-icon" href="/images/logo/logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-[#0a0b1a] text-white overflow-x-hidden">
+      <div className={`min-h-screen overflow-x-hidden transition-colors duration-200 ${
+        theme === 'dark' 
+          ? 'bg-[#0D1117] text-[#E5E7EB]' 
+          : 'bg-[#F7FAFC] text-[#1C1C1C]'
+      }`}>
         {/* Navigation */}
         <motion.nav
           initial={{ y: -100 }}
           animate={{ y: 0 }}
-          className="fixed top-0 w-full z-50 bg-[#0a0b1a]/80 backdrop-blur-lg border-b border-purple-500/20"
+          className={`fixed top-0 w-full z-50 backdrop-blur-lg border-b transition-colors duration-200 ${
+            theme === 'dark'
+              ? 'bg-[#0D1117]/80 border-primary-500/20'
+              : 'bg-white/80 border-primary-500/20'
+          }`}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent"
-                style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
+                className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
+                style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}
               >
                 AURAY
               </motion.div>
@@ -198,7 +233,11 @@ export default function Landing() {
                         const id = item.toLowerCase().replace(/\s+/g, '');
                         scrollToSection(id);
                       }}
-                      className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
+                      className={`transition-colors duration-200 font-medium ${
+                        theme === 'dark'
+                          ? 'text-gray-300 hover:text-white'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
                     >
                       {item}
                     </button>
@@ -206,21 +245,57 @@ export default function Landing() {
                 )}
               </div>
               <div className="flex items-center gap-4">
+                {!isCheckingAuth && (
+                  <>
+                    {isAuthenticated ? (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push('/dashboard')}
+                        className="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"
+                      >
+                        Dashboard
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push('/login')}
+                        className={`px-6 py-2 font-semibold hover:underline transition-all duration-300 ${
+                          theme === 'dark'
+                            ? 'text-white'
+                            : 'text-gray-700 hover:text-gray-900'
+                        }`}
+                      >
+                        Login
+                      </motion.button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setIsEarlyAccessModalOpen(true)}
+                      className="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"
+                    >
+                      Get Early Access
+                    </motion.button>
+                  </>
+                )}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => router.push('/login')}
-                  className="px-6 py-2 text-white font-semibold hover:underline transition-all duration-300"
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-lg transition-all duration-300 ${
+                    theme === 'dark'
+                      ? 'bg-white/10 text-white hover:bg-white/20'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  aria-label="Toggle theme"
                 >
-                  Login
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsEarlyAccessModalOpen(true)}
-                  className="px-6 py-2 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-lg font-semibold hover:from-[#6f6fff] hover:to-[#b865ff] transition-all duration-300"
-                >
-                  Get Early Access
+                  {theme === 'dark' ? (
+                    <SunIcon className="h-5 w-5" />
+                  ) : (
+                    <MoonIcon className="h-5 w-5" />
+                  )}
                 </motion.button>
               </div>
             </div>
@@ -231,9 +306,9 @@ export default function Landing() {
         <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
           {/* Animated Background */}
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#5f5fff]/10 via-[#a855f7]/10 to-transparent" />
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#5f5fff]/20 rounded-full filter blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#a855f7]/20 rounded-full filter blur-3xl animate-pulse delay-700" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-accent-500/10 to-transparent" />
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full filter blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/20 rounded-full filter blur-3xl animate-pulse delay-700" />
           </div>
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -247,10 +322,12 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.8 }}
-                className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+                className={`text-5xl md:text-7xl font-bold mb-6 leading-tight ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}
               >
                 Your Voice in{' '}
-                <span className="bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   Every Meeting
                 </span>
               </motion.h1>
@@ -259,7 +336,9 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.8 }}
-                className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto"
+                className={`text-xl md:text-2xl mb-12 max-w-3xl mx-auto ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
               >
                 Auray joins your meetings, listens, speaks, and acts — just like you.
               </motion.p>
@@ -274,7 +353,7 @@ export default function Landing() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsEarlyAccessModalOpen(true)}
-                  className="px-8 py-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-bold text-lg shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 flex items-center gap-2"
+                  className="px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-bold text-lg shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 flex items-center gap-2"
                 >
                   Get Early Access
                   <ArrowRightIcon className="w-5 h-5" />
@@ -288,7 +367,11 @@ export default function Landing() {
                     setIsVideoModalOpen(true);
                     console.log('State set, new value should be true');
                   }}
-                  className="px-8 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
+                  className={`px-8 py-4 backdrop-blur-lg border rounded-xl font-bold text-lg transition-all duration-300 flex items-center gap-2 ${
+                    theme === 'dark'
+                      ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
+                      : 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-900'
+                  }`}
                 >
                   <PlayIcon className="w-5 h-5" />
                   Watch Demo
@@ -314,8 +397,8 @@ export default function Landing() {
                   className="inline-block"
                 >
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-full blur-xl opacity-50" />
-                    <MicrophoneIcon className="relative w-32 h-32 text-[#5f5fff]" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full blur-xl opacity-50" />
+                    <MicrophoneIcon className="relative w-32 h-32 text-primary-500" />
                   </div>
                 </motion.div>
               </motion.div>
@@ -332,12 +415,16 @@ export default function Landing() {
             <motion.div
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center p-2"
+              className={`w-6 h-10 border-2 rounded-full flex justify-center p-2 ${
+                theme === 'dark' ? 'border-gray-400' : 'border-gray-600'
+              }`}
             >
               <motion.div
                 animate={{ y: [0, 12, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="w-1 h-3 bg-gray-400 rounded-full"
+                className={`w-1 h-3 rounded-full ${
+                  theme === 'dark' ? 'bg-gray-400' : 'bg-gray-600'
+                }`}
               />
             </motion.div>
           </motion.div>
@@ -355,11 +442,13 @@ export default function Landing() {
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Powerful Features for{' '}
-                <span className="bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   Modern Teams
                 </span>
               </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className={`text-xl max-w-2xl mx-auto ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Everything you need to make AI an integral part of your meeting workflow.
               </p>
             </motion.div>
@@ -375,13 +464,19 @@ export default function Landing() {
                   whileHover={{ scale: 1.05, y: -10 }}
                   className="relative group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#5f5fff]/20 to-[#a855f7]/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
-                  <div className="relative bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8 h-full">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+                  <div className={`relative backdrop-blur-lg border rounded-2xl p-8 h-full ${
+                    theme === 'dark'
+                      ? 'bg-[#161B22]/50 border-primary-500/20'
+                      : 'bg-white border-primary-500/30 shadow-sm'
+                  }`}>
                     <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                       <feature.icon className="w-7 h-7 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-                    <p className="text-gray-400">{feature.description}</p>
+                    <h3 className={`text-2xl font-bold mb-4 ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>{feature.title}</h3>
+                    <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -390,7 +485,7 @@ export default function Landing() {
         </section>
 
         {/* How It Works Section */}
-        <section id="howitworks" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent">
+        <section id="howitworks" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-primary-900/10 to-transparent">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -401,11 +496,13 @@ export default function Landing() {
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 How{' '}
-                <span className="bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   It Works
                 </span>
               </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className={`text-xl max-w-2xl mx-auto ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Three simple steps to bring AI into every meeting.
               </p>
             </motion.div>
@@ -420,21 +517,27 @@ export default function Landing() {
                   transition={{ delay: index * 0.2, duration: 0.6 }}
                   className="relative"
                 >
-                  <div className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8 h-full text-center">
+                  <div className={`backdrop-blur-lg border rounded-2xl p-8 h-full text-center ${
+                    theme === 'dark'
+                      ? 'bg-[#161B22]/50 border-primary-500/20'
+                      : 'bg-white border-primary-500/30 shadow-sm'
+                  }`}>
                     <motion.div
                       initial={{ scale: 0 }}
                       whileInView={{ scale: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.2 + 0.3, duration: 0.5, type: 'spring' }}
-                      className="text-6xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent mb-4"
+                      className="text-6xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
                     >
                       {step.number}
                     </motion.div>
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-[#5f5fff] to-[#a855f7] flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                       <step.icon className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
-                    <p className="text-gray-400">{step.description}</p>
+                    <h3 className={`text-2xl font-bold mb-4 ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>{step.title}</h3>
+                    <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{step.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -454,11 +557,13 @@ export default function Landing() {
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Works with{' '}
-                <span className="bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   Your Tools
                 </span>
               </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className={`text-xl max-w-2xl mx-auto ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Seamlessly integrate with the platforms you already use.
               </p>
             </motion.div>
@@ -475,8 +580,16 @@ export default function Landing() {
                     whileHover={{ scale: 1.1 }}
                     className="group relative"
                   >
-                    <div className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl px-8 py-6 w-32 text-center">
-                      <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-white/5 flex items-center justify-center group-hover:rotate-12 group-hover:bg-white/10 transition-all duration-300 p-2">
+                    <div className={`backdrop-blur-lg border rounded-2xl px-8 py-6 w-32 text-center ${
+                    theme === 'dark'
+                      ? 'bg-[#161B22]/50 border-primary-500/20'
+                      : 'bg-white border-primary-500/30 shadow-sm'
+                  }`}>
+                      <div className={`w-16 h-16 mx-auto mb-3 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-all duration-300 p-2 ${
+                        theme === 'dark'
+                          ? 'bg-white/5 group-hover:bg-white/10'
+                          : 'bg-gray-100 group-hover:bg-gray-200'
+                      }`}>
                         <Image
                           src={integration.image}
                           alt={integration.name}
@@ -486,10 +599,14 @@ export default function Landing() {
                           unoptimized
                         />
                       </div>
-                      <p className="text-sm font-semibold">{integration.name}</p>
+                      <p className={`text-sm font-semibold ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+                      }`}>{integration.name}</p>
                     </div>
                     <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="bg-gray-800 px-3 py-1 rounded-lg text-xs whitespace-nowrap">
+                      <div className={`px-3 py-1 rounded-lg text-xs whitespace-nowrap ${
+                        theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
+                      }`}>
                         {integration.tooltip}
                       </div>
                     </div>
@@ -501,7 +618,7 @@ export default function Landing() {
         </section>
 
         {/* Testimonials Section */}
-        <section id="community" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent">
+        <section id="community" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-primary-900/10 to-transparent">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -512,11 +629,13 @@ export default function Landing() {
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Loved by{' '}
-                <span className="bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   Early Users
                 </span>
               </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className={`text-xl max-w-2xl mx-auto ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 See what people are saying about Auray.
               </p>
             </motion.div>
@@ -529,7 +648,11 @@ export default function Landing() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.2, duration: 0.6 }}
-                  className="bg-[#151632]/50 backdrop-blur-lg border border-purple-500/20 rounded-2xl p-8"
+                  className={`backdrop-blur-lg border rounded-2xl p-8 ${
+                    theme === 'dark'
+                      ? 'bg-[#161B22]/50 border-primary-500/20'
+                      : 'bg-white border-primary-500/30 shadow-sm'
+                  }`}
                 >
                   <div className="flex gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
@@ -543,10 +666,16 @@ export default function Landing() {
                       </svg>
                     ))}
                   </div>
-                  <p className="text-gray-300 mb-6 italic">&quot;{testimonial.quote}&quot;</p>
+                  <p className={`mb-6 italic ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>&quot;{testimonial.quote}&quot;</p>
                   <div>
-                    <p className="font-bold">{testimonial.author}</p>
-                    <p className="text-sm text-gray-400">
+                    <p className={`font-bold ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>{testimonial.author}</p>
+                    <p className={`text-sm ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       {testimonial.role}, {testimonial.company}
                     </p>
                   </div>
@@ -565,7 +694,7 @@ export default function Landing() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEarlyAccessModalOpen(true)}
-                className="px-8 py-4 bg-gradient-to-r from-[#5f5fff] to-[#a855f7] rounded-xl font-bold text-lg shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300 flex items-center gap-2 mx-auto"
+                className="px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-bold text-lg shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 flex items-center gap-2 mx-auto"
               >
                 Join the Waitlist
                 <ArrowRightIcon className="w-5 h-5" />
@@ -575,7 +704,9 @@ export default function Landing() {
         </section>
 
         {/* Footer */}
-        <footer id="contact" className="relative py-16 px-4 sm:px-6 lg:px-8 border-t border-purple-500/20">
+        <footer id="contact" className={`relative py-16 px-4 sm:px-6 lg:px-8 border-t ${
+          theme === 'dark' ? 'border-primary-500/20' : 'border-primary-500/30'
+        }`}>
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
               <div>
@@ -583,22 +714,28 @@ export default function Landing() {
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  className="text-2xl font-bold bg-gradient-to-r from-[#5f5fff] to-[#a855f7] bg-clip-text text-transparent mb-4"
+                  className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
                 >
                   Auray
                 </motion.div>
-                <p className="text-gray-400">
+                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                   Your voice in every meeting. AI-powered meeting assistance for modern teams.
                 </p>
               </div>
               <div>
-                <h4 className="font-bold mb-4">Quick Links</h4>
+                <h4 className={`font-bold mb-4 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Quick Links</h4>
                 <ul className="space-y-2">
                   {['Home', 'Features', 'How It Works', 'Integrations'].map((link) => (
                     <li key={link}>
                       <button
                         onClick={() => scrollToSection(link.toLowerCase().replace(' ', ''))}
-                        className="text-gray-400 hover:text-white transition-colors"
+                        className={`transition-colors ${
+                          theme === 'dark'
+                            ? 'text-gray-400 hover:text-white'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
                       >
                         {link}
                       </button>
@@ -607,7 +744,9 @@ export default function Landing() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold mb-4">Connect</h4>
+                <h4 className={`font-bold mb-4 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Connect</h4>
                 <div className="flex gap-4">
                   {socialLinks.map((social, index) => (
                     <motion.a
@@ -616,16 +755,26 @@ export default function Landing() {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.1, y: -5 }}
-                      className="w-10 h-10 rounded-lg bg-[#151632] border border-purple-500/20 flex items-center justify-center hover:bg-gradient-to-r hover:from-[#5f5fff] hover:to-[#a855f7] transition-all duration-300"
+                      className={`w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gradient-to-r hover:from-primary-500 hover:to-accent-500 transition-all duration-300 ${
+                        theme === 'dark'
+                          ? 'bg-[#161B22] border-primary-500/20'
+                          : 'bg-white border-primary-500/30 shadow-sm'
+                      }`}
                     >
-                      <span className="text-xs font-bold">{social.name[0]}</span>
+                      <span className={`text-xs font-bold ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{social.name[0]}</span>
                     </motion.a>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="text-center pt-8 border-t border-purple-500/20">
-              <p className="text-gray-400">Copyright © 2025 Auray. All rights reserved.</p>
+            <div className={`text-center pt-8 border-t ${
+              theme === 'dark' ? 'border-primary-500/20' : 'border-primary-500/30'
+            }`}>
+              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+                Copyright © 2025 Auray. All rights reserved.
+              </p>
             </div>
           </div>
         </footer>

@@ -74,8 +74,8 @@ export default function App({ Component, pageProps, router }: AppProps) {
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
-      // Default to dark theme
-      setTheme('dark');
+      // Default to light theme
+      setTheme('light');
     }
   }, [setTheme]);
 
@@ -102,7 +102,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </Head>
       
       {shouldShowLayout ? (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <div className="min-h-screen bg-[#F7FAFC] dark:bg-[#0D1117] transition-colors duration-200">
           <Header />
           
           {/* Main Content Area */}

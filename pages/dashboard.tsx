@@ -130,7 +130,7 @@ const Dashboard: NextPage = () => {
 
               <button
                 onClick={() => router.push('/call')}
-                className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="group relative overflow-hidden bg-gradient-to-br from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">

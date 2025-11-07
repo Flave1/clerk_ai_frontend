@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import apiClient from '@/lib/api';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface ConnectedIntegration {
   id: string;
@@ -43,6 +44,7 @@ const ConnectedAppsPage: NextPage = () => {
     isOpen: false,
     integration: null,
   });
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // Load connected integrations
   useEffect(() => {
@@ -91,6 +93,7 @@ const ConnectedAppsPage: NextPage = () => {
     if (!disconnectDialog.integration) return;
 
     try {
+      setIsDisconnecting(true);
       await apiClient.disconnectIntegration(disconnectDialog.integration.integration_id);
       toast.success(`${disconnectDialog.integration.name} disconnected successfully!`);
       
@@ -104,6 +107,8 @@ const ConnectedAppsPage: NextPage = () => {
     } catch (error: any) {
       console.error('Failed to disconnect integration:', error);
       toast.error(error?.response?.data?.detail || 'Failed to disconnect integration');
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -250,40 +255,19 @@ const ConnectedAppsPage: NextPage = () => {
         )}
 
         {/* Disconnect Confirmation Dialog */}
-        {disconnectDialog.isOpen && disconnectDialog.integration && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                  Disconnect {disconnectDialog.integration.name}?
-                </h3>
-              </div>
-              
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Are you sure you want to disconnect {disconnectDialog.integration.name}? 
-                You will need to reconnect it to use its features again.
-              </p>
-              
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={handleDisconnectCancel}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDisconnectConfirm}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Disconnect
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          isOpen={disconnectDialog.isOpen}
+          onClose={handleDisconnectCancel}
+          onConfirm={handleDisconnectConfirm}
+          title={disconnectDialog.integration ? `Disconnect ${disconnectDialog.integration.name}?` : 'Disconnect Integration?'}
+          message={disconnectDialog.integration 
+            ? `Are you sure you want to disconnect ${disconnectDialog.integration.name}? You will need to reconnect it to use its features again.`
+            : 'Are you sure you want to disconnect this integration?'}
+          confirmText="Disconnect"
+          cancelText="Cancel"
+          confirmButtonColor="red"
+          isLoading={isDisconnecting}
+        />
       </div>
     </>
   );
