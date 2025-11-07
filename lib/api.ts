@@ -285,10 +285,10 @@ class ApiClient {
     voice_id: string;
     bot_name: string;
   }, apiKey?: string): Promise<JoinMeetingResponse> {
-    // Webhook endpoints are at /v1/api.auray.net (not /api/v1)
+    // Webhook endpoints are at /v1/api.aurray.net (not /api/v1)
     // Use /api/v1/ prefix to go through Next.js API proxy
-    // The proxy will forward /api/v1/api.auray.net/* → backend /v1/api.auray.net/*
-    const webhookUrl = '/api/v1/api.auray.net/join_meeting';
+    // The proxy will forward /api/v1/api.aurray.net/* → backend /v1/api.aurray.net/*
+    const webhookUrl = '/api/v1/api.aurray.net/join_meeting';
     
     // Use API key if provided, otherwise fall back to access token
     const authHeader = apiKey 

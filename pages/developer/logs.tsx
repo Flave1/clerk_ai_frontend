@@ -8,7 +8,7 @@ const LogsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Logs - AI Receptionist</title>
+        <title>Logs - Aurray</title>
       </Head>
       <Header />
       

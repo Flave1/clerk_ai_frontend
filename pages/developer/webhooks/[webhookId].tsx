@@ -33,29 +33,29 @@ const WebhookDetailPage: NextPage = () => {
   const webhooks: Record<string, any> = {
     join_meeting: {
       name: 'Join Meeting',
-      url: '/v1/api.auray.net/join_meeting',
+      url: '/v1/api.aurray.net/join_meeting',
       method: 'POST',
       description: 'Join a meeting with AI assistant capabilities',
       defaultPayload: {
-        meeting_url: 'https://us04web.zoom.us/wc/75103094141/join?fromPWA=1&pwd=eJkC8PPZLIQKpoWFv90CiKgnKeKZk7.1',
-        type: 'zoom',
+        meeting_url: 'https://teams.live.com/meet/9318960718018?p=J453ke6nEPHvg5kJGq',
+        type: 'teams',
         transcript: true,
         audio_record: false,
         video_record: false,
-        voice_id: 'voice_123',
-        bot_name: 'Auray Bot',
+        voice_id: 'f5HLTX707KIM4SzJYzSz',
+        bot_name: 'Aurray Bot',
         context_id: null,
       },
     },
     voice_profiles: {
       name: 'Get Voice Profiles',
-      url: '/v1/api.auray.net/voice_profiles',
+      url: '/v1/api.aurray.net/voice_profiles',
       method: 'GET',
       description: 'Get a list of available voice profiles for TTS',
     },
     meeting_contexts: {
       name: 'Get Meeting Contexts',
-      url: '/v1/api.auray.net/meeting_contexts',
+      url: '/v1/api.aurray.net/meeting_contexts',
       method: 'GET',
       description: 'Get a list of meeting contexts for the authenticated user',
     },
@@ -82,8 +82,8 @@ const WebhookDetailPage: NextPage = () => {
       setResponse(null);
 
       // Construct the webhook URL for the proxy
-      // webhookInfo.url is like '/v1/api.auray.net/join_meeting'
-      // We need to call it via /api/v1/api.auray.net/join_meeting
+      // webhookInfo.url is like '/v1/api.aurray.net/join_meeting'
+      // We need to call it via /api/v1/api.aurray.net/join_meeting
       const webhookUrl = `/api${webhookInfo.url}`;
       
       const config: any = {
@@ -126,7 +126,7 @@ const WebhookDetailPage: NextPage = () => {
     return (
       <>
         <Head>
-          <title>Webhook Not Found - Auray</title>
+          <title>Webhook Not Found - Aurray</title>
         </Head>
         <Header />
         <div className={`min-h-screen flex items-center justify-center ${
@@ -152,7 +152,7 @@ const WebhookDetailPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{webhookInfo.name} - Auray</title>
+        <title>{webhookInfo.name} - Aurray</title>
       </Head>
       <Header />
       

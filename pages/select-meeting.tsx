@@ -4,9 +4,10 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
-import { ClipboardIcon, RocketLaunchIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ClipboardIcon, RocketLaunchIcon, XMarkIcon, SparklesIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useUIStore } from '@/store';
 import ComingSoonModal from '@/components/ui/ComingSoonModal';
+import { useRouter } from 'next/router';
 
 type PlatformKey = 'clerk' | 'teams' | 'zoom' | 'google_meet';
 
@@ -22,10 +23,10 @@ interface PlatformOption {
 const PLATFORMS: PlatformOption[] = [
 	{
 		key: 'clerk',
-		name: 'Auray Meeting',
+		name: 'Aurray Meeting',
 		image: '/images/logo/logo.png',
 		gradient: 'from-primary-500/20 via-accent-500/10 to-transparent',
-		description: 'Spin up a native Auray environment with real-time AI note-taking, action item tracking, and automated follow-ups built in.',
+		description: 'Spin up a native Aurray environment with real-time AI note-taking, action item tracking, and automated follow-ups built in.',
 	},
 	{
 		key: 'teams',
@@ -39,7 +40,7 @@ const PLATFORMS: PlatformOption[] = [
 		name: 'Zoom',
 		image: '/images/integrations/zoom.png',
 		gradient: 'from-[#38BDF8]/20 via-[#0EA5E9]/10 to-transparent',
-		description: 'Launch a Zoom call with embedded Auray insights so every conversation is searchable, actionable, and archived instantly.',
+		description: 'Launch a Zoom call with embedded Aurray insights so every conversation is searchable, actionable, and archived instantly.',
 	},
 	{
 		key: 'google_meet',
@@ -52,6 +53,7 @@ const PLATFORMS: PlatformOption[] = [
 
 export default function SelectMeetingPage() {
 	const { theme } = useUIStore();
+	const router = useRouter();
 	const [loadingKey, setLoadingKey] = useState<PlatformKey | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [generated, setGenerated] = useState<{ platform: string; meeting_id: string; meeting_url: string } | null>(null);
@@ -125,25 +127,36 @@ export default function SelectMeetingPage() {
 	return (
 		<>
 			<Head>
-				<title>Select Meeting - AI Receptionist</title>
+				<title>Select Meeting - Aurray</title>
 			</Head>
-			<div className={`min-h-screen w-full flex items-center justify-center px-4 py-12 bg-gradient-to-br ${pageBackground} transition-colors duration-300`}>
-				<div className="max-w-5xl w-full">
+			<div className={`min-h-screen w-full bg-gradient-to-br ${pageBackground} transition-colors duration-300`}>
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					<div className="mb-8">
+						<button
+							onClick={() => router.push('/meetings')}
+							className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+						>
+							<ArrowLeftIcon className="h-4 w-4 mr-2" />
+							Back to Meetings
+						</button>
+					</div>
 					<motion.div
 						initial={{ opacity: 0, y: -20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.5 }}
-						className="text-center mb-12"
+						className="mb-12"
 					>
-						<h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-							Start a New Meeting
-						</h1>
-						<p className="text-xl text-gray-600 dark:text-gray-400">
-							Choose your preferred platform to generate a meeting link
-						</p>
+						<div className="flex flex-col text-left">
+							<h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+								Start a New Meeting
+							</h1>
+							<p className="mt-2 text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl">
+								Choose your preferred platform to generate a meeting link
+							</p>
+						</div>
 					</motion.div>
 
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 					{PLATFORMS.map(({ key, name, image, gradient, tag, description }, index) => (
 							<motion.button
 								key={key}
@@ -301,10 +314,11 @@ export default function SelectMeetingPage() {
 
 			{/* Coming Soon Modal for Zoom and Google Meet */}
 			<ComingSoonModal
+				featureName={"Back soon"}
 				isOpen={comingSoonModal.isOpen}
 				onClose={() => setComingSoonModal({ isOpen: false, platformName: '', platformImage: undefined })}
 				title={`${comingSoonModal.platformName} Temporarily Unavailable`}
-				message={`We recently brought down ${comingSoonModal.platformName}. We are working really hard to return it. Please use Auray or Microsoft Teams for your meeting.`}
+				message={`We recently brought down ${comingSoonModal.platformName}. We are working really hard to return it. Please use Aurray or Microsoft Teams for your meeting.`}
 				image={comingSoonModal.platformImage}
 			/>
 		</>

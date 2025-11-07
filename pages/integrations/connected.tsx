@@ -120,7 +120,7 @@ const ConnectedAppsPage: NextPage = () => {
     return (
       <>
         <Head>
-          <title>Connected Apps - Auray</title>
+          <title>Connected Apps - Aurray</title>
         </Head>
         <Header />
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -136,7 +136,7 @@ const ConnectedAppsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Connected Apps - Auray</title>
+        <title>Connected Apps - Aurray</title>
       </Head>
       <Header />
       
@@ -175,7 +175,7 @@ const ConnectedAppsPage: NextPage = () => {
                 No Connected Apps
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                You haven't connected any apps yet. Connect your favorite tools and services to enhance Auray's capabilities.
+                You haven't connected any apps yet. Connect your favorite tools and services to enhance Aurray's capabilities.
               </p>
               <button
                 onClick={() => router.push('/integrations')}

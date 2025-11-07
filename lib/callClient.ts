@@ -1,5 +1,5 @@
 /**
- * Real-time call client for AI Receptionist
+ * Real-time call client for Aurray
  * Connects to the RT-Gateway WebSocket for live audio conversations
  */
 import { v4 as uuidv4 } from 'uuid';
@@ -292,7 +292,7 @@ class CallClient {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('Connected to AI Receptionist');
+      console.log('Connected to Aurray');
       this.isConnected = true;
       this.connectionState = 'connected';
       this.reconnectAttempts = 0;
@@ -304,14 +304,14 @@ class CallClient {
       // Send initial system message
       this.emitMessage({
         type: 'system_message',
-        content: 'Connected to AI Receptionist. How can I help you today?',
+        content: 'Connected to Aurray. How can I help you today?',
         timestamp: new Date(),
         conversationId: this.conversationId!,
       });
     };
 
     this.ws.onclose = (event) => {
-      console.log('Disconnected from AI Receptionist:', event.code, event.reason);
+      console.log('Disconnected from Aurray:', event.code, event.reason);
       this.isConnected = false;
       this.connectionState = 'disconnected';
       this.updateStatus();

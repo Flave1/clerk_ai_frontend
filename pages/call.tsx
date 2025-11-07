@@ -60,8 +60,8 @@ const CallPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>AI Receptionist Call - Live Demo</title>
-        <meta name="description" content="Test the AI Receptionist in real-time" />
+        <title>Aurray Call - Live Demo</title>
+        <meta name="description" content="Test the Aurray in real-time" />
       </Head>
 
       <Header />

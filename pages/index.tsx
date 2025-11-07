@@ -102,13 +102,13 @@ export default function Landing() {
   const steps = [
     {
       number: '01',
-      title: 'Connect Auray to your workflow',
-      description: 'Invite Auray to your meeting as a participant, or integrate directly into your applications using our powerful API.',
+      title: 'Connect Aurray to your workflow',
+      description: 'Invite Aurray to your meeting as a participant, or integrate directly into your applications using our powerful API.',
       icon: LinkIcon,
     },
     {
       number: '02',
-      title: 'Auray listens, speaks, and records insights',
+      title: 'Aurray listens, speaks, and records insights',
       description: 'AI participates actively, taking notes, asking questions, and contributing meaningfully.',
       icon: SparklesIcon,
     },
@@ -160,7 +160,7 @@ export default function Landing() {
 
   const testimonials = [
     {
-      quote: 'Auray has transformed how I manage meetings. I never miss important details anymore.',
+      quote: 'Aurray has transformed how I manage meetings. I never miss important details anymore.',
       author: 'Sarah Chen',
       role: 'Product Manager',
       company: 'TechFlow',
@@ -192,8 +192,8 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>Auray - Your Voice in Every Meeting</title>
-        <meta name="description" content="Auray joins your meetings, listens, speaks, and acts — just like you." />
+        <title>Aurray - Your Voice in Every Meeting</title>
+        <meta name="description" content="Aurray joins your meetings, listens, speaks, and acts — just like you." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo/logo.png" type="image/png" />
         <link rel="shortcut icon" href="/images/logo/logo.png" type="image/png" />
@@ -222,7 +222,7 @@ export default function Landing() {
                 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
                 style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}
               >
-                AURAY
+                AURRAY
               </motion.div>
               <div className="hidden md:flex space-x-8">
                 {['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map(
@@ -340,7 +340,7 @@ export default function Landing() {
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}
               >
-                Auray joins your meetings, listens, speaks, and acts — just like you.
+                Aurray joins your meetings, listens, speaks, and acts — just like you.
               </motion.p>
 
               <motion.div
@@ -636,7 +636,7 @@ export default function Landing() {
               <p className={`text-xl max-w-2xl mx-auto ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                See what people are saying about Auray.
+                See what people are saying about Aurray.
               </p>
             </motion.div>
 
@@ -716,7 +716,7 @@ export default function Landing() {
                   viewport={{ once: true }}
                   className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
                 >
-                  Auray
+                  Aurray
                 </motion.div>
                 <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                   Your voice in every meeting. AI-powered meeting assistance for modern teams.
@@ -773,7 +773,7 @@ export default function Landing() {
               theme === 'dark' ? 'border-primary-500/20' : 'border-primary-500/30'
             }`}>
               <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Copyright © 2025 Auray. All rights reserved.
+                Copyright © 2025 Aurray. All rights reserved.
               </p>
             </div>
           </div>

@@ -123,7 +123,7 @@ export default function Register() {
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.isNetworkError) {
-        errorMessage = `Unable to connect to server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`;
+        errorMessage = `Unable to connect to server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL}`;
       }
       
       toast.error(errorMessage);
@@ -147,7 +147,7 @@ export default function Register() {
   return (
     <>
       <Head>
-        <title>Sign Up - Auray</title>
+        <title>Sign Up - Aurray</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -178,7 +178,7 @@ export default function Register() {
               transition={{ delay: 0.2 }}
               className="text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-2"
             >
-              Auray
+              Aurray
             </motion.h1>
             <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
               Create your account to get started

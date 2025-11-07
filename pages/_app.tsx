@@ -95,8 +95,8 @@ export default function App({ Component, pageProps, router }: AppProps) {
   return (
     <>
       <Head>
-        <title>AI Receptionist Dashboard</title>
-        <meta name="description" content="AI Receptionist and Meeting Assistant Dashboard" />
+        <title>Aurray Dashboard</title>
+        <meta name="description" content="Aurray and Meeting Assistant Dashboard" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

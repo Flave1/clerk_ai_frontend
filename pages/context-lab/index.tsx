@@ -52,7 +52,7 @@ const ContextLabPage: NextPage = () => {
     return (
       <>
         <Head>
-          <title>Context Lab - Auray</title>
+          <title>Context Lab - Aurray</title>
         </Head>
         <Header />
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -68,7 +68,7 @@ const ContextLabPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Context Lab - Auray</title>
+        <title>Context Lab - Aurray</title>
       </Head>
 
       <Header />
@@ -80,7 +80,7 @@ const ContextLabPage: NextPage = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Context Lab</h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Customize how Auray behaves in different meeting scenarios.
+                Customize how Aurray behaves in different meeting scenarios.
               </p>
             </div>
             
@@ -109,8 +109,8 @@ const ContextLabPage: NextPage = () => {
               
               {/* Description */}
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
-                Create meeting contexts to define how Auray should behave in different scenarios. 
-                Each context sets the voice, tone, role, and tools Auray uses for that type of meeting.
+                Create meeting contexts to define how Aurray should behave in different scenarios. 
+                Each context sets the voice, tone, role, and tools Aurray uses for that type of meeting.
               </p>
               
               {/* Create Button */}
@@ -171,7 +171,7 @@ const ContextLabPage: NextPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {context.voice_id === 'default' ? "Auray's Voice (Default)" : context.voice_id}
+                          {context.voice_id === 'default' ? "Aurray's Voice (Default)" : context.voice_id}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

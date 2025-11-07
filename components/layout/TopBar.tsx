@@ -40,7 +40,7 @@ export default function TopBar() {
               {getGreeting()}, {userName}!
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Welcome back to Auray
+              Welcome back to Aurray
             </p>
           </div>
         </div>

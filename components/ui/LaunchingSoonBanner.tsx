@@ -24,7 +24,7 @@ const LaunchingSoonBanner: React.FC<LaunchingSoonBannerProps> = ({ onJoinWaitlis
         <div className="flex-1">
           <h4 className="font-semibold text-gray-900 dark:text-white mb-1">We're Launching Soon! 🚀</h4>
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-3">
-            Be among the first to experience Auray. Join our early access program and get notified when we launch.
+            Be among the first to experience Aurray. Join our early access program and get notified when we launch.
           </p>
           <motion.button
             whileHover={{ scale: 1.02 }}

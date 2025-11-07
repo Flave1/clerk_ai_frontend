@@ -66,7 +66,7 @@ const ActionsPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Actions - AI Receptionist</title>
+        <title>Actions - Aurray</title>
       </Head>
       <Header />
       

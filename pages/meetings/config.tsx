@@ -193,7 +193,7 @@ const MeetingConfigPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Meeting Configuration - AI Receptionist</title>
+        <title>Meeting Configuration - Aurray</title>
       </Head>
 
       <Header />

@@ -208,7 +208,7 @@ const LiveKitCallInterface: React.FC<LiveKitCallInterfaceProps> = ({ onCallEnd }
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">AI Receptionist Call (LiveKit)</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Aurray Call (LiveKit)</h2>
           <p className={`text-sm ${getConnectionColor()}`}>
             {getConnectionStatus()}
             {conversationId && (

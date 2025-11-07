@@ -78,7 +78,7 @@ const UsersPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Users - AI Receptionist</title>
+        <title>Users - Aurray</title>
       </Head>
       <Header />
       

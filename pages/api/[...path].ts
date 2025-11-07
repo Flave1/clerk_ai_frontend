@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Remove trailing slash from BACKEND_URL to avoid double slashes
 //http://3.235.168.161
-const BACKEND_URL = (process.env.BACKEND_URL || 'http://3.235.199.221:8000').replace(/\/$/, '');
+const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,11 +27,11 @@ export default async function handler(
     console.log(`[API Proxy] ${req.method} /api/${path}`);
   }
 
-  // Handle special webhook paths like /api/v1/api.auray.net/*
-  // These should go to /v1/api.auray.net/* on backend
+  // Handle special webhook paths like /api/v1/api.aurray.net/*
+  // These should go to /v1/api.aurray.net/* on backend
   let backendPath: string;
-  if (path.startsWith('v1/api.auray.net/')) {
-    // Webhook path, use as-is (e.g., v1/api.auray.net/join_meeting)
+  if (path.startsWith('v1/api.aurray.net/')) {
+    // Webhook path, use as-is (e.g., v1/api.aurray.net/join_meeting)
     backendPath = path;
   } else if (path.startsWith('v1/')) {
     // Already has v1 prefix, use as-is

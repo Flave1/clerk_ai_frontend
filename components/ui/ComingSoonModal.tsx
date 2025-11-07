@@ -21,7 +21,7 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
   featureName,
   image
 }) => {
-  const defaultTitle = featureName ? `${featureName} Coming Soon` : 'Coming Soon';
+  const defaultTitle = featureName ? `${featureName}` : 'Coming Soon';
   const defaultMessage = message || "We're working hard to bring you this feature. Stay tuned for updates!";
   // Prevent body scroll when modal is open
   useEffect(() => {

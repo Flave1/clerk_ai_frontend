@@ -99,7 +99,7 @@ const Dashboard: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Dashboard - Auray</title>
+        <title>Dashboard - Aurray</title>
       </Head>
 
       <Header />

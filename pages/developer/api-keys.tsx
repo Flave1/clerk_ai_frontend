@@ -146,7 +146,7 @@ const ApiKeysPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>API Keys - Auray</title>
+        <title>API Keys - Aurray</title>
       </Head>
       <Header />
       
@@ -160,7 +160,7 @@ const ApiKeysPage: NextPage = () => {
                 API Keys
               </h1>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Manage your API keys for programmatic access to Auray
+                Manage your API keys for programmatic access to Aurray
               </p>
             </div>
             <button
