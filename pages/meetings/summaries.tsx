@@ -292,7 +292,7 @@ const MeetingSummariesPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Meeting Summaries - AI Receptionist</title>
+        <title>Meeting Summaries - Aurray</title>
       </Head>
 
       <Header />

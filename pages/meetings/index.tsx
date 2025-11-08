@@ -13,7 +13,8 @@ import {
   CogIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PhoneIcon
 } from '@heroicons/react/24/outline';
 import { useMeetingStore } from '@/store';
 import apiClient from '@/lib/api';
@@ -261,6 +262,26 @@ function MeetingFilters({
             </select>
           </div>
         </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Related Pages</h4>
+          <div className="flex flex-col gap-2">
+            <Link
+              href="/meetings/config"
+              className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <CogIcon className="h-4 w-4 mr-2" />
+              Configuration
+            </Link>
+            <Link
+              href="/meetings/summaries"
+              className="inline-flex w-full items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            >
+              <DocumentTextIcon className="h-4 w-4 mr-2" />
+              Summaries
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -353,7 +374,7 @@ const MeetingsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Meetings - AI Receptionist</title>
+        <title>Meetings - Aurray</title>
       </Head>
 
       <Header />
@@ -370,17 +391,10 @@ const MeetingsPage: NextPage = () => {
             </div>
             
             <div className="flex space-x-3">
-              <Link href="/meetings/config">
-                <button className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <CogIcon className="h-4 w-4 mr-2" />
-                  Configuration
-                </button>
-              </Link>
-              
-              <Link href="/meetings/summaries">
+              <Link href="/select-meeting">
                 <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
-                  <DocumentTextIcon className="h-4 w-4 mr-2" />
-                  Summaries
+                  <PhoneIcon className="h-4 w-4 mr-2" />
+                  Start Meeting
                 </button>
               </Link>
             </div>

@@ -15,7 +15,7 @@ import apiClient from '@/lib/api';
 
 // Voice options - for now, only Default Voice is available
 const VOICE_OPTIONS = [
-  { id: 'default', name: "Alloy ", provider: 'Auray Default' },
+  { id: 'default', name: "Alloy ", provider: 'Aurray Default' },
 ];
 
 interface ConnectedTool {
@@ -148,7 +148,7 @@ Once the meeting ends, summarize the important details, including next steps, de
   return (
     <>
       <Head>
-        <title>Create Meeting Context - Auray</title>
+        <title>Create Meeting Context - Aurray</title>
       </Head>
 
       <Header />
@@ -165,7 +165,7 @@ Once the meeting ends, summarize the important details, including next steps, de
           
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Create Meeting Context</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Configure how Auray behaves in this meeting context.
+            Configure how Aurray behaves in this meeting context.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ Once the meeting ends, summarize the important details, including next steps, de
               required
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Unique identifier for this context. Can be displayed as the context name Auray uses when joining meetings.
+              Unique identifier for this context. Can be displayed as the context name Aurray uses when joining meetings.
             </p>
           </div>
 
@@ -219,7 +219,7 @@ Once the meeting ends, summarize the important details, including next steps, de
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Select which voice profile Auray uses. You can preview voices or create a custom voice profile.
+              Select which voice profile Aurray uses. You can preview voices or create a custom voice profile.
             </p>
           </div>
 
@@ -233,11 +233,11 @@ Once the meeting ends, summarize the important details, including next steps, de
               onChange={(e) => handleInputChange('context_description', e.target.value)}
               rows={10}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm min-h-[240px]"
-              placeholder="Define Auray's behavior, tone, and goals for this context. e.g., Be concise, data-driven, and persuasive when talking to clients."
+              placeholder="Define Aurray's behavior, tone, and goals for this context. e.g., Be concise, data-driven, and persuasive when talking to clients."
               required
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              This acts like a system prompt for the AI during meetings. Tell your bot what to do and what not to do, how Auray should behave, and what goals to achieve.
+              This acts like a system prompt for Aurray during meetings. Tell your bot what to do and what not to do, how Aurray should behave, and what goals to achieve.
             </p>
           </div>
 
@@ -256,7 +256,7 @@ Once the meeting ends, summarize the important details, including next steps, de
               <option value="presenter">Presenter (lead discussion, explain slides, answer questions)</option>
             </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Define how Auray should behave in the meeting.
+              Define how Aurray should behave in the meeting.
             </p>
           </div>
 
@@ -381,7 +381,7 @@ Once the meeting ends, summarize the important details, including next steps, de
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                  Choose which connected tools Auray can use in this context.
+                  Choose which connected tools Aurray can use in this context.
                 </p>
               </>
             )}

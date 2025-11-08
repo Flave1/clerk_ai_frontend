@@ -201,7 +201,7 @@ const IntegrationsPage: NextPage = () => {
     return (
       <>
         <Head>
-          <title>Integrations - Auray</title>
+          <title>Integrations - Aurray</title>
         </Head>
         <Header />
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -217,7 +217,7 @@ const IntegrationsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Integrations - Auray</title>
+        <title>Integrations - Aurray</title>
       </Head>
       <Header />
       
@@ -235,7 +235,7 @@ const IntegrationsPage: NextPage = () => {
               </button>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Integrations</h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Connect your favorite tools and services to enhance Auray's capabilities.
+                Connect your favorite tools and services to enhance Aurray's capabilities.
               </p>
             </div>
           </div>

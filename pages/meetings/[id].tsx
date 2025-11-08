@@ -355,7 +355,7 @@ const MeetingDetailPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{meeting.title} - AI Receptionist</title>
+        <title>{meeting.title} - Aurray</title>
       </Head>
 
       <Header />

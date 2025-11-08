@@ -27,7 +27,6 @@ import { useAuth } from '@/hooks/useAuth';
 
 const mainNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
-  { name: 'Start Meeting', href: '/select-meeting', icon: PhoneIcon },
   { name: 'Meetings', href: '/meetings', icon: VideoCameraIcon },
   { name: 'Voice Profile', href: '/voice-profile', icon: MicrophoneIcon },
   { name: 'Context Lab', href: '/context-lab', icon: BeakerIcon },
@@ -96,7 +95,7 @@ export default function Header() {
               <div className="h-8 w-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Auray</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Aurray</span>
             </Link>
             <button
               onClick={() => setSidebarCollapsed(true)}

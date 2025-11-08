@@ -22,21 +22,21 @@ const WebhooksIndexPage: NextPage = () => {
     {
       id: 'voice_profiles',
       name: 'Get Voice Profiles',
-      url: '/v1/api.auray.net/voice_profiles',
+      url: '/v1/api.aurray.net/voice_profiles',
       method: 'GET',
       description: 'Get a list of available voice profiles for TTS',
     },
     {
       id: 'meeting_contexts',
       name: 'Get Meeting Contexts',
-      url: '/v1/api.auray.net/meeting_contexts',
+      url: '/v1/api.aurray.net/meeting_contexts',
       method: 'GET',
       description: 'Get a list of meeting contexts for the authenticated user',
     },
     {
       id: 'join_meeting',
       name: 'Join Meeting',
-      url: '/v1/api.auray.net/join_meeting',
+      url: '/v1/api.aurray.net/join_meeting',
       method: 'POST',
       description: 'Join a meeting with AI assistant capabilities',
     },
@@ -49,7 +49,7 @@ const WebhooksIndexPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Available Webhooks - Auray</title>
+        <title>Available Webhooks - Aurray</title>
       </Head>
       <Header />
       

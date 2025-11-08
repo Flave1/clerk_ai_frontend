@@ -1,6 +1,6 @@
-# AI Receptionist Frontend
+# Aurray Frontend
 
-A modern Next.js dashboard for the AI Receptionist and Meeting Assistant system.
+A modern Next.js dashboard for the Aurray and Meeting Assistant system.
 
 ## Features
 

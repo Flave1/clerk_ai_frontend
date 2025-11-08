@@ -75,7 +75,7 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Login - Auray</title>
+        <title>Login - Aurray</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -106,7 +106,7 @@ export default function Login() {
               transition={{ delay: 0.2 }}
               className="text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-2"
             >
-              Auray
+              Aurray
             </motion.h1>
             <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
               Welcome back! Sign in to continue.

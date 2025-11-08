@@ -8,7 +8,7 @@ const NotificationsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Notifications - AI Receptionist</title>
+        <title>Notifications - Aurray</title>
       </Head>
       <Header />
       

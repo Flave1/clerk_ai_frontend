@@ -49,7 +49,7 @@ const RoomsPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Rooms - AI Receptionist</title>
+        <title>Rooms - Aurray</title>
       </Head>
       <Header />
       

@@ -225,7 +225,7 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 dark:text-white mb-1">We're Launching Soon! 🚀</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                        Be among the first to experience Auray. Join our early access program and get notified when we launch.
+                        Be among the first to experience Aurray. Join our early access program and get notified when we launch.
                       </p>
                     </div>
                   </div>
@@ -243,7 +243,7 @@ const EarlyAccessModal: React.FC<EarlyAccessModalProps> = ({ isOpen, onClose }) 
                     </motion.div>
                     <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">You're on the list! ✨</h4>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">
-                      We'll notify you as soon as Auray is ready.
+                      We'll notify you as soon as Aurray is ready.
                     </p>
                     <button
                       onClick={onClose}

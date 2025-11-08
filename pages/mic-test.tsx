@@ -19,7 +19,7 @@ const MicTestPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Microphone Test - AI Receptionist</title>
+        <title>Microphone Test - Aurray</title>
       </Head>
       
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">

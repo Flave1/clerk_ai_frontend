@@ -8,7 +8,7 @@ const ProfilePage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Profile - AI Receptionist</title>
+        <title>Profile - Aurray</title>
       </Head>
       <Header />
       

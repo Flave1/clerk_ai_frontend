@@ -8,7 +8,7 @@ const SettingsPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Settings - AI Receptionist</title>
+        <title>Settings - Aurray</title>
       </Head>
       <Header />
       

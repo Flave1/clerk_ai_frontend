@@ -7,7 +7,7 @@ const VoiceProfile: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Voice Profile - Auray</title>
+        <title>Voice Profile - Aurray</title>
       </Head>
 
       <Header />
