@@ -160,8 +160,15 @@ const ContextLabPage: NextPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {context.name}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {context.name}
+                          </div>
+                          {context.is_default && (
+                            <span className="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                              Selected
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">

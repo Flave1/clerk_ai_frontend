@@ -21,6 +21,7 @@ import { useAudioRecording } from '@/hooks/useAudioRecording';
 import apiClient from '@/lib/api';
 import InviteModal from './InviteModal';
 import ParticipantList from './ParticipantList';
+import type { MeetingContext } from '@/types';
 
 interface CallInterfaceProps {
   onCallStart?: (conversationId: string) => void;
@@ -46,8 +47,15 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
   
   const [lastSentMessage, setLastSentMessage] = useState<{text: string, timestamp: number} | null>(null);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
-  const [audioQueue, setAudioQueue] = useState<ArrayBuffer[]>([]);
+  const [audioQueue, setAudioQueue] = useState<Array<{ data: ArrayBuffer; format: string }>>([]);
   const [isVoiceMode, setIsVoiceMode] = useState(true); // Pure voice mode vs hybrid mode
+  
+  const [meetingContexts, setMeetingContexts] = useState<MeetingContext[]>([]);
+  const [contextsLoading, setContextsLoading] = useState(false);
+  const [contextsError, setContextsError] = useState<string | null>(null);
+  const [startingContextId, setStartingContextId] = useState<string | null>(null);
+  const [activeContext, setActiveContext] = useState<MeetingContext | null>(null);
+  const [expandedContexts, setExpandedContexts] = useState<Record<string, boolean>>({});
   
   // Meeting room specific state
   const [showChatSidebar, setShowChatSidebar] = useState(false);
@@ -68,11 +76,15 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
 
   // VideoTile Component
   const VideoTile: React.FC<{ participant: typeof participants[0] }> = ({ participant }) => (
-    <div className={`relative bg-gray-800 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-      participant.isSpeaking ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-600'
-    }`}>
+    <div
+      className={`relative rounded-xl border transition-all duration-200 shadow-sm ${
+        participant.isSpeaking
+          ? 'border-blue-500 bg-blue-50/60 shadow-blue-500/10 dark:border-blue-500 dark:bg-blue-900/20'
+          : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40'
+      }`}
+    >
       {/* Video or Avatar Placeholder */}
-      <div className="aspect-video bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+      <div className="aspect-video bg-gray-900 flex items-center justify-center text-gray-400 dark:bg-gray-950">
         {participant.isVideoEnabled ? (
           <div className="w-full h-full bg-gray-700 flex items-center justify-center">
             <VideoCameraIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
@@ -87,8 +99,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
       </div>
       
       {/* Participant Info */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-1 sm:p-2">
-        <div className="flex items-center justify-between">
+      <div className="absolute bottom-0 left-0 right-0 bg-gray-900/80 text-gray-50 p-1 sm:p-2 dark:bg-black/60 dark:text-white">
+          <div className="flex items-center justify-between">
           <span className="text-xs sm:text-sm font-medium truncate">{participant.name}</span>
           <div className="flex items-center space-x-1">
             {participant.isMuted && (
@@ -173,7 +185,13 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
       
       // Handle TTS audio playback with queue management
       if (message.type === 'tts_audio' && message.audioData) {
-        setAudioQueue(prev => [...prev, message.audioData!]);
+        setAudioQueue(prev => [
+          ...prev,
+          {
+            data: message.audioData!,
+            format: message.audioFormat || 'audio/wav',
+          },
+        ]);
       }
     });
 
@@ -199,6 +217,33 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
     }
   }, [audioError]);
 
+  const loadMeetingContexts = useCallback(async () => {
+    try {
+      setContextsLoading(true);
+      setContextsError(null);
+      const data = await apiClient.getMeetingContexts();
+      const sortedContexts = [...data].sort((a, b) => Number(b.is_default) - Number(a.is_default));
+      setMeetingContexts(sortedContexts);
+      setExpandedContexts({});
+    } catch (error) {
+      console.error('Failed to load meeting contexts:', error);
+      setContextsError('Unable to load meeting contexts.');
+    } finally {
+      setContextsLoading(false);
+    }
+  }, []);
+
+  const toggleContextExpansion = (contextId: string) => {
+    setExpandedContexts(prev => ({
+      ...prev,
+      [contextId]: !prev[contextId],
+    }));
+  };
+
+  useEffect(() => {
+    loadMeetingContexts();
+  }, [loadMeetingContexts]);
+
   // Audio queue management
   const playNextAudio = useCallback(async () => {
     if (audioQueue.length === 0 || !audioRef.current || isPlayingTTS) {
@@ -206,10 +251,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
     }
 
     setIsPlayingTTS(true);
-    const audioData = audioQueue[0];
+    const audioItem = audioQueue[0];
     
     try {
-      const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
+      const audioBlob = new Blob([audioItem.data], { type: audioItem.format || 'audio/wav' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
       audioRef.current.src = audioUrl;
@@ -282,23 +327,25 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
     }
   }, [existingConversation, loadingConversation]);
 
-  // Initialize meeting when call starts
+  // Initialize meeting when call starts or session is available
   useEffect(() => {
-    if (status.conversationId && !meetingId) {
-      const newMeetingId = `meeting-${status.conversationId}`;
-      setMeetingId(newMeetingId);
-      setMeetingUrl(`${window.location.origin}/join/${newMeetingId}`);
-      
-      // Update URL to include meeting parameters for the host
-      const url = new URL(window.location.href);
-      url.searchParams.set('meetingId', newMeetingId);
-      url.searchParams.set('participantId', 'host-1');
-      url.searchParams.set('name', 'Meeting Host');
-      url.searchParams.set('isHost', 'true');
-      window.history.replaceState({}, '', url.toString());
-      
-      // Load participants from database
-      loadMeetingParticipants(newMeetingId);
+    if (!meetingId) {
+      const sessionId = callClient.currentSessionId || status.conversationId;
+      if (sessionId) {
+        setMeetingId(sessionId);
+        setMeetingUrl(
+          `${window.location.origin}/standalone-call?meetingId=${encodeURIComponent(sessionId)}`
+        );
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('meetingId', sessionId);
+        url.searchParams.set('participantId', 'host-1');
+        url.searchParams.set('name', 'Meeting Host');
+        url.searchParams.set('isHost', 'true');
+        window.history.replaceState({}, '', url.toString());
+
+        loadMeetingParticipants(sessionId);
+      }
     }
   }, [status.conversationId, meetingId]);
 
@@ -474,21 +521,47 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
     }
   };
 
-  const startCall = async () => {
+  const startCall = async (context?: MeetingContext) => {
     try {
       setIsLoading(true);
-      const conversationId = await callClient.startCall();
-      console.log('Call started with conversation ID:', conversationId);
+      setStartingContextId(context?.id ?? null);
+      const result = await callClient.startCall(context);
+      console.log('Call started with conversation ID:', result.conversationId);
+      setActiveContext(context ?? null);
+
+      const resolvedMeetingId = result.meetingId || callClient.currentSessionId || result.conversationId;
+      if (resolvedMeetingId) {
+        setMeetingId(resolvedMeetingId);
+        const resolvedMeetingUrl =
+          result.meetingUrl ||
+          `${window.location.origin}/standalone-call?meetingId=${encodeURIComponent(resolvedMeetingId)}`;
+        setMeetingUrl(resolvedMeetingUrl);
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('meetingId', resolvedMeetingId);
+        url.searchParams.set('participantId', 'host-1');
+        url.searchParams.set('name', 'Meeting Host');
+        url.searchParams.set('isHost', 'true');
+        window.history.replaceState({}, '', url.toString());
+
+        loadMeetingParticipants(resolvedMeetingId);
+      }
       
       // Notify parent component about call start
       if (onCallStart) {
-        onCallStart(conversationId);
+        onCallStart(result.conversationId);
+      }
+
+      if (result.meetingUiUrl) {
+        window.location.href = result.meetingUiUrl;
+        return;
       }
     } catch (error) {
       console.error('Failed to start call:', error);
       alert('Failed to start call. Please try again.');
     } finally {
       setIsLoading(false);
+      setStartingContextId(null);
     }
   };
 
@@ -512,6 +585,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
         onCallEnd(status.conversationId);
       }
       setMessages([]);
+      setActiveContext(null);
       
       // Clear query parameters from URL
       const url = new URL(window.location.href);
@@ -538,6 +612,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
       
       // End the call for this participant
       await callClient.endCall();
+      setActiveContext(null);
       
       // Clear query parameters from URL
       const url = new URL(window.location.href);
@@ -602,19 +677,22 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
   };
 
   const toggleMute = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
+    const shouldRecord = !isRecording;
+
+    if (shouldRecord) {
       toggleRecording();
+    } else {
+      stopRecording();
     }
-    
-    // Broadcast participant update via WebSocket
+
     if (status.isConnected) {
-      callClient.sendMessage(JSON.stringify({
-        type: 'participant_update',
-        participantId: 'user-1',
-        updates: { isMuted: !isRecording }
-      }));
+      callClient.sendMessage(
+        JSON.stringify({
+          type: 'participant_update',
+          participantId: 'user-1',
+          updates: { isMuted: !shouldRecord },
+        })
+      );
     }
   };
 
@@ -640,37 +718,20 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden dark:border-gray-800 dark:bg-gray-950">
       {/* Hidden audio element for TTS playback */}
-      <audio ref={audioRef} style={{ display: 'none' }} />
+      <audio ref={audioRef} className="hidden" />
       
       {/* Main Meeting Area */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-800 border-b border-gray-700">
-          <div className="mb-2 sm:mb-0">
-            <h2 className="text-base sm:text-lg font-semibold text-white">AI Meeting Room</h2>
-            <p className={`text-xs sm:text-sm ${getStatusColor()}`}>
-              {loadingConversation ? 'Loading conversation...' : getStatusText()}
-              {status.conversationId && (
-                <span className="ml-1 sm:ml-2 text-gray-400">
-                  (ID: {status.conversationId.slice(0, 8)}...)
-                </span>
-              )}
-              {existingConversation && !loadingConversation && existingConversation.status && (
-                <span className="ml-1 sm:ml-2 text-blue-400">
-                  (Existing: {existingConversation.status})
-                </span>
-              )}
-            </p>
-          </div>
-          
+        <div className="flex items-center justify-end px-4 py-3 sm:px-6 sm:py-4 bg-gray-50 border-b border-gray-200 dark:bg-gray-900/60 dark:border-gray-800">
           <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Invite Button */}
             {status.isCallActive && meetingId && (
               <button
                 onClick={() => setShowInviteModal(true)}
-                className="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
+                className="p-2 rounded-lg bg-green-600 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900"
                 title="Invite Participants"
               >
                 <ShareIcon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -681,7 +742,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
             {status.isCallActive && (
               <button
                 onClick={() => setShowParticipantList(true)}
-                className="p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+                className="p-2 rounded-lg bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900"
                 title="View Participants"
               >
                 <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -693,8 +754,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
               onClick={() => setShowChatSidebar(!showChatSidebar)}
               className={`p-2 rounded-lg transition-colors ${
                 showChatSidebar 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900'
               }`}
               title="Toggle Chat"
             >
@@ -703,20 +764,22 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
             
             {/* Call Controls */}
             {!status.isCallActive ? (
-              <button
-                onClick={startCall}
-                disabled={isLoading}
-                className="flex items-center space-x-1 sm:space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
-              >
-                <PhoneIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline">{isLoading ? 'Starting...' : 'Start Meeting'}</span>
-                <span className="xs:hidden">{isLoading ? 'Starting...' : 'Start'}</span>
-              </button>
+              meetingContexts.length === 0 ? (
+                <button
+                  onClick={() => startCall()}
+                  disabled={isLoading}
+                  className="flex items-center space-x-1 rounded-lg bg-green-600 px-3 py-2 text-sm text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 disabled:cursor-not-allowed disabled:bg-green-400/70 sm:space-x-2 sm:px-4 sm:text-base dark:focus:ring-offset-gray-900"
+                >
+                  <PhoneIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">{isLoading ? 'Starting...' : 'Start Meeting'}</span>
+                  <span className="xs:hidden">{isLoading ? 'Starting...' : 'Start'}</span>
+                </button>
+              ) : null
             ) : (
               isHost() ? (
                 <button
                   onClick={endCall}
-                  className="flex items-center space-x-1 sm:space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
+                  className="flex items-center space-x-1 rounded-lg bg-red-600 px-3 py-2 text-sm text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 sm:space-x-2 sm:px-4 sm:text-base dark:focus:ring-offset-gray-900"
                 >
                   <PhoneIconSolid className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden xs:inline">End Meeting</span>
@@ -725,7 +788,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
               ) : (
                 <button
                   onClick={leaveMeeting}
-                  className="flex items-center space-x-1 sm:space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
+                  className="flex items-center space-x-1 rounded-lg bg-orange-500 px-3 py-2 text-sm text-white shadow-sm transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 sm:space-x-2 sm:px-4 sm:text-base dark:focus:ring-offset-gray-900"
                 >
                   <PhoneIconSolid className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden xs:inline">Leave Meeting</span>
@@ -737,14 +800,94 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
         </div>
 
         {/* Video Grid */}
-        <div className="flex-1 p-2 sm:p-4 min-h-0">
+        <div className="flex-1 min-h-0 px-3 py-4 sm:px-6 sm:py-6 bg-gray-50 dark:bg-gray-900/40">
           {!status.isCallActive ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-gray-400 px-4">
-                <VideoCameraIcon className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-500" />
-                <p className="text-lg sm:text-xl font-medium mb-2">Ready to start meeting</p>
-                <p className="text-sm">Click "Start Meeting" to begin your AI meeting room</p>
-              </div>
+            <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-3">
+              {contextsLoading && (
+                <div className="flex h-40 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                  Loading contexts...
+                </div>
+              )}
+
+              {contextsError && !contextsLoading && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-200">
+                  {contextsError}
+                </div>
+              )}
+
+              {!contextsLoading && !contextsError && meetingContexts.length === 0 && (
+                <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                  Add a meeting context to get started.
+                </div>
+              )}
+
+              {!contextsLoading && !contextsError && meetingContexts.length > 0 && (
+                <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+                  {meetingContexts.map((context) => (
+                    <div
+                      key={context.id}
+                      className={`flex flex-col gap-4 rounded-2xl border p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md ${
+                        context.is_default
+                          ? 'border-primary-300 bg-primary-50/60 dark:border-primary-500/40 dark:bg-primary-900/20'
+                          : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
+                      }`}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                              {context.name}
+                            </h4>
+                            {context.is_default && (
+                              <span className="inline-flex items-center rounded-full bg-primary-600/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-500/20 dark:text-primary-200">
+                                Selected
+                              </span>
+                            )}
+                            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                              {context.meeting_role}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                              Tone: {context.tone_personality === 'custom' && context.custom_tone
+                                ? context.custom_tone
+                                : context.tone_personality}
+                            </span>
+                          </div>
+                          <p className={`text-sm leading-relaxed text-gray-600 dark:text-gray-300 ${expandedContexts[context.id] ? '' : 'line-clamp-3'}`}>
+                            {context.context_description}
+                          </p>
+                          <button
+                            onClick={() => toggleContextExpansion(context.id)}
+                            className="text-xs font-medium text-blue-600 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-white dark:text-blue-300 dark:hover:text-blue-200 dark:focus:ring-offset-gray-900"
+                          >
+                            {expandedContexts[context.id] ? 'See less' : 'See more'}
+                          </button>
+                          {context.tools_integrations && context.tools_integrations.length > 0 && (
+                            <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                              {context.tools_integrations.map((tool) => (
+                                <span
+                                  key={tool}
+                                  className="rounded-full bg-gray-100 px-2 py-1 font-medium uppercase tracking-wide dark:bg-gray-800"
+                                >
+                                  {tool}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => startCall(context)}
+                            disabled={isLoading}
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-gray-900"
+                          >
+                            {isLoading && startingContextId === context.id ? 'Starting...' : 'Start Now'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className={`grid gap-2 sm:gap-4 h-full ${
@@ -763,10 +906,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
 
         {/* Meeting Controls */}
         {status.isCallActive && (
-          <div className="bg-gray-800 border-t border-gray-700">
+          <div className="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60">
             {/* Microphone Permission Button */}
             {audioError && (
-              <div className="p-3 border-b border-gray-700">
+              <div className="border-b border-gray-200 p-3 dark:border-gray-800 sm:p-4">
                 <button
                   onClick={async () => {
                     const granted = await requestMicrophonePermission();
@@ -774,7 +917,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                       console.log('Microphone permission granted, you can now start recording');
                     }
                   }}
-                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900"
                 >
                   Grant Microphone Permission
                 </button>
@@ -782,16 +925,16 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
             )}
             
             {/* Control Buttons */}
-            <div className="flex items-center justify-center space-x-2 sm:space-x-4 p-3 sm:p-4">
+            <div className="flex items-center justify-center space-x-2 p-3 sm:space-x-4 sm:p-5">
               {/* Mute/Unmute */}
               <button
                 onClick={toggleMute}
                 className={`p-2 sm:p-3 rounded-full transition-all duration-200 ${
                   isRecording
                     ? isSpeaking
-                      ? 'bg-red-500 text-white shadow-lg scale-110'
-                      : 'bg-red-100 text-red-600 hover:bg-red-200'
-                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                      ? 'scale-110 bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      : 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
                 }`}
                 title={isRecording ? (isSpeaking ? 'Mute' : 'Unmute') : 'Unmute'}
               >
@@ -807,8 +950,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                 onClick={toggleVideo}
                 className={`p-2 sm:p-3 rounded-full transition-all duration-200 ${
                   isVideoEnabled
-                    ? 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                    : 'bg-red-600 text-white hover:bg-red-700'
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+                    : 'bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500'
                 }`}
                 title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
               >
@@ -824,8 +967,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                 onClick={toggleScreenShare}
                 className={`p-2 sm:p-3 rounded-full transition-all duration-200 ${
                   isScreenSharing
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
                 }`}
                 title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
               >
@@ -837,8 +980,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                 onClick={() => setIsVoiceMode(!isVoiceMode)}
                 className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors ${
                   isVoiceMode
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
                 }`}
                 title={isVoiceMode ? 'Voice mode (seamless audio)' : 'Hybrid mode (text + audio)'}
               >
@@ -852,25 +995,25 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
 
       {/* Chat Sidebar */}
       {showChatSidebar && (
-        <div className="w-full sm:w-80 bg-gray-800 border-l border-gray-700 flex flex-col h-full lg:h-auto lg:max-h-full">
+        <div className="flex h-full w-full flex-col border-l border-gray-200 bg-white lg:h-auto lg:max-h-full sm:w-80 dark:border-gray-800 dark:bg-gray-950">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-700">
-            <h3 className="text-base sm:text-lg font-semibold text-white">Chat</h3>
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:p-4 dark:border-gray-800 dark:bg-gray-900/60">
+            <h3 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-gray-100">Chat</h3>
             <button
               onClick={() => setShowChatSidebar(false)}
-              className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white"
+              className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-white dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-offset-gray-900"
             >
               <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-h-0">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:space-y-4 sm:py-4">
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="flex h-full items-center justify-center text-gray-400">
                 <div className="text-center">
-                  <ChatBubbleLeftRightIcon className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-gray-500" />
-                  <p className="text-xs sm:text-sm">No messages yet</p>
+                  <ChatBubbleLeftRightIcon className="mx-auto mb-2 h-6 w-6 text-gray-400 sm:h-8 sm:w-8" />
+                  <p className="text-xs text-gray-500 sm:text-sm dark:text-gray-400">No messages yet</p>
                 </div>
               </div>
             ) : (
@@ -881,25 +1024,25 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                     className={`flex ${message.type === 'user_speech' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs sm:max-w-sm px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm ${
+                      className={`max-w-xs rounded-lg px-3 py-2 text-xs sm:max-w-sm sm:text-sm ${
                         message.type === 'user_speech'
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-blue-600 text-white shadow-sm'
                           : message.type === 'ai_response'
-                          ? 'bg-gray-700 text-gray-100'
+                          ? 'bg-gray-100 text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-100'
                           : message.type === 'audio_data'
-                          ? 'bg-purple-600 text-white'
+                          ? 'bg-purple-600 text-white shadow-sm'
                           : message.type === 'tts_audio'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-yellow-600 text-white'
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'bg-yellow-600 text-white shadow-sm'
                       }`}
                     >
-                      <p className="text-xs">{message.content}</p>
+                      <p className="text-xs leading-relaxed sm:text-sm">{message.content}</p>
                       {message.type === 'tts_audio' && (
-                        <p className="text-xs opacity-70 mt-1">
+                        <p className="mt-1 text-xs opacity-70">
                           🔊 {isPlayingTTS ? 'Playing...' : 'Ready'}
                         </p>
                       )}
-                      <p className="text-xs opacity-70 mt-1">
+                      <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:text-xs">
                         {message.timestamp.toLocaleTimeString()}
                       </p>
                     </div>
@@ -909,19 +1052,19 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                 {/* Action Status Indicators */}
                 {actionStatuses.map((action) => (
                   <div key={action.id} className="flex justify-center">
-                    <div className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm flex items-center space-x-2 ${
+                    <div className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium sm:text-sm ${
                       action.status === 'completed' 
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-200'
                         : action.status === 'failed'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-blue-600 text-white'
+                        ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200'
+                        : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
                     }`}>
                       <div className={`w-2 h-2 rounded-full ${
                         action.status === 'completed' 
-                          ? 'bg-green-400'
+                          ? 'bg-green-400 dark:bg-green-300'
                           : action.status === 'failed'
-                          ? 'bg-red-400'
-                          : 'bg-blue-400 animate-pulse'
+                          ? 'bg-red-400 dark:bg-red-300'
+                          : 'bg-blue-400 animate-pulse dark:bg-blue-300'
                       }`} />
                       <span>{action.message}</span>
                     </div>
@@ -934,7 +1077,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
 
           {/* Input Area - Only show in hybrid mode */}
           {status.isConnected && !isVoiceMode && (
-            <div className="border-t border-gray-700 p-3 sm:p-4">
+            <div className="border-t border-gray-200 px-4 py-3 sm:p-4 dark:border-gray-800">
               <div className="flex items-center space-x-2">
                 <input
                   ref={inputRef}
@@ -943,14 +1086,14 @@ const CallInterface: React.FC<CallInterfaceProps> = ({ onCallStart, onCallEnd, e
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-600 rounded-lg px-2 sm:px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-700 text-white placeholder-gray-400 text-sm"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   disabled={!status.isConnected}
                 />
                 
                 <button
                   onClick={sendMessage}
                   disabled={!inputMessage.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:bg-blue-400/70 dark:focus:ring-offset-gray-900"
                 >
                   Send
                 </button>

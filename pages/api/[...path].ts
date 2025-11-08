@@ -46,6 +46,8 @@ export default async function handler(
   
   // Debug logging
   if (process.env.NODE_ENV !== 'production') {
+    console.log(`[API Proxy] Backend URL: ${BACKEND_URL}`);
+    console.log(`[API Proxy] Backend path: ${backendPath}`);
     console.log(`[API Proxy] Forwarding to: ${targetUrl}`);
   }
 
