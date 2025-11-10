@@ -96,7 +96,7 @@ class CallClient {
     if (envUrl && /^https?:\/\//i.test(envUrl)) {
       return envUrl.replace(/\/$/, '');
     }
-    return 'http://localhost:8000';
+    return process.env.BACKEND_URL || '';
   }
 
   // Public methods

@@ -62,7 +62,7 @@ export default function Login() {
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.isNetworkError) {
-        errorMessage = `Unable to connect to server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`;
+        errorMessage = `Unable to connect to server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL}`;
       }
       
       toast.error(errorMessage);
