@@ -48,12 +48,12 @@ export default async function handler(
   
   // Construct target URL (ensure single slash between base URL and path)
   const targetUrl = `${BACKEND_URL}/${backendPath}`;
-  
-  // Debug logging
+ 
+  // Log the backend URL being used on every request for observability
+  console.info(`[API Proxy] Forwarding ${req.method} request to ${targetUrl}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log(`[API Proxy] Backend URL: ${BACKEND_URL}`);
     console.log(`[API Proxy] Backend path: ${backendPath}`);
-    console.log(`[API Proxy] Forwarding to: ${targetUrl}`);
   }
 
   try {

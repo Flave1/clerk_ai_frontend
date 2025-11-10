@@ -4,6 +4,7 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 import type { MeetingContext } from '@/types';
+import axios from '@/lib/axios';
 
 export interface CallMessage {
   type: 'user_speech' | 'ai_response' | 'system_message' | 'audio_data' | 'tts_audio';
@@ -98,10 +99,6 @@ class CallClient {
     return 'http://localhost:8000';
   }
 
-  private get conversationsBaseUrl(): string {
-    return `${this.httpBaseUrl}/conversations`;
-  }
-
   // Public methods
   async startCall(context?: MeetingContext): Promise<{
     conversationId: string;
@@ -125,22 +122,12 @@ class CallClient {
     // Start conversation on backend first to get the real conversation ID
     try {
       const tempConversationId = uuidv4();
-      const response = await fetch(`${this.conversationsBaseUrl}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          room_id: `room-${tempConversationId}`,
-          user_id: tempConversationId,
-          ...(context?.id ? { context_id: context.id } : {}),
-          meeting_platform: 'aurray',
-        })
+      const { data } = await axios.post('/conversations/start', {
+        room_id: `room-${tempConversationId}`,
+        user_id: tempConversationId,
+        ...(context?.id ? { context_id: context.id } : {}),
+        meeting_platform: 'aurray',
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to start conversation');
-      }
-      
-      const data = await response.json();
       this.conversationId = data.conversation_id; // Use the backend-generated conversation ID
       this.meetingId = data.meeting_id ?? null;
       console.log('Backend conversation ID:', this.conversationId);
@@ -190,15 +177,7 @@ class CallClient {
     // Call the backend endpoint first to properly end the conversation
     if (this.conversationId) {
       try {
-        const response = await fetch(`${this.conversationsBaseUrl}/${this.conversationId}/end`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to end conversation: ${response.status}`);
-        }
-        
+        await axios.post(`/conversations/${this.conversationId}/end`);
         console.log('Conversation ended on backend:', this.conversationId);
       } catch (error) {
         console.error('Failed to end conversation on backend:', error);
@@ -225,19 +204,9 @@ class CallClient {
       const userId = uuidv4();
       
       // Join existing conversation on backend
-      const response = await fetch(`${this.conversationsBaseUrl}/${conversationId}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId
-        })
+      const { data } = await axios.post(`/conversations/${conversationId}/join`, {
+        user_id: userId
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to join conversation');
-      }
-      
-      const data = await response.json();
       this.conversationId = data.conversation_id;
       console.log('Joined conversation:', this.conversationId);
       
@@ -258,15 +227,7 @@ class CallClient {
     // Call the backend endpoint to delete the conversation and all related data
     if (this.conversationId) {
       try {
-        const response = await fetch(`${this.conversationsBaseUrl}/${this.conversationId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to delete conversation: ${response.status}`);
-        }
-        
+        await axios.delete(`/conversations/${this.conversationId}`);
         console.log('Conversation deleted on backend:', this.conversationId);
       } catch (error) {
         console.error('Failed to delete conversation on backend:', error);
@@ -933,15 +894,7 @@ class CallClient {
     if (!this.conversationId) return;
     
     try {
-      const response = await fetch(`${this.conversationsBaseUrl}/${this.conversationId}/end`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to end conversation: ${response.status}`);
-      }
-      
+      await axios.post(`/conversations/${this.conversationId}/end`);
       console.log('Conversation ended on backend due to disconnect:', this.conversationId);
     } catch (error) {
       console.error('Failed to end conversation on backend after disconnect:', error);
@@ -1000,15 +953,7 @@ class CallClient {
   // Static method to delete any conversation by ID
   static async deleteConversation(conversationId: string): Promise<void> {
     try {
-      const response = await fetch(`/conversations/${conversationId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to delete conversation: ${response.status}`);
-      }
-      
+      await axios.delete(`/conversations/${conversationId}`);
       console.log('Conversation deleted:', conversationId);
     } catch (error) {
       console.error('Failed to delete conversation:', error);
@@ -1023,17 +968,9 @@ class CallClient {
     failed_deletions: Array<{conversation_id: string; error: string}>;
   }> {
     try {
-      const response = await fetch(`/conversations/bulk-delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation_ids: conversationIds })
+      const { data: result } = await axios.post('/conversations/bulk-delete', {
+        conversation_ids: conversationIds
       });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to bulk delete conversations: ${response.status}`);
-      }
-      
-      const result = await response.json();
       console.log(`Bulk delete completed: ${result.deleted_count}/${result.total_requested} conversations deleted`);
       
       if (result.failed_deletions.length > 0) {

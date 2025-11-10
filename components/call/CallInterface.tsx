@@ -89,9 +89,12 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
       query.set('meetingUrl', meetingUrl);
     }
 
-    // Open meeting room in a new tab
-    const meetingRoomUrl = `${window.location.origin}/meeting-room?${query.toString()}`;
-    window.open(meetingRoomUrl, '_blank');
+    // Navigate to meeting room in the current tab
+    const meetingRoomUrl = `/meeting-room?${query.toString()}`;
+    router.push(meetingRoomUrl).catch((error) => {
+      console.error('Failed to navigate to meeting room:', error);
+      window.location.href = meetingRoomUrl;
+    });
   };
 
   const startCall = async (context?: MeetingContext) => {
