@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 
 const CallPage: NextPage = () => {
   const router = useRouter();
-  const [recentConversationId, setRecentConversationId] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [existingConversation, setExistingConversation] = useState<{ status?: string; turn_count?: number; started_at?: string; summary?: string } | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
@@ -37,15 +36,6 @@ const CallPage: NextPage = () => {
     setCurrentConversationId(conversationId);
     // Update URL with conversation ID
     router.push(`/call?conversation=${conversationId}`, undefined, { shallow: true });
-  };
-
-  const handleCallEnd = (conversationId: string) => {
-    setRecentConversationId(conversationId);
-    setCurrentConversationId(null);
-    // Update URL to remove conversation ID
-    router.push('/call', undefined, { shallow: true });
-    // Optionally redirect to conversation details
-    // router.push(`/conversations/${conversationId}`);
   };
 
   // Handle URL parameters on page load
@@ -92,7 +82,6 @@ const CallPage: NextPage = () => {
             <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6 lg:p-8">
               <CallInterface
                 onCallStart={handleCallStart}
-                onCallEnd={handleCallEnd}
                 existingConversation={existingConversation}
                 loadingConversation={loadingConversation}
               />
@@ -148,20 +137,7 @@ const CallPage: NextPage = () => {
                 </div>
               )}
 
-              {recentConversationId && (
-                <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-5 text-sm text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100">
-                  <p className="font-medium">Recent call saved</p>
-                  <p className="mt-2">
-                    Review transcripts and actions from your last session.
-                  </p>
-                  <button
-                    onClick={() => router.push(`/conversations/${recentConversationId}`)}
-                    className="mt-4 inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                  >
-                    View conversation
-                  </button>
-                </div>
-              )}
+
             </aside>
           </div>
         </div>
