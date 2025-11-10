@@ -25,8 +25,6 @@ A modern Next.js dashboard for the Aurray and Meeting Assistant system.
 ### Prerequisites
 
 - Node.js 18+ 
-- npm or yarn
-- Backend API running on `http://localhost:8000`
 
 ### Installation
 
@@ -43,8 +41,6 @@ cp .env.example .env.local
 3. Update environment variables if needed:
 ```bash
 # Edit .env.local
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 ### Development
