@@ -132,6 +132,14 @@ class ApiClient {
     await this.client.post(`/meetings/${id}/leave`);
   }
 
+  async botLeft(meetingId: string, sessionId: string, reason?: string): Promise<void> {
+    await this.client.post(`/meetings/${meetingId}/bot-left`, {
+      sessionId,
+      reason: reason || 'user_left',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   async getActiveMeetings(): Promise<Meeting[]> {
     const response = await this.client.get('/meetings/active');
     return response.data;

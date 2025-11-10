@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Remove trailing slash from BACKEND_URL to avoid double slashes
 //http://3.235.168.161
-const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+const BACKEND_URL = (process.env.BACKEND_URL || 'http://44.203.236.62:8000').replace(/\/$/, '');
 
 export default async function handler(
   req: NextApiRequest,
@@ -29,12 +29,17 @@ export default async function handler(
 
   // Handle special webhook paths like /api/v1/api.aurray.net/*
   // These should go to /v1/api.aurray.net/* on backend
+  // Handle RT Gateway routes (conversations, bot, stt, tts, llm) - these are mounted directly
   let backendPath: string;
   if (path.startsWith('v1/api.aurray.net/')) {
     // Webhook path, use as-is (e.g., v1/api.aurray.net/join_meeting)
     backendPath = path;
   } else if (path.startsWith('v1/')) {
     // Already has v1 prefix, use as-is
+    backendPath = path;
+  } else if (path.startsWith('conversations/') || path.startsWith('bot/') || 
+             path.startsWith('stt/') || path.startsWith('tts/') || path.startsWith('llm/')) {
+    // RT Gateway routes are mounted directly (not under api/v1)
     backendPath = path;
   } else {
     // Regular API path, add api/v1 prefix

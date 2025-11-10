@@ -38,8 +38,13 @@ class CallClient {
   private audioInputWs: WebSocket | null = null;
   private audioOutputWs: WebSocket | null = null;
   private sessionId: string | null = null;
+  private meetingId: string | null = null;
   private currentContext: MeetingContext | null = null;
   private isDisconnecting = false;
+  private isReconnectScheduled = false;
+  private readonly defaultSampleRate = 16000;
+  private pendingTtsChunks: ArrayBuffer[] = [];
+  private pendingTtsFormat: string | null = null;
 
   // Event handlers
   private messageHandlers: CallEventHandler[] = [];
@@ -115,7 +120,7 @@ class CallClient {
       meetingId?: string;
       meetingUrl?: string;
       meetingUiUrl?: string;
-    } = { conversationId: '' };
+    } | null = null;
 
     // Start conversation on backend first to get the real conversation ID
     try {
@@ -127,7 +132,7 @@ class CallClient {
           room_id: `room-${tempConversationId}`,
           user_id: tempConversationId,
           ...(context?.id ? { context_id: context.id } : {}),
-          meeting_platform: 'clerk',
+          meeting_platform: 'aurray',
         })
       });
       
@@ -137,6 +142,7 @@ class CallClient {
       
       const data = await response.json();
       this.conversationId = data.conversation_id; // Use the backend-generated conversation ID
+      this.meetingId = data.meeting_id ?? null;
       console.log('Backend conversation ID:', this.conversationId);
       callResult = {
         conversationId: this.conversationId,
@@ -146,9 +152,11 @@ class CallClient {
       };
     } catch (error) {
       console.error('Failed to start conversation on backend:', error);
-      // Fallback to generating our own ID
-      this.conversationId = uuidv4();
-      callResult = { conversationId: this.conversationId };
+      throw error instanceof Error ? error : new Error('Failed to start conversation');
+    }
+
+    if (!callResult) {
+      throw new Error('Conversation start failed without response.');
     }
 
     const sessionId = callResult.meetingId || callResult.conversationId || this.conversationId;
@@ -157,6 +165,9 @@ class CallClient {
     }
 
     this.sessionId = sessionId;
+    if (!this.meetingId && callResult.meetingId) {
+      this.meetingId = callResult.meetingId;
+    }
     this.isCallActive = true;
     this.updateStatus();
 
@@ -169,9 +180,6 @@ class CallClient {
       throw error;
     }
 
-    if (!callResult.conversationId && this.conversationId) {
-      callResult.conversationId = this.conversationId;
-    }
     return callResult;
   }
 
@@ -203,6 +211,7 @@ class CallClient {
     this.disconnect();
     this.conversationId = null;
     this.sessionId = null;
+    this.meetingId = null;
     this.currentContext = null;
     this.updateStatus();
   }
@@ -233,6 +242,7 @@ class CallClient {
       console.log('Joined conversation:', this.conversationId);
       
       this.sessionId = this.conversationId;
+      this.meetingId = null;
       this.isCallActive = true;
       this.updateStatus();
       await this.connectBotSockets(this.sessionId, this.currentContext ?? undefined);
@@ -269,6 +279,7 @@ class CallClient {
     this.disconnect();
     this.conversationId = null;
     this.sessionId = null;
+    this.meetingId = null;
     this.currentContext = null;
     this.updateStatus();
   }
@@ -341,7 +352,11 @@ class CallClient {
     this.pingInterval = setInterval(() => {
       const socket = this.audioOutputWs || this.ws;
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send('ping');
+        try {
+          socket.send(JSON.stringify({ type: 'ping' }));
+        } catch (error) {
+          console.error('Failed to send ping message', error);
+        }
       }
     }, 30000); // Ping every 30 seconds
   }
@@ -481,7 +496,11 @@ class CallClient {
       const handleError = (event: Event) => {
         outputWs.removeEventListener('open', handleOpen);
         outputWs.removeEventListener('error', handleError);
-        reject(new Error(`Failed to connect audio output socket: ${(event as ErrorEvent).message}`));
+        reject(
+          new Error(
+            `Failed to connect audio output socket: ${this.describeSocketError(event)}`,
+          ),
+        );
       };
       outputWs.addEventListener('open', handleOpen);
       outputWs.addEventListener('error', handleError);
@@ -498,7 +517,7 @@ class CallClient {
     const registrationMessage = {
       type: 'bot_registration',
       sessionId,
-      meetingId: sessionId,
+      meetingId: this.meetingId ?? sessionId,
       botName: context?.name ?? 'Web Client',
       platform: 'clerk',
       audioConfig: {
@@ -532,7 +551,11 @@ class CallClient {
       const handleError = (event: Event) => {
         inputWs.removeEventListener('open', handleOpen);
         inputWs.removeEventListener('error', handleError);
-        reject(new Error(`Failed to connect audio input socket: ${(event as ErrorEvent).message}`));
+        reject(
+          new Error(
+            `Failed to connect audio input socket: ${this.describeSocketError(event)}`,
+          ),
+        );
       };
       inputWs.addEventListener('open', handleOpen);
       inputWs.addEventListener('error', handleError);
@@ -559,6 +582,8 @@ class CallClient {
           this.scheduleReconnect();
         }
       }
+      this.pendingTtsChunks = [];
+      this.pendingTtsFormat = null;
     });
 
     ws.addEventListener('error', (event) => {
@@ -566,6 +591,33 @@ class CallClient {
       this.connectionState = 'error';
       this.updateStatus();
     });
+
+    const flushPendingTts = () => {
+      if (this.pendingTtsChunks.length === 0) {
+        return;
+      }
+
+      const mergedBuffer = this.mergeAudioChunks(this.pendingTtsChunks);
+      this.pendingTtsChunks = [];
+
+      if (mergedBuffer.byteLength === 0) {
+        return;
+      }
+
+      const { data: normalizedBuffer, format } = this.normalizeAudioBuffer(
+        mergedBuffer,
+        this.defaultSampleRate,
+      );
+
+      this.emitMessage({
+        type: 'tts_audio',
+        content: `TTS audio: ${normalizedBuffer.byteLength} bytes`,
+        timestamp: new Date(),
+        conversationId: sessionId,
+        audioData: normalizedBuffer,
+        audioFormat: format,
+      });
+    };
 
     ws.addEventListener('message', (event) => {
       try {
@@ -576,6 +628,7 @@ class CallClient {
           try {
             const parsed = JSON.parse(event.data);
             if (parsed.type === 'ai_response' && typeof parsed.content === 'string') {
+              flushPendingTts();
               this.emitMessage({
                 type: 'ai_response',
                 content: parsed.content,
@@ -585,6 +638,7 @@ class CallClient {
               return;
             }
             if (parsed.type === 'transcription' && typeof parsed.content === 'string') {
+              flushPendingTts();
               this.emitMessage({
                 type: 'user_speech',
                 content: parsed.content,
@@ -594,6 +648,7 @@ class CallClient {
               return;
             }
             if (parsed.type === 'tts_complete') {
+              flushPendingTts();
               this.emitMessage({
                 type: 'system_message',
                 content: 'Playback complete.',
@@ -603,6 +658,7 @@ class CallClient {
               return;
             }
           } catch {
+            flushPendingTts();
             this.emitMessage({
               type: 'ai_response',
               content: event.data,
@@ -612,30 +668,122 @@ class CallClient {
             return;
           }
         } else if (event.data instanceof ArrayBuffer) {
-          this.emitMessage({
-            type: 'tts_audio',
-            content: `TTS audio: ${event.data.byteLength} bytes`,
-            timestamp: new Date(),
-            conversationId: sessionId,
-            audioData: event.data,
-            audioFormat: 'audio/wav',
-          });
+          this.pendingTtsChunks.push(event.data.slice(0));
         } else if (event.data instanceof Blob) {
           event.data.arrayBuffer().then((buffer) => {
-            this.emitMessage({
-              type: 'tts_audio',
-              content: `TTS audio: ${buffer.byteLength} bytes`,
-              timestamp: new Date(),
-              conversationId: sessionId,
-              audioData: buffer,
-              audioFormat: event.data.type || 'audio/wav',
-            });
+            this.pendingTtsChunks.push(buffer);
           });
         }
       } catch (error) {
         console.error('Failed to process audio output message', error);
       }
     });
+  }
+
+  private normalizeAudioBuffer(
+    buffer: ArrayBuffer,
+    sampleRate: number,
+  ): { data: ArrayBuffer; format: string } {
+    if (buffer.byteLength >= 4) {
+      const headerBytes = new Uint8Array(buffer, 0, 4);
+      const header = String.fromCharCode(
+        headerBytes[0],
+        headerBytes[1],
+        headerBytes[2],
+        headerBytes[3],
+      );
+
+      if (header === 'RIFF') {
+        return { data: buffer, format: 'audio/wav' };
+      }
+
+      if (header === 'ID3') {
+        return { data: buffer, format: 'audio/mpeg' };
+      }
+
+      if (header === 'OggS') {
+        return { data: buffer, format: 'audio/ogg' };
+      }
+    }
+
+    const wavBuffer = this.convertFloat32PcmToWav(buffer, sampleRate);
+    return { data: wavBuffer, format: 'audio/wav' };
+  }
+
+  private convertFloat32PcmToWav(
+    pcmBuffer: ArrayBuffer,
+    sampleRate: number,
+  ): ArrayBuffer {
+    if (pcmBuffer.byteLength === 0) {
+      return pcmBuffer;
+    }
+
+    const float32Array = new Float32Array(pcmBuffer);
+    const bytesPerSample = 2; // 16-bit PCM
+    const wavBuffer = new ArrayBuffer(44 + float32Array.length * bytesPerSample);
+    const view = new DataView(wavBuffer);
+
+    const writeString = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i += 1) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+      }
+    };
+
+    let offset = 0;
+    writeString(offset, 'RIFF');
+    offset += 4;
+    view.setUint32(offset, 36 + float32Array.length * bytesPerSample, true);
+    offset += 4;
+    writeString(offset, 'WAVE');
+    offset += 4;
+    writeString(offset, 'fmt ');
+    offset += 4;
+    view.setUint32(offset, 16, true); // Subchunk1Size
+    offset += 4;
+    view.setUint16(offset, 1, true); // PCM format
+    offset += 2;
+    view.setUint16(offset, 1, true); // Mono
+    offset += 2;
+    view.setUint32(offset, sampleRate, true);
+    offset += 4;
+    const byteRate = sampleRate * bytesPerSample;
+    view.setUint32(offset, byteRate, true);
+    offset += 4;
+    view.setUint16(offset, bytesPerSample, true); // Block align (channels * bytes per sample)
+    offset += 2;
+    view.setUint16(offset, bytesPerSample * 8, true); // Bits per sample (16)
+    offset += 2;
+    writeString(offset, 'data');
+    offset += 4;
+    view.setUint32(offset, float32Array.length * bytesPerSample, true);
+    offset += 4;
+
+    for (let i = 0; i < float32Array.length; i += 1, offset += 2) {
+      let sample = float32Array[i];
+      // Clamp to [-1, 1]
+      sample = Math.max(-1, Math.min(1, sample));
+      // Scale to 16-bit signed int
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+    }
+
+    return wavBuffer;
+  }
+
+  private mergeAudioChunks(chunks: ArrayBuffer[]): ArrayBuffer {
+    if (chunks.length === 1) {
+      return chunks[0];
+    }
+
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+    const mergedArray = new Uint8Array(totalLength);
+    let offset = 0;
+
+    for (const chunk of chunks) {
+      mergedArray.set(new Uint8Array(chunk), offset);
+      offset += chunk.byteLength;
+    }
+
+    return mergedArray.buffer;
   }
 
   private setupAudioInputListeners(ws: WebSocket): void {
@@ -683,18 +831,102 @@ class CallClient {
   }
 
   private scheduleReconnect(): void {
-    this.reconnectAttempts++;
+    if (
+      this.isReconnectScheduled ||
+      this.isDisconnecting ||
+      !this.isCallActive ||
+      !this.sessionId
+    ) {
+      return;
+    }
+
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.warn('Max reconnect attempts reached, ending call');
+      this.emitMessage({
+        type: 'system_message',
+        content: 'Connection lost. Please restart the call.',
+        timestamp: new Date(),
+        conversationId: this.sessionId || this.conversationId || '',
+      });
+      this.isCallActive = false;
+      this.cleanupAudioSockets();
+      this.updateStatus();
+      return;
+    }
+
+    this.isReconnectScheduled = true;
+    this.reconnectAttempts += 1;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-    
+
     console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
-    
+
     setTimeout(() => {
-      if (this.isCallActive && this.sessionId) {
-        this.connectBotSockets(this.sessionId, this.currentContext ?? undefined).catch((error) => {
-          console.error('Reconnect failed:', error);
-        });
+      if (!this.isCallActive || !this.sessionId) {
+        this.isReconnectScheduled = false;
+        return;
       }
+
+      this.connectBotSockets(this.sessionId, this.currentContext ?? undefined)
+        .then(() => {
+          this.isReconnectScheduled = false;
+        })
+        .catch((error) => {
+          this.isReconnectScheduled = false;
+          this.handleReconnectFailure(error);
+        });
     }, delay);
+  }
+
+  private handleReconnectFailure(error: unknown): void {
+    if (!this.isCallActive) {
+      return;
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+        ? error
+        : 'Unknown error';
+    console.error('Reconnect failed:', message);
+
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('insufficient resources')) {
+      this.emitMessage({
+        type: 'system_message',
+        content:
+          'Unable to reconnect: server resources are limited. Please wait a moment and restart the call.',
+        timestamp: new Date(),
+        conversationId: this.sessionId || this.conversationId || '',
+      });
+      this.isCallActive = false;
+      this.cleanupAudioSockets();
+      this.updateStatus();
+      return;
+    }
+
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.scheduleReconnect();
+      return;
+    }
+
+    this.emitMessage({
+      type: 'system_message',
+      content: 'Connection lost after multiple attempts. Please restart the call.',
+      timestamp: new Date(),
+      conversationId: this.sessionId || this.conversationId || '',
+    });
+    this.isCallActive = false;
+    this.cleanupAudioSockets();
+    this.updateStatus();
+  }
+
+  private describeSocketError(event: Event): string {
+    if ('message' in event && typeof (event as ErrorEvent).message === 'string') {
+      return (event as ErrorEvent).message || 'Unknown error';
+    }
+
+    return (event && (event as any).reason) || 'Unknown error';
   }
 
   private async endCallOnBackend(): Promise<void> {
