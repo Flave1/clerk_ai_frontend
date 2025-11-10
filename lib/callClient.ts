@@ -79,15 +79,32 @@ class CallClient {
   }
   
   private get gatewayBaseUrl(): string {
+    const wsBase =
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_RT_GATEWAY_URL ||
+      process.env.NEXT_PUBLIC_WS_URL ||
+      process.env.NEXT_PUBLIC_API_ORIGIN;
+
+    if (wsBase && /^https?:\/\//i.test(wsBase)) {
+      const parsed = new URL(wsBase);
+      parsed.protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${parsed.protocol}//${parsed.host}`;
+    }
+
     const httpBase = this.httpBaseUrl;
-    const parsed = new URL(httpBase);
-    const protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${parsed.host}`;
+    if (httpBase) {
+      const parsed = new URL(httpBase);
+      const protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${parsed.host}`;
+    }
+
+    return window.location.origin.replace(/^http/, 'ws');
   }
   
   // Unified service HTTP URL - use relative path /api for Next.js rewrites
   private get httpBaseUrl(): string {
     const envUrl =
+      process.env.BACKEND_URL ||
       process.env.NEXT_PUBLIC_RT_GATEWAY_HTTP_URL ||
       process.env.NEXT_PUBLIC_API_ORIGIN ||
       process.env.NEXT_PUBLIC_API_URL ||
@@ -96,7 +113,12 @@ class CallClient {
     if (envUrl && /^https?:\/\//i.test(envUrl)) {
       return envUrl.replace(/\/$/, '');
     }
-    return process.env.BACKEND_URL || '';
+
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/api`;
+    }
+
+    return '/api';
   }
 
   // Public methods
