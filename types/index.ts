@@ -303,6 +303,7 @@ export interface MeetingContext {
   created_at: string;
   updated_at: string;
   user_id: string;
+  is_default: boolean;
 }
 
 export interface MeetingContextCreate {
@@ -313,4 +314,5 @@ export interface MeetingContextCreate {
   meeting_role: MeetingRole;
   tone_personality: TonePersonality;
   custom_tone?: string;
+  is_default?: boolean;
 }

@@ -38,6 +38,8 @@ export const useAudioRecording = (options?: AudioRecordingOptions): AudioRecordi
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const muteGainRef = useRef<GainNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const recognitionRef = useRef<any>(null);
   
@@ -53,6 +55,63 @@ export const useAudioRecording = (options?: AudioRecordingOptions): AudioRecordi
   const isStartingRef = useRef<boolean>(false);
   const isRecordingRef = useRef<boolean>(false);
   const isRecognitionActiveRef = useRef<boolean>(false);
+
+  const targetSampleRate = 16000;
+
+  const downsampleBuffer = useCallback(
+    (buffer: Float32Array, sampleRate: number, outSampleRate: number) => {
+      if (outSampleRate >= sampleRate) {
+        return buffer;
+      }
+
+      const sampleRateRatio = sampleRate / outSampleRate;
+      const newLength = Math.round(buffer.length / sampleRateRatio);
+      const result = new Float32Array(newLength);
+      let offsetResult = 0;
+      let offsetBuffer = 0;
+
+      while (offsetResult < result.length) {
+        const nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+        let accum = 0;
+        let count = 0;
+
+        for (
+          let i = Math.floor(offsetBuffer);
+          i < nextOffsetBuffer && i < buffer.length;
+          i += 1
+        ) {
+          accum += buffer[i];
+          count += 1;
+        }
+
+        result[offsetResult] = count > 0 ? accum / count : 0;
+        offsetResult += 1;
+        offsetBuffer = nextOffsetBuffer;
+      }
+
+      return result;
+    },
+    []
+  );
+
+  const floatTo16BitPCM = useCallback((float32Array: Float32Array) => {
+    const buffer = new ArrayBuffer(float32Array.length * 2);
+    const view = new DataView(buffer);
+    let offset = 0;
+
+    for (let i = 0; i < float32Array.length; i += 1) {
+      let sample = float32Array[i];
+      sample = Math.max(-1, Math.min(1, sample));
+      view.setInt16(
+        offset,
+        sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+        true
+      );
+      offset += 2;
+    }
+
+    return buffer;
+  }, []);
 
   const startRecording = useCallback(async () => {
     try {
@@ -114,10 +173,63 @@ export const useAudioRecording = (options?: AudioRecordingOptions): AudioRecordi
       
       // Set up audio context for level monitoring
       audioContextRef.current = new AudioContext();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      analyserRef.current = audioContextRef.current.createAnalyser();
+      const audioContext = audioContextRef.current;
+      const source = audioContext.createMediaStreamSource(stream);
+      analyserRef.current = audioContext.createAnalyser();
       analyserRef.current.fftSize = 256;
       source.connect(analyserRef.current);
+
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
+      }
+      if (muteGainRef.current) {
+        muteGainRef.current.disconnect();
+        muteGainRef.current = null;
+      }
+
+      if (options?.onAudioStream || options?.onAudioChunk) {
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        const muteGain = audioContext.createGain();
+        muteGain.gain.value = 0;
+
+        processor.onaudioprocess = (event) => {
+          if (!options?.onAudioStream && !options?.onAudioChunk) {
+            return;
+          }
+
+          const input = event.inputBuffer.getChannelData(0);
+          if (!input || input.length === 0) {
+            return;
+          }
+
+          const downsampled = downsampleBuffer(
+            input,
+            audioContext.sampleRate,
+            targetSampleRate
+          );
+          if (!downsampled || downsampled.length === 0) {
+            return;
+          }
+
+          const pcmBuffer = floatTo16BitPCM(downsampled);
+
+          if (options?.onAudioStream) {
+            options.onAudioStream(pcmBuffer, 'audio/pcm');
+          }
+
+          if (options?.onAudioChunk) {
+            options.onAudioChunk(pcmBuffer);
+          }
+        };
+
+        source.connect(processor);
+        processor.connect(muteGain);
+        muteGain.connect(audioContext.destination);
+
+        processorRef.current = processor;
+        muteGainRef.current = muteGain;
+      }
       
       // Set up MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
@@ -465,6 +577,16 @@ export const useAudioRecording = (options?: AudioRecordingOptions): AudioRecordi
         mediaRecorderRef.current.stop();
       }
       mediaRecorderRef.current = null;
+    }
+
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+
+    if (muteGainRef.current) {
+      muteGainRef.current.disconnect();
+      muteGainRef.current = null;
     }
     
     // Stop speech recognition and clear reference

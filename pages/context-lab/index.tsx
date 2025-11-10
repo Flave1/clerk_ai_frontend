@@ -7,7 +7,6 @@ import {
   BeakerIcon,
   PlusIcon,
   ArrowRightIcon,
-  PencilIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/layout/Header';
 import apiClient from '@/lib/api';
@@ -144,14 +143,23 @@ const ContextLabPage: NextPage = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Tools
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {contexts.map((context) => (
-                    <tr key={context.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr
+                      key={context.id}
+                      onClick={() => handleEdit(context.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleEdit(context.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center text-2xl">
@@ -160,8 +168,15 @@ const ContextLabPage: NextPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {context.name}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {context.name}
+                          </div>
+                          {context.is_default && (
+                            <span className="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                              Selected
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -178,15 +193,6 @@ const ContextLabPage: NextPage = () => {
                         <div className="text-sm text-gray-500 dark:text-gray-400">
                           {context.tools_integrations.length} {context.tools_integrations.length === 1 ? 'tool' : 'tools'}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(context.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                        >
-                          <PencilIcon className="h-4 w-4 mr-1.5" />
-                          Edit
-                        </button>
                       </td>
                     </tr>
                   ))}

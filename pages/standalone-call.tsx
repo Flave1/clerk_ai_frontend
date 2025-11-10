@@ -45,19 +45,10 @@ const StandaloneCallPage: React.FC = () => {
     window.history.replaceState({}, '', url.toString());
   };
 
-  const handleCallEnd = (conversationId: string) => {
-    console.log('Call ended for conversation ID:', conversationId);
-    // Remove conversation ID from URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete('conversationId');
-    window.history.replaceState({}, '', url.toString());
-  };
-
   return (
     <div className="h-screen w-screen bg-gray-900 overflow-hidden">
       <CallInterface
         onCallStart={handleCallStart}
-        onCallEnd={handleCallEnd}
         existingConversation={existingConversation}
         loadingConversation={loadingConversation}
       />

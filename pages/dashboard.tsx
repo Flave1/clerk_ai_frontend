@@ -139,8 +139,8 @@ const Dashboard: NextPage = () => {
                     </div>
                     <ArrowRightIcon className="h-5 w-5 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Start Call</h3>
-                  <p className="text-white/90 text-sm">Begin a new conversation</p>
+                  <h3 className="text-xl font-bold text-white mb-2">Quick Call</h3>
+                  <p className="text-white/90 text-sm"> Aurray joins a call with you using a selected context</p>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>

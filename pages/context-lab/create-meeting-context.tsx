@@ -75,6 +75,7 @@ Once the meeting ends, summarize the important details, including next steps, de
     meeting_role: 'participant',
     tone_personality: 'friendly',
     custom_tone: '',
+    is_default: false,
   });
 
   // Load connected integrations
@@ -258,6 +259,27 @@ Once the meeting ends, summarize the important details, including next steps, de
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Define how Aurray should behave in the meeting.
             </p>
+          </div>
+
+          {/* Default Context */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-start space-x-3">
+              <input
+                id="is_default"
+                type="checkbox"
+                checked={Boolean(formData.is_default)}
+                onChange={(e) => handleInputChange('is_default', e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <div>
+                <label htmlFor="is_default" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Make this the default meeting context
+                </label>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  The default context is used automatically when starting a call unless you choose a different one. Only one context can be selected as default.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Tone & Personality */}

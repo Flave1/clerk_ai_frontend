@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
 import { ClipboardIcon, RocketLaunchIcon, XMarkIcon, SparklesIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 import ComingSoonModal from '@/components/ui/ComingSoonModal';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
 
-type PlatformKey = 'clerk' | 'teams' | 'zoom' | 'google_meet';
+type PlatformKey = 'aurray' | 'teams' | 'zoom' | 'google_meet';
 
 interface PlatformOption {
 	key: PlatformKey;
@@ -22,7 +24,7 @@ interface PlatformOption {
 
 const PLATFORMS: PlatformOption[] = [
 	{
-		key: 'clerk',
+		key: 'aurray',
 		name: 'Aurray Meeting',
 		image: '/images/logo/logo.png',
 		gradient: 'from-primary-500/20 via-accent-500/10 to-transparent',
@@ -51,12 +53,15 @@ const PLATFORMS: PlatformOption[] = [
 	},
 ];
 
+const DEFAULT_VOICE_ID = 'f5HLTX707KIM4SzJYzSz';
+
 export default function SelectMeetingPage() {
 	const { theme } = useUIStore();
+	const { user } = useAuth();
 	const router = useRouter();
 	const [loadingKey, setLoadingKey] = useState<PlatformKey | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const [generated, setGenerated] = useState<{ platform: string; meeting_id: string; meeting_url: string } | null>(null);
+	const [generated, setGenerated] = useState<{ platform: string; meeting_id: string; meeting_url: string; conversation_id?: string; meeting_ui_url?: string; message?: string } | null>(null);
 	const [comingSoonModal, setComingSoonModal] = useState<{ isOpen: boolean; platformName: string; platformImage?: string }>({
 		isOpen: false,
 		platformName: '',
@@ -67,7 +72,6 @@ export default function SelectMeetingPage() {
 	const pageBackground = isDark
 		? 'from-[#05060f] via-[#0f1324] to-[#090b16]'
 		: 'from-white via-[#f8fafc] to-[#eef2ff]';
-	const activePlatform = generated ? PLATFORMS.find((platform) => platform.key === (generated.platform as PlatformKey)) : undefined;
 
 	async function handleSelect(key: PlatformKey) {
 		// Check if Zoom or Google Meet (temporarily down)
@@ -84,15 +88,64 @@ export default function SelectMeetingPage() {
 
 		try {
 			setLoadingKey(key);
-			const res = await axios.post('/meetings/generate-url', { platform: key });
-			const data = res.data;
-			setGenerated(data);
-			setDialogOpen(true);
-			toast.success(`${PLATFORMS.find((platform) => platform.key === key)?.name || 'Meeting'} link ready`);
+			
+			if (key === 'aurray') {
+				// Use authenticated user's ID, or generate UUID as fallback
+				const userId = user?.user_id || uuidv4();
+				const tempRoomId = `room-${userId}`;
+
+				// Call conversations/start endpoint for Aurray
+				const res = await axios.post('/conversations/start', {
+					room_id: tempRoomId,
+					user_id: userId,
+					meeting_platform: key,
+				});
+				const data = res.data;
+
+				// Navigate directly to meeting-room
+				const query = new URLSearchParams({
+					meetingId: data.meeting_id || data.conversation_id,
+					conversationId: data.conversation_id,
+					isHost: 'true',
+				});
+				
+				if (data.meeting_url) {
+					query.set('meetingUrl', data.meeting_url);
+				}
+				
+				const meetingRoomUrl = `/meeting-room?${query.toString()}`;
+				router.push(meetingRoomUrl);
+				toast.success('Starting Aurray meeting...');
+			} else {
+				// Call external meeting start endpoint instead of conversations/start
+				const res = await axios.post('/conversations/start-external', {
+					meeting_url: '',
+					type: key,
+					transcript: true,
+					audio_record: false,
+					video_record: false,
+					voice_id: DEFAULT_VOICE_ID,
+					bot_name: 'Aurray Bot',
+					context_id: null,
+				});
+				const data = res.data || {};
+				const platformConfig = PLATFORMS.find((platform) => platform.key === key);
+
+				setGenerated({
+					platform: key,
+					meeting_id: data.meeting_id || '',
+					meeting_url: data.meeting_url || data.meeting_ui_url || '',
+					conversation_id: data.conversation_id || data.meeting_id,
+					meeting_ui_url: data.meeting_ui_url,
+					message: data.message,
+				});
+				setDialogOpen(true);
+				toast.success(data.message || `${platformConfig?.name || 'Meeting'} link ready`);
+			}
 		} catch (e) {
 			const err = e as any;
 			const detail = err?.response?.data?.detail;
-			const msg = typeof detail === 'string' ? detail : err?.message || 'Failed to generate meeting link';
+			const msg = typeof detail === 'string' ? detail : err?.message || 'Failed to start meeting';
 			toast.error(msg);
 		} finally {
 			setLoadingKey(null);
@@ -119,9 +172,27 @@ export default function SelectMeetingPage() {
 	}
 
 	function startNow() {
-		if (!generated?.meeting_url) return;
+		if (!generated) return;
+		
+		// If it's an Aurray meeting, navigate to meeting-room
+		if (generated.platform === 'aurray' && generated.conversation_id) {
+			const query = new URLSearchParams({
+				meetingId: generated.meeting_id || generated.conversation_id,
+				conversationId: generated.conversation_id,
+				isHost: 'true',
+			});
+			
+			if (generated.meeting_url) {
+				query.set('meetingUrl', generated.meeting_url);
+			}
+			
+			const meetingRoomUrl = `/meeting-room?${query.toString()}`;
+			router.push(meetingRoomUrl);
+		} else if (generated.meeting_url) {
+			// For other platforms, open the meeting URL
 		const resolved = resolveMeetingUrl(generated.meeting_url);
 		window.open(resolved, '_blank');
+		}
 	}
 
 	return (
@@ -251,7 +322,7 @@ export default function SelectMeetingPage() {
 								<div>
 									<p className="text-sm font-semibold text-primary-400">Meeting link generated</p>
 									<h2 className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
-										{activePlatform?.name || generated.platform}
+										{PLATFORMS.find((platform) => platform.key === generated.platform)?.name || generated.platform}
 									</h2>
 								</div>
 								<button
@@ -265,20 +336,23 @@ export default function SelectMeetingPage() {
 							<div className="relative z-10 mt-6 flex flex-col gap-5 rounded-2xl border border-primary-500/10 bg-white/70 p-5 dark:bg-white/5">
 								<div className="flex items-start gap-4">
 									<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-inner dark:bg-white/10">
-										{activePlatform && (
+										{PLATFORMS.find((platform) => platform.key === generated.platform) && (
 											<Image
-												src={activePlatform.image}
-												alt={`${activePlatform.name} logo`}
+												src={PLATFORMS.find((platform) => platform.key === generated.platform)?.image}
+												alt={`${PLATFORMS.find((platform) => platform.key === generated.platform)?.name} logo`}
 												width={48}
 												height={48}
 												className="object-contain"
 											/>
 										)}
 									</div>
-									<div className="flex-1">
-										<p className="text-sm text-gray-600 dark:text-gray-400">
-											{activePlatform?.description}
-										</p>
+									<div className="flex-1 space-y-2">
+										{generated.message && (
+											<p className="text-sm font-medium text-gray-800 dark:text-gray-200">{generated.message}</p>
+										)}
+										{!generated.message && (
+											<p className="text-sm text-gray-600 dark:text-gray-400">Your meeting link is ready. Share it with your participants or launch immediately.</p>
+										)}
 									</div>
 								</div>
 								<div className="rounded-xl border border-dashed border-primary-500/40 bg-primary-500/5 p-4">
@@ -304,7 +378,7 @@ export default function SelectMeetingPage() {
 									onClick={startNow}
 									className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-primary-600 hover:to-accent-600"
 								>
-									<RocketLaunchIcon className="h-5 w-5" /> Start Now
+									<RocketLaunchIcon className="h-5 w-5" /> Open Link
 								</motion.button>
 							</div>
 						</motion.div>

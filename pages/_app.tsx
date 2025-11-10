@@ -38,6 +38,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
   const shouldShowLayout = router.pathname !== '/standalone-call' 
     && router.pathname !== '/login'
     && router.pathname !== '/register'
+    && !router.pathname.startsWith('/meeting-room')
     && router.pathname !== '/'
     && !router.pathname.startsWith('/join/');
 
