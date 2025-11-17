@@ -32,7 +32,15 @@ export default function Login() {
       
       if (result && result.access_token) {
         toast.success('Signed in successfully!');
-        // Small delay to ensure token is stored
+        // Verify token is in localStorage before redirecting
+        const { getAccessToken } = await import('@/lib/auth');
+        const token = getAccessToken();
+        if (!token) {
+          console.error('[Login] Token not found in localStorage after sign in!');
+          throw new Error('Token storage failed');
+        }
+        console.log('[Login] Token verified in localStorage, redirecting to dashboard...');
+        // Small delay to ensure everything is ready
         setTimeout(() => {
           router.push('/dashboard');
         }, 100);

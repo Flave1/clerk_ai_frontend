@@ -8,7 +8,7 @@ interface ComingSoonModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  message?: string;
+  message?: string | React.ReactNode;
   featureName?: string;
   image?: string;
 }
@@ -23,6 +23,7 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
 }) => {
   const defaultTitle = featureName ? `${featureName}` : 'Coming Soon';
   const defaultMessage = message || "We're working hard to bring you this feature. Stay tuned for updates!";
+  const displayMessage = typeof message === 'string' ? message : (message || defaultMessage);
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -116,9 +117,9 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
                   <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                     {defaultTitle}
                   </h4>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {defaultMessage}
-                  </p>
+                  <div className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {displayMessage}
+                  </div>
                 </div>
               </div>
 

@@ -22,8 +22,9 @@ import {
 import { PhoneIcon as PhoneSolidIcon, MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
 import InviteModal from '@/components/call/InviteModal';
 import ParticipantList from '@/components/call/ParticipantList';
-import { callClient, CallMessage, CallStatus } from '@/lib/callClient';
-import { useAudioRecording } from '@/hooks/useAudioRecording';
+import callClient, { CallMessage, CallStatus } from '@/lib/callClient';
+import useAudioRecording from '@/hooks/useAudioRecording';
+import axios, { API_ORIGIN } from '@/lib/axios';
 import apiClient from '@/lib/api';
 
 type SidebarPanel = 'chat' | 'participants' | 'actions' | null;
@@ -57,13 +58,6 @@ interface MeetingParticipant {
   joinedAt: Date;
 }
 
-interface ActionStatus {
-  id: string;
-  type: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
-  message: string;
-  timestamp: Date;
-}
 
 const MeetingRoom: React.FC = () => {
   const router = useRouter();
@@ -89,7 +83,7 @@ const MeetingRoom: React.FC = () => {
     [nameQuery],
   );
 
-  const [status, setStatus] = useState<CallStatus>(callClient.currentStatus);
+  const [status, setStatus] = useState<CallStatus>(callClient.status);
   const [messages, setMessages] = useState<CallMessage[]>([]);
   const [isMuted, setIsMuted] = useState(true);
   const [participants, setParticipants] = useState<MeetingParticipant[]>([
@@ -113,10 +107,10 @@ const MeetingRoom: React.FC = () => {
     },
   ]);
   const [meetingId, setMeetingId] = useState<string>(
-    typeof meetingIdQuery === 'string' ? meetingIdQuery : callClient.currentSessionId || '',
+    typeof meetingIdQuery === 'string' ? meetingIdQuery : callClient.sessionId || '',
   );
   const [conversationId, setConversationId] = useState<string>(
-    typeof conversationIdQuery === 'string' ? conversationIdQuery : callClient.currentConversationId || '',
+    typeof conversationIdQuery === 'string' ? conversationIdQuery : '',
   );
   const [meetingUrl, setMeetingUrl] = useState<string>(
     typeof meetingUrlQuery === 'string'
@@ -124,55 +118,145 @@ const MeetingRoom: React.FC = () => {
       : `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${meetingId}`,
   );
 
-  const [isVoiceMode, setIsVoiceMode] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>('chat');
   const [inputMessage, setInputMessage] = useState('');
-  const [actionStatuses, setActionStatuses] = useState<ActionStatus[]>([]);
-  const [audioQueue, setAudioQueue] = useState<Array<{ data: ArrayBuffer; format: string }>>([]);
-  const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const [meetingStartTime] = useState<Date>(new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [actionStatuses] = useState<any[]>([]); // Automation feed statuses
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const manuallyMutedRef = useRef<boolean>(isMuted);
-  const actionTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
+  // ChatGPT-like: Use Web Audio API for immediate playback (no queue, no WAV conversion)
+  const audioOutputContextRef = useRef<AudioContext | null>(null);
+  const nextPlayTimeRef = useRef<number>(0); // Track next scheduled play time for seamless playback
 
+  // Get backend URL and sessionId for WebSocket
+  const BACKEND = useMemo(() => {
+    const origin = API_ORIGIN || (typeof window !== 'undefined' ? window.location.origin : '');
+    const protocol = origin.startsWith('https') ? 'wss:' : 'ws:';
+    const host = origin.replace(/^https?:\/\//, '');
+    return `${protocol}//${host}`;
+  }, []);
+
+  const sessionId = useMemo(() => {
+    return meetingId || conversationId || callClient.sessionId || '';
+  }, [meetingId, conversationId]);
+
+  const [isWsReady, setIsWsReady] = useState(false);
+
+  // Always use callClient's WebSocket - never create a duplicate connection
+  // This ensures we use the same connection that callClient established
+  const ws = useMemo(() => {
+    // Only use callClient's WebSocket - no fallback to prevent duplicate connections
+    // If callClient doesn't have a WebSocket yet, we'll wait for it (handled by isWsReady state)
+    return callClient.ws;
+  }, [callClient.ws]);
+
+  // Load participants for this conversation from RT Gateway metadata
+  useEffect(() => {
+    const cid = conversationId || conversationIdQuery;
+    if (!cid) return;
+
+    let cancelled = false;
+
+    const loadParticipants = async () => {
+      try {
+        const res = await axios.get(`/conversations/${cid}/metadata`);
+        const metadata = res.data?.metadata || {};
+        const backendParticipants = metadata.conversation_participants || metadata.participants;
+        if (!Array.isArray(backendParticipants)) {
+          return;
+        }
+
+        const mapped: MeetingParticipant[] = backendParticipants.map((p: any, index: number) => {
+          const role = p.role as string | undefined;
+    
+          // Normalize IDs so UI logic (You / Assistant / Host) still works
+          let id = typeof p.id === 'string' ? p.id : `participant-${index}`;
+          if (role === 'user') {
+            id = localParticipantId;
+          } else if (role === 'context') {
+            id = 'ai-assistant';
+          }
+
+          const name =
+            typeof p.name === 'string' && p.name.trim().length > 0
+              ? p.name
+              : `Participant ${index + 1}`;
+
+          return {
+            id,
+            name,
+            isVideoEnabled: false,
+            isMuted: role === 'context',
+            isSpeaking: false,
+            isHost: role === 'user' ? true : Boolean(p.isHost),
+            joinedAt: new Date(),
+          };
+    });
+    
+        if (!cancelled && mapped.length > 0) {
+          setParticipants(mapped);
+        }
+      } catch (error) {
+        console.error('[MeetingRoom] Failed to load conversation metadata:', error);
+      }
+    };
+
+    loadParticipants();
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, conversationIdQuery, localParticipantId]);
+
+  // Track WebSocket readiness for UI/controls
+  useEffect(() => {
+    if (!ws) {
+      setIsWsReady(false);
+      return;
+    }
+
+    const handleOpen = () => setIsWsReady(true);
+    const handleClose = () => setIsWsReady(false);
+
+    if (ws.readyState === WebSocket.OPEN) {
+      setIsWsReady(true);
+    }
+
+    ws.addEventListener('open', handleOpen);
+    ws.addEventListener('close', handleClose);
+
+    return () => {
+      ws.removeEventListener('open', handleOpen);
+      ws.removeEventListener('close', handleClose);
+    };
+  }, [ws]);
+
+  // Cleanup WebSocket on unmount (only if it's not callClient's WebSocket)
+  useEffect(() => {
+    return () => {
+      if (ws && ws !== callClient.ws) {
+        ws.close();
+      }
+    };
+  }, [ws]);
+
+  // Audio recording with integrated turn-taking and WebSocket
   const {
-    isRecording,
-    isSpeaking,
-    audioLevel,
-    error: audioError,
-    toggleRecording,
-    stopRecording,
-    requestMicrophonePermission,
-  } = useAudioRecording({
-    onAudioStream: async (audioChunk, format) => {
-      if (manuallyMutedRef.current || !callClient.currentStatus.isCallActive) {
-        return;
-      }
+    listening: isRecording,
+    speaking: isSpeaking,
+    rms: audioLevel,
+    start: startRecording,
+    stop: stopRecording,
+  } = useAudioRecording();
+  
+  const [audioError, setAudioError] = useState<string | null>(null);
 
-      try {
-        await callClient.sendAudioChunk(audioChunk, format);
-      } catch (error) {
-        console.error('Failed to send audio chunk:', error);
-      }
-    },
-    onTranscript: async (transcript: string) => {
-      if (manuallyMutedRef.current || !callClient.currentStatus.isCallActive) {
-        return;
-      }
-
-      try {
-        await callClient.sendMessage(transcript);
-      } catch (error) {
-        console.error('Failed to send transcript message:', error);
-      }
-    },
-  });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -181,59 +265,116 @@ const MeetingRoom: React.FC = () => {
     return () => clearInterval(interval);
   }, [meetingStartTime]);
 
-  useEffect(() => {
-    const unsubscribeMessage = callClient.onMessage((message) => {
-      setMessages((prev) => [...prev, message]);
-      parseActionFromMessage(message);
+  // ChatGPT-like: Initialize Web Audio API for immediate playback
+  const initAudioOutput = useCallback(() => {
+    if (!audioOutputContextRef.current) {
+      audioOutputContextRef.current = new AudioContext({ sampleRate: 16000 }); // Match backend: 16kHz PCM16
+      // Don't try to resume here - browsers require user gesture for autoplay
+      // It will be resumed when audio actually plays (in playAudioDelta)
+    }
+  }, []);
 
-      if (message.type === 'tts_audio' && message.audioData) {
-        setAudioQueue((prev) => [
-          ...prev,
-          {
-            data: message.audioData!,
-            format: message.audioFormat || 'audio/wav',
-          },
-        ]);
+  // ChatGPT-like: Play audio delta immediately using Web Audio API (no WAV conversion, no queue)
+  const playAudioDelta = useCallback(async (pcmData: ArrayBuffer) => {
+    try {
+      initAudioOutput();
+      const audioContext = audioOutputContextRef.current;
+      if (!audioContext) return;
+
+      // Ensure AudioContext is running
+      // Note: resume() may fail due to browser autoplay policy until user interacts
+      if (audioContext.state === 'suspended') {
+        try {
+          await audioContext.resume();
+        } catch (error) {
+          // AudioContext will resume automatically on next user interaction
+          // This is expected behavior due to browser autoplay policies
+          return; // Skip playing this chunk - it will play once user interacts
+        }
       }
 
-      try {
-        const parsed = JSON.parse(message.content);
-        if (parsed.type === 'participant_joined') {
-          const { participant } = parsed.data;
-          addOrUpdateParticipant(participant.id, {
-            ...participant,
-            isVideoEnabled: participant.isVideoEnabled ?? false,
-            isMuted: participant.id === localParticipantId ? manuallyMutedRef.current : true,
-            isSpeaking: false,
-            joinedAt: new Date(),
-          });
+      // Realtime API sends 16-bit PCM at 16kHz (matches backend config)
+      // Convert to Float32Array for Web Audio API
+      const pcm16 = new Int16Array(pcmData);
+      const float32 = new Float32Array(pcm16.length);
+      
+      for (let i = 0; i < pcm16.length; i++) {
+        float32[i] = pcm16[i] / 32768.0; // Convert 16-bit PCM to float32 (-1 to 1)
+      }
+
+      // Create AudioBuffer at 16kHz to match backend audio format
+      const audioBuffer = audioContext.createBuffer(1, float32.length, 16000);
+      audioBuffer.copyToChannel(float32, 0);
+
+      // Calculate duration of this chunk
+      const duration = audioBuffer.duration;
+      const currentTime = audioContext.currentTime;
+
+      // ChatGPT-like: Schedule chunks to play sequentially without gaps
+      // If this is the first chunk or enough time has passed, schedule immediately
+      // Otherwise, schedule to play right after the previous chunk
+      let scheduleTime = nextPlayTimeRef.current;
+      if (scheduleTime < currentTime + 0.01) {
+        // Play immediately if no previous chunk is scheduled
+        scheduleTime = currentTime;
+      }
+
+      // Create source and schedule playback
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      
+      // Schedule playback
+      source.start(scheduleTime);
+      
+      // Update next play time for seamless sequential playback
+      nextPlayTimeRef.current = scheduleTime + duration;
+      
+      // Cleanup after playback completes
+      source.onended = () => {
+        try {
+          source.disconnect();
+        } catch (e) {
+          // Ignore cleanup errors
         }
-        if (parsed.type === 'participant_left') {
-          const { participantId } = parsed.data;
-          setParticipants((prev) => prev.filter((p) => p.id !== participantId));
-        }
-        if (parsed.type === 'participant_updated') {
-          const { participantId, updates } = parsed.data;
-          addOrUpdateParticipant(participantId, updates);
-        }
-      } catch {
-        // not a participant event
+      };
+    } catch (error) {
+      // Ignore playback errors (e.g., if context is closed)
+      if (error instanceof Error && !error.message.includes('closed')) {
+        console.error('Failed to play audio delta:', error);
+      }
+    }
+  }, [initAudioOutput]);
+
+  useEffect(() => {
+    const unsubscribeMessage = callClient.onMessage((message) => {
+      setMessages((prev) => {
+        const newMessages = [...prev, message];
+        return newMessages.slice(-100);
+      });
+
+      if (message.type === 'tts_audio' && message.audio) {
+        // ChatGPT-like: Play audio delta immediately (no queue, no WAV conversion)
+        // Realtime API sends raw 16-bit PCM, play it directly
+        playAudioDelta(message.audio);
       }
     });
 
-    const unsubscribeStatus = callClient.onStatusChange((newStatus) => {
+    callClient.onStatusChange((newStatus) => {
       setStatus(newStatus);
 
-      if (!newStatus.isConnected) {
-        stopRecording();
+      // Stop recording when call is disconnected or not active
+      if (!newStatus.isConnected || !newStatus.isCallActive || newStatus.connectionState !== 'connected') {
+        void stopRecording();
       }
     });
 
     return () => {
       unsubscribeMessage();
-      unsubscribeStatus();
+      // Ensure audio recording is stopped when component unmounts
+      void stopRecording();
     };
-  }, [localParticipantId, stopRecording]);
+  }, [localParticipantId, stopRecording, playAudioDelta]);
 
   useEffect(() => {
     if (audioError) {
@@ -246,11 +387,11 @@ const MeetingRoom: React.FC = () => {
     const resolvedMeetingId =
       typeof meetingIdQuery === 'string'
         ? meetingIdQuery
-        : callClient.currentSessionId || status.conversationId || '';
+        : callClient.sessionId || '';
     const resolvedConversationId =
       typeof conversationIdQuery === 'string'
         ? conversationIdQuery
-        : callClient.currentConversationId || status.conversationId || '';
+        : '';
 
     if (resolvedMeetingId) {
       setMeetingId(resolvedMeetingId);
@@ -267,27 +408,30 @@ const MeetingRoom: React.FC = () => {
         ? `${origin}/join/${resolvedMeetingId || resolvedConversationId}`
         : '';
     setMeetingUrl(resolvedMeetingUrl);
-  }, [conversationIdQuery, meetingIdQuery, meetingUrlQuery, status.conversationId]);
+  }, [conversationIdQuery, meetingIdQuery, meetingUrlQuery]);
 
   useEffect(() => {
     if (!status.isCallActive) {
       const resolvedConversationId =
         typeof conversationIdQuery === 'string'
           ? conversationIdQuery
-          : callClient.currentConversationId;
+          : '';
+      const resolvedMeetingId =
+        typeof meetingIdQuery === 'string'
+          ? meetingIdQuery
+          : meetingId || '';
 
-      if (resolvedConversationId) {
+      if (resolvedConversationId && resolvedMeetingId) {
         callClient
-          .joinCall(resolvedConversationId)
+          .joinCall(resolvedMeetingId)
           .then(() => {
-            console.log('Joined call in meeting room view');
           })
           .catch((error) => {
             console.error('Failed to join call from meeting room:', error);
           });
       }
     }
-  }, [conversationIdQuery, status.isCallActive]);
+  }, [conversationIdQuery, meetingIdQuery, meetingId, status.isCallActive]);
 
   const addOrUpdateParticipant = useCallback(
     (participantId: string, updates: Partial<MeetingParticipant>) => {
@@ -323,51 +467,25 @@ const MeetingRoom: React.FC = () => {
     [],
   );
 
-  const playNextAudio = useCallback(async () => {
-    if (audioQueue.length === 0 || !audioRef.current || isPlayingTTS) {
-      return;
-    }
-
-    setIsPlayingTTS(true);
-    const audioItem = audioQueue[0];
-
-    try {
-      const audioBlob = new Blob([audioItem.data], {
-        type: audioItem.format || 'audio/wav',
-      });
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      audioRef.current.src = audioUrl;
-      audioRef.current.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        setIsPlayingTTS(false);
-        setAudioQueue((prev) => prev.slice(1));
-      };
-
-      await audioRef.current.play();
-    } catch (error) {
-      console.error('Failed to play TTS audio:', error);
-      setIsPlayingTTS(false);
-      setAudioQueue((prev) => prev.slice(1));
-    }
-  }, [audioQueue, isPlayingTTS]);
-
   useEffect(() => {
-    if (audioQueue.length > 0 && !isPlayingTTS) {
-      void playNextAudio();
-    }
-  }, [audioQueue.length, isPlayingTTS, playNextAudio]);
-
-  useEffect(() => {
+    // Initialize audio output context on mount (ChatGPT-like: Web Audio API for immediate playback)
+    initAudioOutput();
+    nextPlayTimeRef.current = 0; // Reset play time tracking
+    
     return () => {
-      Object.values(actionTimeouts.current).forEach((timeout) => clearTimeout(timeout));
+      // Cleanup Web Audio API
+      if (audioOutputContextRef.current) {
+        audioOutputContextRef.current.close().catch(() => {});
+        audioOutputContextRef.current = null;
+      }
+      nextPlayTimeRef.current = 0;
+      // Cleanup HTML audio element (if still used)
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initAudioOutput]);
 
   useEffect(() => {
     manuallyMutedRef.current = isMuted;
@@ -385,77 +503,43 @@ const MeetingRoom: React.FC = () => {
   }, [isSpeaking, isMuted, localParticipantId]);
 
   useEffect(() => {
-    setParticipants((prev) =>
-      prev.map((p) =>
-        p.id === 'ai-assistant'
-          ? {
-              ...p,
-              isSpeaking: isPlayingTTS,
-            }
-          : p,
-      ),
-    );
-  }, [isPlayingTTS]);
+    // Only start recording when call is active AND connected
+    const canRecord = status.isCallActive && status.isConnected && status.connectionState === 'connected' && !audioError && !isMuted && ws && isWsReady;
 
-  useEffect(() => {
-    if (!status.isCallActive || audioError) {
+    if (!status.isCallActive || !status.isConnected || status.connectionState !== 'connected' || audioError) {
       if (isRecording) {
-        stopRecording();
+        void stopRecording();
       }
       return;
     }
 
     if (isMuted) {
       if (isRecording) {
-        stopRecording();
+        void stopRecording();
       }
       return;
     }
 
-    if (!isRecording) {
-      toggleRecording();
+    if (!isRecording && ws && isWsReady) {
+      void startRecording();
     }
-  }, [status.isCallActive, audioError, isMuted, isRecording, toggleRecording, stopRecording]);
+  }, [status.isCallActive, status.isConnected, status.connectionState, audioError, isMuted, isRecording, ws, isWsReady, startRecording, stopRecording]);
 
-  const addActionStatus = useCallback((action: ActionStatus) => {
-    setActionStatuses((prev) => [...prev, action]);
+  // Cleanup when navigating away from the page
+  useEffect(() => {
+    const handleRouteChange = () => {
+      void stopRecording();
+    };
 
-    const timeout = setTimeout(() => {
-      setActionStatuses((prev) => prev.filter((a) => a.id !== action.id));
-    }, 6000);
-    actionTimeouts.current[action.id] = timeout;
-  }, []);
+    router.events?.on('routeChangeStart', handleRouteChange);
+    
+    return () => {
+      router.events?.off('routeChangeStart', handleRouteChange);
+      // Also stop recording on unmount
+      void stopRecording();
+    };
+  }, [router, stopRecording]);
 
-  const parseActionFromMessage = (message: CallMessage) => {
-    if (message.type !== 'ai_response') return;
-    const content = message.content.toLowerCase();
-
-    if (content.includes('scheduling') || content.includes('calendar')) {
-      addActionStatus({
-        id: `action-${Date.now()}`,
-        type: 'calendar',
-        status: 'in_progress',
-        message: 'Scheduling your meeting...',
-        timestamp: new Date(),
-      });
-    } else if (content.includes('slack') || content.includes('message')) {
-      addActionStatus({
-        id: `action-${Date.now()}`,
-        type: 'slack',
-        status: 'in_progress',
-        message: 'Sending a Slack message...',
-        timestamp: new Date(),
-      });
-    } else if (content.includes('searching') || content.includes('looking up')) {
-      addActionStatus({
-        id: `action-${Date.now()}`,
-        type: 'search',
-        status: 'in_progress',
-        message: 'Searching knowledge base...',
-        timestamp: new Date(),
-      });
-    }
-  };
 
   const connectionBadge = useMemo(() => {
     switch (status.connectionState) {
@@ -469,9 +553,9 @@ const MeetingRoom: React.FC = () => {
           label: 'Connecting...',
           className: 'text-yellow-400',
         };
-      case 'error':
+      case 'disconnected':
         return {
-          label: 'Error',
+          label: 'Disconnected',
           className: 'text-red-400',
         };
       default:
@@ -482,10 +566,22 @@ const MeetingRoom: React.FC = () => {
     }
   }, [status.connectionState]);
 
-  const toggleMute = () => {
+  const toggleMute = async () => {
     if (!status.isCallActive && !status.isConnected) return;
+    
+    // Resume AudioContext on user interaction (browser autoplay policy)
+    if (audioOutputContextRef.current?.state === 'suspended') {
+      try {
+        await audioOutputContextRef.current.resume();
+      } catch (error) {
+        // Ignore - will resume on next interaction
+      }
+    }
+    
     setIsMuted((prev) => !prev);
   };
+
+  const controlsDisabled = !isWsReady;
 
   const toggleVideo = () => {
     setIsCameraOn((prev) => !prev);
@@ -540,15 +636,31 @@ const MeetingRoom: React.FC = () => {
         }
       }
 
+      // Stop recording before ending call
+      void stopRecording();
+      // Explicitly close WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
       await callClient.endCall();
+      // Force a full page reload to ensure all audio/WebSocket resources are released
+      if (typeof window !== 'undefined') {
+        window.location.href = '/meetings';
+      } else {
       router.push('/meetings');
+      }
     } catch (error) {
       console.error('Failed to end meeting:', error);
+      // Ensure recording is stopped even if endCall fails
+      void stopRecording();
     }
   };
 
   const leaveMeeting = async () => {
     try {
+      // Stop recording before leaving
+      void stopRecording();
+      
       // Notify backend that bot left the meeting
       const meetingId = typeof meetingIdQuery === 'string' ? meetingIdQuery : null;
       const conversationId = typeof conversationIdQuery === 'string' ? conversationIdQuery : null;
@@ -568,8 +680,17 @@ const MeetingRoom: React.FC = () => {
           participantId: localParticipantId,
         }),
       );
+      // Explicitly close WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
       await callClient.endCall();
+      // Force a full page reload to ensure all audio/WebSocket resources are released
+      if (typeof window !== 'undefined') {
+        window.location.href = '/meetings';
+      } else {
       router.push('/meetings');
+      }
     } catch (error) {
       console.error('Failed to leave meeting:', error);
     }
@@ -625,7 +746,7 @@ const MeetingRoom: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowInviteModal(true)}
-            className="hidden sm:inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs sm:text-sm font-medium text-white transition hover:bg-white/20"
+            className="hidden sm:inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary-500/80 to-accent-500/80 px-3 py-1.5 text-xs sm:text-sm font-medium text-white transition hover:from-primary-500 hover:to-accent-500 shadow-lg shadow-primary-500/30"
           >
             <UserGroupIcon className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden md:inline">Invite</span>
@@ -633,7 +754,7 @@ const MeetingRoom: React.FC = () => {
           {isHost ? (
             <button
               onClick={endMeetingForAll}
-              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg bg-red-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-red-600"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg bg-red-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-red-600 shadow-lg"
             >
               <PhoneSolidIcon className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">End For All</span>
@@ -642,7 +763,7 @@ const MeetingRoom: React.FC = () => {
           ) : (
             <button
               onClick={leaveMeeting}
-              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg bg-orange-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-orange-600"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg bg-orange-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-orange-600 shadow-lg"
             >
               <ArrowRightOnRectangleIcon className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Leave</span>
@@ -671,13 +792,13 @@ const MeetingRoom: React.FC = () => {
                   className={cn(
                     'relative flex min-h-[200px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 p-3 transition sm:min-h-[240px] sm:p-4',
                     {
-                      'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950': participant.isSpeaking,
+                      'ring-2 ring-primary-400/50 ring-offset-2 ring-offset-slate-950': participant.isSpeaking,
                     },
                   )}
                 >
-                  <div className="absolute inset-x-4 top-4 flex items-center justify-between rounded-xl bg-black/40 px-3 py-2 text-xs text-slate-200 backdrop-blur">
+                  <div className="absolute inset-x-4 top-4 z-20 flex items-center justify-between rounded-xl bg-black/40 px-3 py-2 text-xs text-slate-200 backdrop-blur">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-500 text-sm font-semibold text-white shadow-lg">
                         {participant.name
                           .split(' ')
                           .map((n) => n[0])
@@ -694,20 +815,14 @@ const MeetingRoom: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {participant.isSpeaking && (
-                        <span className="flex items-center gap-1 text-xs text-emerald-300">
-                          <SpeakerWaveIcon className="h-4 w-4" />
-                          Speaking
-                        </span>
-                      )}
                       <div className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1">
                         {participant.isMuted ? (
                           <MicrophoneIcon className="h-4 w-4 text-red-400" />
                         ) : (
-                          <MicrophoneSolidIcon className="h-4 w-4 text-emerald-400" />
+                          <MicrophoneSolidIcon className="h-4 w-4 text-accent-400" />
                         )}
                         {participant.isVideoEnabled ? (
-                          <VideoCameraIcon className="h-4 w-4 text-emerald-300" />
+                          <VideoCameraIcon className="h-4 w-4 text-primary-300" />
                         ) : (
                           <VideoCameraSlashIcon className="h-4 w-4 text-slate-400" />
                         )}
@@ -715,7 +830,10 @@ const MeetingRoom: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-20 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-black/20">
+                  <div className="relative mt-20 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-black/20">
+                    {participant.isSpeaking && (
+                      <div className="speaking-sun-ball" />
+                    )}
                     {participant.isVideoEnabled ? (
                       <div className="h-full w-full rounded-xl bg-slate-800" />
                     ) : (
@@ -736,35 +854,71 @@ const MeetingRoom: React.FC = () => {
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
               <div className="hidden items-center gap-3 text-xs text-slate-300 sm:flex">
                 <div className="flex items-center gap-2">
-                  <span className="block h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="block h-2 w-2 rounded-full bg-accent-400 shadow-lg shadow-accent-400/50" />
                   {participants.length} participants
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="block h-2 w-2 rounded-full bg-sky-400" />
-                  Audio level {Math.round(audioLevel * 100)}%
+                <div className={cn(
+                  "flex items-center gap-2 transition-colors",
+                  isSpeaking && "text-red-300"
+                )}>
+                  {/* {isSpeaking ? (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                      </span>
+                      <span className="font-medium">Speaking</span>
+                      <span className="text-xs opacity-75">({Math.round(audioLevel * 100)}%)</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="block h-2 w-2 rounded-full bg-primary-400 shadow-lg shadow-primary-400/50" />
+                      <span className="text-xs">Audio: {Math.round(audioLevel * 100)}%</span>
+                    </>
+                  )} */}
                 </div>
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
+                {controlsDisabled && (
+                  <div className="mr-2 flex items-center gap-2 text-xs text-slate-300">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
+                    <span>Connecting audio...</span>
+                  </div>
+                )}
                 <button
                   onClick={toggleMute}
+                  disabled={controlsDisabled}
                   className={cn(
-                    'flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition',
-                    isMuted ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500 text-white hover:bg-red-600',
+                    'relative flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition shadow-lg',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
+                    isMuted 
+                      ? 'bg-white/10 text-white hover:bg-white/20' 
+                      : isSpeaking
+                        ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 animate-pulse'
+                        : 'bg-gradient-to-br from-primary-500 to-accent-500 text-white hover:from-primary-600 hover:to-accent-600',
                   )}
-                  title={isMuted ? 'Unmute' : 'Mute'}
+                  title={isMuted ? 'Unmute' : isSpeaking ? 'Speaking...' : 'Mute'}
                 >
+                  {isSpeaking && !isMuted && (
+                    <span className="absolute inset-0 rounded-full bg-red-400 opacity-75 animate-ping" />
+                  )}
                   {isMuted ? (
-                    <MicrophoneIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <MicrophoneIcon className="h-5 w-5 sm:h-6 sm:w-6 relative z-10" />
                   ) : (
-                    <MicrophoneSolidIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <MicrophoneSolidIcon className={cn(
+                      "h-5 w-5 sm:h-6 sm:w-6 relative z-10",
+                      isSpeaking && "animate-pulse"
+                    )} />
                   )}
                 </button>
 
                 <button
                   onClick={toggleVideo}
+                  disabled={controlsDisabled}
                   className={cn(
                     'flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     isCameraOn
                       ? 'bg-white/10 text-white hover:bg-white/20'
                       : 'bg-white text-slate-900 hover:bg-slate-200',
@@ -780,8 +934,10 @@ const MeetingRoom: React.FC = () => {
 
                 <button
                   onClick={toggleScreenShare}
+                  disabled={controlsDisabled}
                   className={cn(
                     'hidden h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition sm:flex',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     isScreenSharing
                       ? 'bg-sky-500 text-white hover:bg-sky-600'
                       : 'bg-white/10 text-white hover:bg-white/20',
@@ -792,19 +948,11 @@ const MeetingRoom: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => setIsVoiceMode((prev) => !prev)}
-                  className={cn(
-                    'hidden items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition sm:flex',
-                    isVoiceMode ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-white/10 text-white hover:bg-white/20',
-                  )}
-                >
-                  {isVoiceMode ? 'Voice Mode' : 'Hybrid Mode'}
-                </button>
-
-                <button
                   onClick={isHost ? endMeetingForAll : leaveMeeting}
+                  disabled={controlsDisabled}
                   className={cn(
                     'flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     isHost ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600',
                   )}
                   title={isHost ? 'End meeting for all' : 'Leave meeting'}
@@ -820,8 +968,10 @@ const MeetingRoom: React.FC = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSidebarPanel((prev) => (prev === 'chat' ? null : 'chat'))}
+                  disabled={controlsDisabled}
                   className={cn(
                     'flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     sidebarPanel === 'chat' ? 'bg-white text-slate-900' : 'bg-white/10 text-white hover:bg-white/20',
                   )}
                 >
@@ -830,8 +980,10 @@ const MeetingRoom: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setSidebarPanel((prev) => (prev === 'participants' ? null : 'participants'))}
+                  disabled={controlsDisabled}
                   className={cn(
                     'flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     sidebarPanel === 'participants'
                       ? 'bg-white text-slate-900'
                       : 'bg-white/10 text-white hover:bg-white/20',
@@ -842,8 +994,10 @@ const MeetingRoom: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setSidebarPanel((prev) => (prev === 'actions' ? null : 'actions'))}
+                  disabled={controlsDisabled}
                   className={cn(
                     'hidden h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition sm:flex',
+                    controlsDisabled && 'cursor-not-allowed opacity-60',
                     sidebarPanel === 'actions'
                       ? 'bg-white text-slate-900'
                       : 'bg-white/10 text-white hover:bg-white/20',
@@ -882,28 +1036,43 @@ const MeetingRoom: React.FC = () => {
                       <p className="mt-3 text-sm">No messages yet. Say something to get started.</p>
                     </div>
                   ) : (
-                    messages.map((message, index) => (
-                      <div
-                        key={`${message.timestamp.toISOString()}-${index}`}
+                    messages.map((message, index) => {
+                      const timestamp = new Date();
+                      let content = '';
+                      if (message.type === 'transcript') {
+                        content = message.text;
+                      } else if (message.type === 'error') {
+                        content = message.message;
+                      } else if (message.type === 'tts_audio') {
+                        content = `Audio: ${message.audio.byteLength} bytes`;
+                      } else if (message.type === 'status') {
+                        content = `Status: ${message.status.connectionState}`;
+                      } else {
+                        content = message.type;
+                      }
+                      
+                      return (
+                        <div
+                          key={`${message.type}-${index}-${timestamp.getTime()}`}
                         className={cn('flex flex-col gap-2 rounded-xl p-3 text-sm', {
-                          'bg-blue-500/20 text-blue-100': message.type === 'user_speech',
-                          'bg-white/10 text-white': message.type === 'ai_response',
+                            'bg-blue-500/20 text-blue-100': message.type === 'transcript',
+                            'bg-white/10 text-white': message.type === 'status',
                           'bg-emerald-500/20 text-emerald-100': message.type === 'tts_audio',
-                          'bg-purple-500/20 text-purple-100': message.type === 'audio_data',
+                            'bg-red-500/20 text-red-100': message.type === 'error',
                         })}
                       >
                         <span className="text-xs uppercase tracking-wide text-slate-400">
                           {message.type.replace('_', ' ')}
                         </span>
-                        <p className="leading-relaxed">{message.content}</p>
+                          <p className="leading-relaxed">{content}</p>
                         <span className="text-[10px] uppercase tracking-wide text-slate-500">
-                          {message.timestamp.toLocaleTimeString()}
+                            {timestamp.toLocaleTimeString()}
                         </span>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
-                {!isVoiceMode && (
                   <div className="rounded-2xl bg-black/30 p-3">
                     <div className="flex items-center gap-2">
                       <input
@@ -924,7 +1093,6 @@ const MeetingRoom: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                )}
               </div>
             )}
 

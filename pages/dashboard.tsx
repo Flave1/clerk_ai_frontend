@@ -104,13 +104,13 @@ const Dashboard: NextPage = () => {
 
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => router.push('/select-meeting')}
                 className="group relative overflow-hidden bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
@@ -148,7 +148,7 @@ const Dashboard: NextPage = () => {
 
             {/* Recent Meetings with Summaries */}
             <div className="card">
-              <div className="card-header flex items-center justify-between">
+              <div className="card-header flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <DocumentTextIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Meeting Summaries</h2>
@@ -225,7 +225,7 @@ const Dashboard: NextPage = () => {
           </div>
 
           {/* Right Column - Calendar Settings, Upcoming Meetings & Quick Info */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 mt-6 lg:mt-0">
             {/* Calendar Meeting Settings */}
             <div className="card">
               <div className="card-header">
@@ -253,7 +253,7 @@ const Dashboard: NextPage = () => {
 
             {/* Upcoming Meetings Card */}
             <div className="card">
-              <div className="card-header flex items-center justify-between">
+              <div className="card-header flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <ClockIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming Meetings</h2>

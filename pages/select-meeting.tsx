@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import axios from '@/lib/axios';
@@ -10,6 +11,7 @@ import { useUIStore, useAuthStore } from '@/store';
 import ComingSoonModal from '@/components/ui/ComingSoonModal';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api';
 
 type PlatformKey = 'aurray' | 'teams' | 'zoom' | 'google_meet';
 
@@ -55,6 +57,14 @@ const PLATFORMS: PlatformOption[] = [
 
 const DEFAULT_VOICE_ID = 'f5HLTX707KIM4SzJYzSz';
 
+// Map platform keys to integration IDs
+const PLATFORM_TO_INTEGRATION: Record<PlatformKey, string | null> = {
+	'aurray': null, // No integration needed for Aurray
+	'zoom': 'zoom',
+	'google_meet': 'google_workspace',
+	'teams': 'microsoft_365',
+};
+
 export default function SelectMeetingPage() {
 	const { theme } = useUIStore();
 	const { user } = useAuth();
@@ -62,18 +72,63 @@ export default function SelectMeetingPage() {
 	const [loadingKey, setLoadingKey] = useState<PlatformKey | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [generated, setGenerated] = useState<{ platform: string; meeting_id: string; meeting_url: string; conversation_id?: string; meeting_ui_url?: string; message?: string } | null>(null);
-	const [comingSoonModal, setComingSoonModal] = useState<{ isOpen: boolean; platformName: string; platformImage?: string }>({
+	const [comingSoonModal, setComingSoonModal] = useState<{ isOpen: boolean; platformName: string; platformImage?: string; platformKey?: PlatformKey }>({
 		isOpen: false,
 		platformName: '',
 		platformImage: undefined,
+		platformKey: undefined,
 	});
+	const [connectedIntegrations, setConnectedIntegrations] = useState<Set<string>>(new Set());
+	const [integrationsLoading, setIntegrationsLoading] = useState(true);
 
 	const isDark = theme === 'dark';
 	const pageBackground = isDark
 		? 'from-[#05060f] via-[#0f1324] to-[#090b16]'
 		: 'from-white via-[#f8fafc] to-[#eef2ff]';
 
+	// Fetch user integrations on mount
+	useEffect(() => {
+		async function loadIntegrations() {
+			if (!user) {
+				setIntegrationsLoading(false);
+				return;
+			}
+
+			try {
+				const integrations = await apiClient.getConnectedIntegrations();
+				const connectedIds = new Set(integrations.map((integration: any) => integration.integration_id));
+				setConnectedIntegrations(connectedIds);
+			} catch (error) {
+				console.error('Failed to load integrations:', error);
+			} finally {
+				setIntegrationsLoading(false);
+			}
+		}
+
+		loadIntegrations();
+	}, [user]);
+
+	// Check if a platform is installed
+	function isPlatformInstalled(key: PlatformKey): boolean {
+		const integrationId = PLATFORM_TO_INTEGRATION[key];
+		if (!integrationId) return true; // Aurray doesn't need integration
+		return connectedIntegrations.has(integrationId);
+	}
+
 	async function handleSelect(key: PlatformKey) {
+		// Check if platform is installed
+		if (!isPlatformInstalled(key)) {
+			const platform = PLATFORMS.find((platform) => platform.key === key);
+			const platformName = platform?.name || 'This service';
+			setComingSoonModal({
+				isOpen: true,
+				platformName: platformName,
+				platformImage: platform?.image,
+				platformKey: key,
+			});
+			return;
+		}
+
 		// Check if Zoom or Google Meet (temporarily down)
 		if (key === 'zoom' || key === 'google_meet') {
 			const platform = PLATFORMS.find((platform) => platform.key === key);
@@ -82,6 +137,7 @@ export default function SelectMeetingPage() {
 				isOpen: true,
 				platformName: platformName,
 				platformImage: platform?.image,
+				platformKey: key,
 			});
 			return;
 		}
@@ -112,10 +168,16 @@ export default function SelectMeetingPage() {
 				if (data.meeting_url) {
 					query.set('meetingUrl', data.meeting_url);
 				}
-				
 				const meetingRoomUrl = `/meeting-room?${query.toString()}`;
+				
+				// Open Aurray meeting in a new tab
+				if (typeof window !== 'undefined') {
+					window.open(meetingRoomUrl, '_blank', 'noopener,noreferrer');
+				} else {
+					// Fallback for non-browser environments
 				router.push(meetingRoomUrl);
-				toast.success('Starting Aurray meeting...');
+				}
+				toast.success('Starting Aurray meeting in a new tab...');
 			} else {
 				// Call external meeting start endpoint instead of conversations/start
 				const res = await axios.post('/conversations/start-external', {
@@ -280,6 +342,14 @@ export default function SelectMeetingPage() {
 										{description}
 									</p>
 
+									{!isPlatformInstalled(key) && (
+										<div className="absolute inset-0 z-20 flex items-end justify-end p-4">
+											<span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400 border border-red-500/20 backdrop-blur-sm">
+												Not installed
+											</span>
+										</div>
+									)}
+
 									{loadingKey === key && (
 										<div className="absolute inset-0 z-20 flex items-end justify-end p-4">
 											<div className="inline-flex items-center gap-2 rounded-full bg-gray-900/80 px-4 py-2 text-xs text-white shadow-lg">
@@ -386,13 +456,45 @@ export default function SelectMeetingPage() {
 				)}
 			</AnimatePresence>
 
-			{/* Coming Soon Modal for Zoom and Google Meet */}
+			{/* Coming Soon Modal for Zoom, Google Meet, or Not Installed apps */}
 			<ComingSoonModal
-				featureName={"Back soon"}
+				featureName={comingSoonModal.platformName}
 				isOpen={comingSoonModal.isOpen}
-				onClose={() => setComingSoonModal({ isOpen: false, platformName: '', platformImage: undefined })}
-				title={`${comingSoonModal.platformName} Temporarily Unavailable`}
-				message={`We recently brought down ${comingSoonModal.platformName}. We are working really hard to return it. Please use Aurray or Microsoft Teams for your meeting.`}
+				onClose={() => setComingSoonModal({ isOpen: false, platformName: '', platformImage: undefined, platformKey: undefined })}
+				title={`${comingSoonModal.platformName} ${comingSoonModal.platformKey && !isPlatformInstalled(comingSoonModal.platformKey) ? 'Not Installed' : 'Temporarily Unavailable'}`}
+				message={
+					comingSoonModal.platformKey && !isPlatformInstalled(comingSoonModal.platformKey) ? (
+						<>
+							{comingSoonModal.platformKey === 'teams' ? (
+								<>
+									Microsoft Teams is part of Microsoft 365. Please{' '}
+									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
+										go to Integrations
+									</Link>
+									{' '}to install Microsoft 365 integration.
+								</>
+							) : comingSoonModal.platformKey === 'google_meet' ? (
+								<>
+									Google Meet is part of Google Workspace. Please{' '}
+									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
+										go to Integrations
+									</Link>
+									{' '}to install Google Workspace integration.
+								</>
+							) : (
+								<>
+									{comingSoonModal.platformName} integration is not installed. Please{' '}
+									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
+										go to Integrations
+									</Link>
+									{' '}to install it.
+								</>
+							)}
+						</>
+					) : (
+						`We recently brought down ${comingSoonModal.platformName}. We are working really hard to return it. Please use Aurray or Microsoft Teams for your meeting.`
+					)
+				}
 				image={comingSoonModal.platformImage}
 			/>
 		</>

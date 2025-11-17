@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { NextPage } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -11,10 +11,10 @@ import {
   ExclamationCircleIcon,
   ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
-import apiClient from '@/lib/api';
 import toast from 'react-hot-toast';
 import Axios from 'axios';
 import { useUIStore } from '@/store';
+import { API_ORIGIN, API_PREFIX } from '@/lib/axios';
 
 interface WebhookResponse {
   success?: boolean;
@@ -30,10 +30,27 @@ const WebhookDetailPage: NextPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [requestPayload, setRequestPayload] = useState<any>({});
 
-  const webhooks: Record<string, any> = {
+  const webhookConfig = useMemo(() => {
+    const origin =
+      API_ORIGIN ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_ORIGIN ||
+      (typeof window !== 'undefined' ? window.location.origin : '');
+
+    const displayBase = origin ? `${origin.replace(/\/$/, '')}${API_PREFIX}/ws` : `${API_PREFIX}/ws`;
+    const requestBase = origin ? `${origin.replace(/\/$/, '')}${API_PREFIX}/ws` : `${API_PREFIX}/ws`;
+
+    return {
+      displayBase,
+      requestBase,
+    };
+  }, []);
+
+  const webhooks: Record<string, any> = useMemo(() => ({
     join_meeting: {
       name: 'Join Meeting',
-      url: '/v1/api.aurray.net/join_meeting',
+      displayUrl: `${webhookConfig.displayBase}/join_meeting`,
+      requestUrl: `${webhookConfig.requestBase}/join_meeting`,
       method: 'POST',
       description: 'Join a meeting with AI assistant capabilities',
       defaultPayload: {
@@ -49,17 +66,19 @@ const WebhookDetailPage: NextPage = () => {
     },
     voice_profiles: {
       name: 'Get Voice Profiles',
-      url: '/v1/api.aurray.net/voice_profiles',
+      displayUrl: `${webhookConfig.displayBase}/voice_profiles`,
+      requestUrl: `${webhookConfig.requestBase}/voice_profiles`,
       method: 'GET',
       description: 'Get a list of available voice profiles for TTS',
     },
     meeting_contexts: {
       name: 'Get Meeting Contexts',
-      url: '/v1/api.aurray.net/meeting_contexts',
+      displayUrl: `${webhookConfig.displayBase}/meeting_contexts`,
+      requestUrl: `${webhookConfig.requestBase}/meeting_contexts`,
       method: 'GET',
       description: 'Get a list of meeting contexts for the authenticated user',
     },
-  };
+  }), [webhookConfig]);
 
   const webhookInfo = webhookId ? webhooks[webhookId as string] : null;
 
@@ -81,10 +100,7 @@ const WebhookDetailPage: NextPage = () => {
       setIsLoading(true);
       setResponse(null);
 
-      // Construct the webhook URL for the proxy
-      // webhookInfo.url is like '/v1/api.aurray.net/join_meeting'
-      // We need to call it via /api/v1/api.aurray.net/join_meeting
-      const webhookUrl = `/api${webhookInfo.url}`;
+      const webhookUrl = webhookInfo.requestUrl;
       
       const config: any = {
         headers: {
@@ -203,10 +219,10 @@ const WebhookDetailPage: NextPage = () => {
                   ? 'bg-[#161B22] text-gray-100'
                   : 'bg-gray-100 text-gray-900'
               }`}>
-                {webhookInfo.url}
+                {webhookInfo.displayUrl}
               </code>
               <button
-                onClick={() => copyToClipboard(webhookInfo.url)}
+                onClick={() => copyToClipboard(webhookInfo.displayUrl)}
                 className={`p-1.5 ${
                   theme === 'dark'
                     ? 'text-gray-400 hover:text-gray-200'

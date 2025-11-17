@@ -5,10 +5,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "concurrently \"npm run dev\" \"npx local-ssl-proxy --source 3443 --target 3000 --cert localhost+2.pem --key localhost+2-key.pem\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "export": "next build",
+    "deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -40,6 +43,7 @@
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
+    "concurrently": "^9.2.1",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4"
   }
