@@ -20,7 +20,7 @@ class WebSocketClient {
   private errorHandlers: ErrorEventHandler[] = [];
 
   constructor() {
-    this.url = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+    this.url = process.env.NEXT_PUBLIC_WS_URL || 'ws://api.auray.net/ws';
   }
 
   // Public methods

@@ -1,4 +1,4 @@
-import axiosInstance from './axios';
+import axiosInstance, { API_BASE_URL, API_ORIGIN, API_PREFIX } from './axios';
 import Axios from 'axios';
 import {
   Action,
@@ -29,10 +29,14 @@ class ApiClient {
     return axiosInstance;
   }
 
+  private withPrefix(path: string): string {
+    return `${API_PREFIX}${path}`;
+  }
+
   // Health Check
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.client.get('/health');
+      const response = await this.client.get(this.withPrefix('/health'));
       return response.status === 200;
     } catch (error) {
       console.error('Health check failed:', error);
@@ -42,14 +46,14 @@ class ApiClient {
 
   // Actions
   async getActions(filters?: ActionFilters): Promise<Action[]> {
-    const response = await this.client.get('/actions', {
+    const response = await this.client.get(this.withPrefix('/actions'), {
       params: filters,
     });
     return response.data;
   }
 
   async getAction(id: string): Promise<Action> {
-    const response = await this.client.get(`/actions/${id}`);
+    const response = await this.client.get(this.withPrefix(`/actions/${id}`));
     return response.data;
   }
 
@@ -59,7 +63,7 @@ class ApiClient {
     result?: Record<string, any>,
     error_message?: string
   ): Promise<Action> {
-    const response = await this.client.put(`/actions/${id}`, {
+    const response = await this.client.put(this.withPrefix(`/actions/${id}`), {
       status,
       result,
       error_message,
@@ -70,17 +74,17 @@ class ApiClient {
 
   // Rooms
   async getRooms(): Promise<Room[]> {
-    const response = await this.client.get('/rooms');
+    const response = await this.client.get(this.withPrefix('/rooms'));
     return response.data;
   }
 
   async getRoom(id: string): Promise<Room> {
-    const response = await this.client.get(`/rooms/${id}`);
+    const response = await this.client.get(this.withPrefix(`/rooms/${id}`));
     return response.data;
   }
 
   async createRoom(data: RoomCreate): Promise<Room> {
-    const response = await this.client.post('/rooms', data);
+    const response = await this.client.post(this.withPrefix('/rooms'), data);
     return response.data;
   }
 
@@ -88,52 +92,52 @@ class ApiClient {
     roomId: string,
     participantCount: number
   ): Promise<Room> {
-    const response = await this.client.put(`/rooms/${roomId}/participants`, {
+    const response = await this.client.put(this.withPrefix(`/rooms/${roomId}/participants`), {
       participant_count: participantCount,
     });
     return response.data;
   }
 
   async deleteRoom(id: string): Promise<void> {
-    await this.client.delete(`/rooms/${id}`);
+    await this.client.delete(this.withPrefix(`/rooms/${id}`));
   }
 
   // Meeting Agent API Methods
   async getMeetings(filters?: MeetingFilters): Promise<Meeting[]> {
-    const response = await this.client.get('/meetings', {
+    const response = await this.client.get(this.withPrefix('/meetings'), {
       params: filters,
     });
     return response.data;
   }
 
   async getMeeting(id: string): Promise<Meeting> {
-    const response = await this.client.get(`/meetings/${id}`);
+    const response = await this.client.get(this.withPrefix(`/meetings/${id}`));
     return response.data;
   }
 
   async getMeetingSummary(id: string): Promise<MeetingSummary> {
-    const response = await this.client.get(`/meetings/${id}/summary`);
+    const response = await this.client.get(this.withPrefix(`/meetings/${id}/summary`));
     return response.data;
   }
 
   async getMeetingSummaries(limit = 50, offset = 0): Promise<MeetingSummary[]> {
-    const response = await this.client.get('/meetings/summaries', {
+    const response = await this.client.get(this.withPrefix('/meetings/summaries'), {
       params: { limit, offset },
     });
     return response.data;
   }
 
   async joinMeeting(id: string): Promise<MeetingJoinResponse> {
-    const response = await this.client.post(`/meetings/${id}/join`);
+    const response = await this.client.post(this.withPrefix(`/meetings/${id}/join`));
     return response.data;
   }
 
   async leaveMeeting(id: string): Promise<void> {
-    await this.client.post(`/meetings/${id}/leave`);
+    await this.client.post(this.withPrefix(`/meetings/${id}/leave`));
   }
 
   async botLeft(meetingId: string, sessionId: string, reason?: string): Promise<void> {
-    await this.client.post(`/meetings/${meetingId}/bot-left`, {
+    await this.client.post(this.withPrefix(`/meetings/${meetingId}/bot-left`), {
       sessionId,
       reason: reason || 'user_left',
       timestamp: new Date().toISOString(),
@@ -141,7 +145,7 @@ class ApiClient {
   }
 
   async getActiveMeetings(): Promise<Meeting[]> {
-    const response = await this.client.get('/meetings/active');
+    const response = await this.client.get(this.withPrefix('/meetings/active'));
     return response.data;
   }
 
@@ -149,7 +153,7 @@ class ApiClient {
     id: string,
     notificationType: 'summary' | 'action_items' | 'reminder'
   ): Promise<void> {
-    await this.client.post(`/meetings/${id}/notify`, {
+    await this.client.post(this.withPrefix(`/meetings/${id}/notify`), {
       notification_type: notificationType,
     });
   }
@@ -159,7 +163,7 @@ class ApiClient {
     participants: any[];
     total_count: number;
   }> {
-    const response = await this.client.get(`/meetings/${id}/participants`);
+    const response = await this.client.get(this.withPrefix(`/meetings/${id}/participants`));
     return response.data;
   }
 
@@ -169,12 +173,12 @@ class ApiClient {
     chunks: string[];
     chunk_count: number;
   }> {
-    const response = await this.client.get(`/meetings/${id}/transcription`);
+    const response = await this.client.get(this.withPrefix(`/meetings/${id}/transcription`));
     return response.data;
   }
 
   async getMeetingActionItems(id: string): Promise<ActionItem[]> {
-    const response = await this.client.get(`/meetings/${id}/action-items`);
+    const response = await this.client.get(this.withPrefix(`/meetings/${id}/action-items`));
     return response.data;
   }
 
@@ -183,32 +187,32 @@ class ApiClient {
     actionItemId: string,
     status: string
   ): Promise<void> {
-    await this.client.put(`/meetings/${meetingId}/action-items/${actionItemId}`, {
+    await this.client.put(this.withPrefix(`/meetings/${meetingId}/action-items/${actionItemId}`), {
       status,
     });
   }
 
   async getMeetingConfig(): Promise<MeetingConfig> {
-    const response = await this.client.get('/meetings/config');
+    const response = await this.client.get(this.withPrefix('/meetings/config'));
     return response.data;
   }
 
   async updateMeetingConfig(config: MeetingConfig): Promise<MeetingConfig> {
-    const response = await this.client.put('/meetings/config', config);
+    const response = await this.client.put(this.withPrefix('/meetings/config'), config);
     return response.data;
   }
 
   async getMeetingAgentStatus(): Promise<MeetingAgentStatus> {
-    const response = await this.client.get('/meetings/status');
+    const response = await this.client.get(this.withPrefix('/meetings/status'));
     return response.data;
   }
 
   async startMeetingScheduler(): Promise<void> {
-    await this.client.post('/meetings/start-scheduler');
+    await this.client.post(this.withPrefix('/meetings/start-scheduler'));
   }
 
   async stopMeetingScheduler(): Promise<void> {
-    await this.client.post('/meetings/stop-scheduler');
+    await this.client.post(this.withPrefix('/meetings/stop-scheduler'));
   }
 
   async bulkDeleteMeetings(meetingIds: string[]): Promise<{
@@ -217,7 +221,7 @@ class ApiClient {
     total_requested: number;
     failed_deletions: Array<{ meeting_id: string; error: string }>;
   }> {
-    const response = await this.client.delete('/meetings/bulk', {
+    const response = await this.client.delete(this.withPrefix('/meetings/bulk'), {
       data: meetingIds,
     });
     return response.data;
@@ -253,12 +257,12 @@ class ApiClient {
 
   // API Keys
   async getApiKeys(): Promise<ApiKey[]> {
-    const response = await this.client.get('/api-keys');
+    const response = await this.client.get(this.withPrefix('/api-keys'));
     return response.data;
   }
 
   async getApiKey(id: string): Promise<ApiKey> {
-    const response = await this.client.get(`/api-keys/${id}`);
+    const response = await this.client.get(this.withPrefix(`/api-keys/${id}`));
     return response.data;
   }
 
@@ -267,7 +271,7 @@ class ApiClient {
     expires_in_days?: number;
     scopes?: string[];
   }): Promise<ApiKey> {
-    const response = await this.client.post('/api-keys', data);
+    const response = await this.client.post(this.withPrefix('/api-keys'), data);
     return response.data;
   }
 
@@ -275,12 +279,12 @@ class ApiClient {
     name?: string;
     status?: string;
   }): Promise<ApiKey> {
-    const response = await this.client.put(`/api-keys/${id}`, data);
+    const response = await this.client.put(this.withPrefix(`/api-keys/${id}`), data);
     return response.data;
   }
 
   async deleteApiKey(id: string): Promise<void> {
-    await this.client.delete(`/api-keys/${id}`);
+    await this.client.delete(this.withPrefix(`/api-keys/${id}`));
   }
 
   // Webhooks
@@ -293,10 +297,11 @@ class ApiClient {
     voice_id: string;
     bot_name: string;
   }, apiKey?: string): Promise<JoinMeetingResponse> {
-    // Webhook endpoints are at /v1/api.aurray.net (not /api/v1)
-    // Use /api/v1/ prefix to go through Next.js API proxy
-    // The proxy will forward /api/v1/api.aurray.net/* → backend /v1/api.aurray.net/*
-    const webhookUrl = '/api/v1/api.aurray.net/join_meeting';
+    const prefixPattern = API_PREFIX
+      ? new RegExp(`${API_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i')
+      : null;
+    const origin = API_ORIGIN || (prefixPattern ? API_BASE_URL.replace(prefixPattern, '') : API_BASE_URL);
+    const webhookUrl = `${origin}/v1/api.aurray.net/join_meeting`;
     
     // Use API key if provided, otherwise fall back to access token
     const authHeader = apiKey 
@@ -317,64 +322,63 @@ class ApiClient {
 
   // Integrations
   async getIntegrations(): Promise<any[]> {
-    const response = await this.client.get('/integrations');
+    const response = await this.client.get(this.withPrefix('/integrations'));
     return response.data;
   }
 
   async getIntegration(integrationId: string): Promise<any> {
-    const response = await this.client.get(`/integrations/${integrationId}`);
+    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}`));
     return response.data;
   }
 
   async getConnectedIntegrations(): Promise<any[]> {
-    const response = await this.client.get('/integrations/connected');
+    const response = await this.client.get(this.withPrefix('/integrations/connected'));
     return response.data;
   }
 
   async getIntegrationOAuthUrl(integrationId: string): Promise<{ oauth_url: string; state: string }> {
-    const response = await this.client.get(`/integrations/${integrationId}/oauth/authorize`);
+    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}/oauth/authorize`));
     return response.data;
   }
 
   async disconnectIntegration(integrationId: string): Promise<void> {
-    await this.client.post(`/integrations/${integrationId}/disconnect`);
+    await this.client.post(this.withPrefix(`/integrations/${integrationId}/disconnect`));
   }
 
   async getIntegrationStatus(integrationId: string): Promise<any> {
-    const response = await this.client.get(`/integrations/${integrationId}/status`);
+    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}/status`));
     return response.data;
   }
 
   // Meeting Contexts
   async getMeetingContexts(): Promise<MeetingContext[]> {
-    const response = await this.client.get('/meeting-contexts');
+    const response = await this.client.get(this.withPrefix('/meeting-contexts'));
     return response.data;
   }
 
   async getMeetingContext(contextId: string): Promise<MeetingContext> {
-    const response = await this.client.get(`/meeting-contexts/${contextId}`);
+    const response = await this.client.get(this.withPrefix(`/meeting-contexts/${contextId}`));
     return response.data;
   }
 
   async createMeetingContext(data: MeetingContextCreate): Promise<MeetingContext> {
-    const response = await this.client.post('/meeting-contexts', data);
+    const response = await this.client.post(this.withPrefix('/meeting-contexts'), data);
     return response.data;
   }
 
   async updateMeetingContext(contextId: string, data: Partial<MeetingContextCreate>): Promise<MeetingContext> {
-    const response = await this.client.put(`/meeting-contexts/${contextId}`, data);
+    const response = await this.client.put(this.withPrefix(`/meeting-contexts/${contextId}`), data);
     return response.data;
   }
 
   async deleteMeetingContext(contextId: string): Promise<void> {
-    await this.client.delete(`/meeting-contexts/${contextId}`);
+    await this.client.delete(this.withPrefix(`/meeting-contexts/${contextId}`));
   }
 
   // Newsletter/Waiting List
   async signupNewsletter(data: { name: string; email: string; country: string }): Promise<{ success: boolean; message: string; timestamp: string }> {
     // Newsletter endpoint is public, so we use Axios directly without auth
-    // The proxy will add /api/v1/ prefix, so we just need /newsletter
-    const response = await Axios.post('/api/newsletter', data);
+    const response = await axiosInstance.post(this.withPrefix('/newsletter'), data);
     return response.data;
   }
 }

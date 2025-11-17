@@ -66,8 +66,11 @@ const IntegrationsPage: NextPage = () => {
   }, []);
 
   const handleConnect = async (integration: Integration) => {
-    // Show coming soon modal for unconnected integrations
-    if (!integration.connected) {
+    // Disable "Coming Soon" modal for these integrations - allow direct OAuth flow
+    const allowedIntegrations = ['google_workspace', 'microsoft_365', 'zoom', 'slack'];
+    
+    // Show coming soon modal for unconnected integrations (except allowed ones)
+    if (!integration.connected && !allowedIntegrations.includes(integration.id)) {
       setComingSoonModal({
         isOpen: true,
         integrationName: integration.name,

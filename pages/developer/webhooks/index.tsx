@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { NextPage } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Header from '@/components/layout/Header';
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { useUIStore } from '@/store';
+import { API_ORIGIN, API_PREFIX } from '@/lib/axios';
 
 interface Webhook {
   id: string;
@@ -18,25 +19,43 @@ const WebhooksIndexPage: NextPage = () => {
   const router = useRouter();
   const { theme } = useUIStore();
 
+  const webhookDisplayBase = useMemo(() => {
+    const envOrigin =
+      API_ORIGIN ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_ORIGIN ||
+      '';
+
+    if (envOrigin) {
+      return `${envOrigin.replace(/\/$/, '')}${API_PREFIX}/ws`;
+    }
+
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}${API_PREFIX}/ws`;
+    }
+
+    return `${API_PREFIX}/ws`;
+  }, []);
+
   const webhooks: Webhook[] = [
     {
       id: 'voice_profiles',
       name: 'Get Voice Profiles',
-      url: '/v1/api.aurray.net/voice_profiles',
+      url: `${webhookDisplayBase}/voice_profiles`,
       method: 'GET',
       description: 'Get a list of available voice profiles for TTS',
     },
     {
       id: 'meeting_contexts',
       name: 'Get Meeting Contexts',
-      url: '/v1/api.aurray.net/meeting_contexts',
+      url: `${webhookDisplayBase}/meeting_contexts`,
       method: 'GET',
       description: 'Get a list of meeting contexts for the authenticated user',
     },
     {
       id: 'join_meeting',
       name: 'Join Meeting',
-      url: '/v1/api.aurray.net/join_meeting',
+      url: `${webhookDisplayBase}/join_meeting`,
       method: 'POST',
       description: 'Join a meeting with AI assistant capabilities',
     },

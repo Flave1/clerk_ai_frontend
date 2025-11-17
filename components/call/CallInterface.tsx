@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { callClient } from '@/lib/callClient';
+import callClient from '@/lib/callClient';
 import apiClient from '@/lib/api';
+import axios from '@/lib/axios';
 import type { MeetingContext } from '@/types';
 
 interface CallInterfaceProps {
@@ -70,7 +71,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
     meetingUrl?: string;
     contextId?: string | null;
   }) => {
-    const resolvedMeetingId = meetingId || callClient.currentSessionId || conversationId;
+    const resolvedMeetingId = meetingId || callClient.sessionId || conversationId;
     if (!resolvedMeetingId) {
       console.error('Unable to resolve meeting identifier for meeting room redirect');
       return;
@@ -102,16 +103,28 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
       setIsStarting(true);
       setStartingContextId(context?.id ?? null);
 
-      const result = await callClient.startCall(context);
+      // Generate a temporary room ID
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') || 'user-' + Date.now() : 'user-' + Date.now();
+      const tempRoomId = `room-${userId}`;
+
+      // Call conversations/start endpoint
+      const res = await axios.post('/conversations/start', {
+        room_id: tempRoomId,
+        user_id: userId,
+        meeting_platform: 'aurray',
+        context_id: context?.id || null,
+      });
+
+      const result = res.data;
 
       if (onCallStart) {
-        onCallStart(result.conversationId);
+        onCallStart(result.conversation_id);
       }
 
       goToMeetingRoom({
-        conversationId: result.conversationId,
-        meetingId: result.meetingId,
-        meetingUrl: result.meetingUiUrl || result.meetingUrl,
+        conversationId: result.conversation_id,
+        meetingId: result.meeting_id || result.conversation_id,
+        meetingUrl: result.meeting_url || result.meeting_ui_url,
         contextId: context?.id ?? null,
       });
     } catch (error) {

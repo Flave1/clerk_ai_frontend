@@ -1,7 +1,7 @@
 /**
  * Authentication service for managing user authentication
  */
-import axiosInstance from './axios';
+import axiosInstance, { API_PREFIX } from './axios';
 
 export interface User {
   user_id: string;
@@ -125,7 +125,7 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
     console.log('[Auth] API Base URL:', baseURL);
     console.log('[Auth] Full URL will be:', `${baseURL}/auth/register`);
     
-    const response = await axiosInstance.post('/auth/register', data, {
+    const response = await axiosInstance.post(`${API_PREFIX}/auth/register`, data, {
       timeout: 60000, // 60 seconds timeout for registration
     });
     
@@ -163,7 +163,7 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
 export const signIn = async (data: SignInRequest): Promise<AuthResponse> => {
   try {
     console.log('[Auth] Signing in user:', data.email);
-    const response = await axiosInstance.post('/auth/signin', data, {
+    const response = await axiosInstance.post(`${API_PREFIX}/auth/signin`, data, {
       timeout: 60000, // 60 seconds timeout for sign in
     });
     const authData: AuthResponse = response.data;
@@ -180,7 +180,17 @@ export const signIn = async (data: SignInRequest): Promise<AuthResponse> => {
       name: authData.name,
     });
     
+    // Verify token was stored correctly
+    const storedToken = getAccessToken();
+    if (!storedToken || storedToken !== authData.access_token) {
+      console.error('[Auth] Token storage verification failed!');
+      console.error('[Auth] Expected token length:', authData.access_token.length);
+      console.error('[Auth] Stored token length:', storedToken?.length || 0);
+      throw new Error('Failed to store authentication token');
+    }
+    
     console.log('[Auth] Sign in successful for:', authData.email);
+    console.log('[Auth] Token stored and verified. Token length:', storedToken.length);
     return authData;
   } catch (error: any) {
     console.error('[Auth] Sign in error:', error);
@@ -192,7 +202,7 @@ export const signIn = async (data: SignInRequest): Promise<AuthResponse> => {
  * Sign in with Google OAuth
  */
 export const signInWithGoogle = async (data: GoogleOAuthRequest): Promise<AuthResponse> => {
-  const response = await axiosInstance.post('/auth/google', data);
+  const response = await axiosInstance.post(`${API_PREFIX}/auth/google`, data);
   const authData: AuthResponse = response.data;
   
   // Store token and user info
@@ -210,7 +220,7 @@ export const signInWithGoogle = async (data: GoogleOAuthRequest): Promise<AuthRe
  * Get current user info
  */
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await axiosInstance.get('/auth/me');
+  const response = await axiosInstance.get(`${API_PREFIX}/auth/me`);
   const user: User = response.data;
   
   // Update stored user info
