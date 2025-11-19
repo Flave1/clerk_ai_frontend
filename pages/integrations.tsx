@@ -67,7 +67,12 @@ const IntegrationsPage: NextPage = () => {
 
   const handleConnect = async (integration: Integration) => {
     // Disable "Coming Soon" modal for these integrations - allow direct OAuth flow
-    const allowedIntegrations = ['google_workspace', 'microsoft_365', 'zoom', 'slack'];
+    const allowedIntegrations = [
+      'google_calendar', 'google_gmail', 'google_drive', 'google_docs', 'google_meet',
+      'microsoft_email', 'microsoft_calendar', 'microsoft_contacts', 'microsoft_teams', 
+      'microsoft_onedrive', 'microsoft_sharepoint', 'microsoft_office',
+      'zoom', 'slack'
+    ];
     
     // Show coming soon modal for unconnected integrations (except allowed ones)
     if (!integration.connected && !allowedIntegrations.includes(integration.id)) {
@@ -81,7 +86,7 @@ const IntegrationsPage: NextPage = () => {
     try {
       setConnecting(integration.id);
       
-      // Get OAuth URL from backend
+      // Get OAuth URL from backend - call the specific integration directly
       const response = await apiClient.getIntegrationOAuthUrl(integration.id);
       const { oauth_url } = response;
       
@@ -101,7 +106,18 @@ const IntegrationsPage: NextPage = () => {
       
       // Listen for OAuth success message from popup
       const handleMessage = (event: MessageEvent) => {
-        if (event.data?.type === 'OAUTH_SUCCESS' && event.data?.integration_id === integration.id) {
+        // For Google services, the integration_id will be 'google_workspace' but we want to match our service
+        const googleServiceMap: Record<string, string> = {
+          'google_calendar': 'google_workspace',
+          'google_gmail': 'google_workspace',
+          'google_drive': 'google_workspace',
+          'google_docs': 'google_workspace',
+          'google_meet': 'google_workspace',
+        };
+        const expectedIntegrationId = googleServiceMap[integration.id] || integration.id;
+        
+        if (event.data?.type === 'OAUTH_SUCCESS' && 
+            (event.data?.integration_id === integration.id || event.data?.integration_id === expectedIntegrationId)) {
           if (checkPopup) clearInterval(checkPopup);
           window.removeEventListener('message', handleMessage);
           setConnecting(null);
@@ -234,7 +250,7 @@ const IntegrationsPage: NextPage = () => {
                 className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Back to Connected Apps
+                Back
               </button>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Integrations</h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
@@ -452,6 +468,7 @@ const IntegrationsPage: NextPage = () => {
         confirmButtonColor="red"
         isLoading={isDisconnecting}
       />
+
     </>
   );
 };

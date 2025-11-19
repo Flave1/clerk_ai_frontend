@@ -285,7 +285,7 @@ const MeetingRoom: React.FC = () => {
       // Note: resume() may fail due to browser autoplay policy until user interacts
       if (audioContext.state === 'suspended') {
         try {
-          await audioContext.resume();
+        await audioContext.resume();
         } catch (error) {
           // AudioContext will resume automatically on next user interaction
           // This is expected behavior due to browser autoplay policies

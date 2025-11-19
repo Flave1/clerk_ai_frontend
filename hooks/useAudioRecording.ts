@@ -72,9 +72,9 @@ export default function useAudioRecorder(): RecorderState {
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        noiseSuppression: false,
-        echoCancellation: false,
-        autoGainControl: false,
+        noiseSuppression: true,
+        echoCancellation: true,  // Enable to prevent feedback loop
+        autoGainControl: true,
         channelCount: 1,
         sampleRate: 16000,
       },
@@ -103,7 +103,8 @@ export default function useAudioRecorder(): RecorderState {
       const now = performance.now();
 
       // Voice detected
-      if (rms > RMS_THRESHOLD) {
+      const isUserVoice = rms > RMS_THRESHOLD;
+      if (isUserVoice) {
         handleUserInterrupt();
         lastVoiceTs.current = now;
 
@@ -113,21 +114,29 @@ export default function useAudioRecorder(): RecorderState {
         }
       }
 
-      // Send audio to backend
+      // Send audio to backend only when:
+      // 1. Bot is NOT speaking, OR
+      // 2. User voice is detected (for interruption)
+      // This prevents bot's own voice from being sent back (feedback loop)
       if (pcm && pcm.length > 0) {
-        // pcm is Float32Array → convert to PCM16
-        const pcm16 = floatToPCM16(pcm);
-        // Convert to ArrayBuffer (not ArrayBufferLike/SharedArrayBuffer)
-        const buffer = new ArrayBuffer(pcm16.byteLength);
-        new Uint8Array(buffer).set(new Uint8Array(pcm16.buffer, pcm16.byteOffset, pcm16.byteLength));
-        callClient.sendAudio(buffer);
+        const shouldSendAudio = !botSpeaking.current || isUserVoice;
+        
+        if (shouldSendAudio) {
+          // pcm is Float32Array → convert to PCM16
+          const pcm16 = floatToPCM16(pcm);
+          // Convert to ArrayBuffer (not ArrayBufferLike/SharedArrayBuffer)
+          const buffer = new ArrayBuffer(pcm16.byteLength);
+          new Uint8Array(buffer).set(new Uint8Array(pcm16.buffer, pcm16.byteOffset, pcm16.byteLength));
+          callClient.sendAudio(buffer);
+        }
       }
 
       checkForCommit();
     };
 
     source.connect(node);
-    node.connect(ctxRef.current.destination);
+    // DO NOT connect node to destination - this would create immediate feedback loop
+    // The microphone should only be used for recording, not for playback monitoring
   }, [listening]);
 
   // -------------------------------------------------------------------

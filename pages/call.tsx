@@ -20,7 +20,6 @@ const CallPage: NextPage = () => {
       setLoadingConversation(true);
       // Conversations feature has been removed
       setExistingConversation(null);
-      console.log('Conversation feature disabled');
     } catch (error) {
       console.error('Failed to fetch conversation:', error);
       toast.error('Conversation feature is no longer available.');

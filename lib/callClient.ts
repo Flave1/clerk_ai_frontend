@@ -51,7 +51,7 @@ class CallClient {
     u.search = "";
     u.hash = "";
     return u.toString();
-  }
+    }
 
   // -----------------------------------------------------
   // Public API used by MeetingRoom
@@ -85,7 +85,7 @@ class CallClient {
     if (!this.ws) {
       console.warn('[CallClient] sendAudio: No WebSocket available');
       return;
-    }
+  }
     if (this.ws.readyState !== WebSocket.OPEN) {
       console.warn(`[CallClient] sendAudio: WebSocket not open (state: ${this.ws.readyState})`);
       return;
@@ -153,9 +153,9 @@ class CallClient {
         try {
           json = JSON.parse(ev.data);
         } catch {
-          return;
-        }
-
+              return;
+            }
+            
         switch (json.type) {
           case "connected":
             this.updateStatus("connected");
@@ -166,7 +166,7 @@ class CallClient {
             this.emit({
               type: "transcript",
               text: json.content,
-            });
+              });
             break;
 
           case "tts_complete":
@@ -186,7 +186,7 @@ class CallClient {
         }
       };
     });
-  }
+    }
 
   // -----------------------------------------------------
   // Util
@@ -198,7 +198,7 @@ class CallClient {
       connectionState: state,
     };
     this.emit({ type: "status", status: this.status });
-  }
+      }
 
   emit(msg: CallMessage) {
     this.handlers.forEach((h) => h(msg));

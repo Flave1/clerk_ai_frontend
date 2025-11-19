@@ -30,7 +30,6 @@ class WebSocketClient {
     }
 
     this.isConnecting = true;
-    console.log(`Connecting to WebSocket: ${this.url}`);
 
     try {
       this.ws = new WebSocket(this.url);
@@ -160,14 +159,12 @@ class WebSocketClient {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
       this.isConnecting = false;
       this.reconnectAttempts = 0;
       this.connectionHandlers.forEach(handler => handler());
     };
 
     this.ws.onclose = (event) => {
-      console.log('WebSocket disconnected:', event.code, event.reason);
       this.isConnecting = false;
       this.disconnectionHandlers.forEach(handler => handler());
       
@@ -195,7 +192,6 @@ class WebSocketClient {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     
-    console.log(`Scheduling WebSocket reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
     
     setTimeout(() => {
       if (this.shouldReconnect) {

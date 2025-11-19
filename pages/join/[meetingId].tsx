@@ -39,7 +39,6 @@ const JoinMeetingPage: React.FC = () => {
       });
       
       const joinResult = response.data;
-      console.log('Successfully joined meeting:', joinResult);
       
       // Redirect to meeting with established connection
       const meetingUrl = `/standalone-call?meetingId=${meetingId}&participantId=${participantId}&name=${encodeURIComponent(name)}&joined=true`;

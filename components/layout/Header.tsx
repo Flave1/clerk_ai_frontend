@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { 
@@ -29,7 +29,7 @@ const mainNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Meetings', href: '/meetings', icon: VideoCameraIcon },
   { name: 'Voice Profile', href: '/voice-profile', icon: MicrophoneIcon },
-  { name: 'Context Lab', href: '/context-lab', icon: BeakerIcon },
+  { name: 'Personality & Context', href: '/context-lab', icon: BeakerIcon },
 ];
 
 const integrationsNavigation = [
@@ -37,7 +37,7 @@ const integrationsNavigation = [
 ];
 
 const settingsNavigation = [
-  { name: 'General', href: '/settings', icon: AdjustmentsHorizontalIcon },
+  // { name: 'General', href: '/settings', icon: AdjustmentsHorizontalIcon },
   { name: 'Profile', href: '/settings/profile', icon: UserCircleIcon },
   { name: 'Notifications', href: '/settings/notifications', icon: BellIcon },
 ];
@@ -52,6 +52,32 @@ export default function Header() {
   const router = useRouter();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
   const { signOut: handleSignOut } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768; // md breakpoint
+      setIsMobile(mobile);
+      
+      // Initialize sidebar state based on screen size (only once on mount)
+      if (!initialized) {
+        setSidebarCollapsed(mobile); // Closed on mobile, open on desktop
+        setInitialized(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [initialized, setSidebarCollapsed]);
+
+  const handleNavClick = () => {
+    // Only close sidebar on mobile devices
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  };
 
   const renderNavItem = (item: typeof mainNavigation[0]) => {
     const isActive = router.pathname === item.href;
@@ -59,6 +85,7 @@ export default function Header() {
       <Link
         key={item.name}
         href={item.href}
+        onClick={handleNavClick}
         className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
           isActive
             ? 'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
@@ -77,7 +104,24 @@ export default function Header() {
         {title}
       </h3>
       <div className="space-y-1">
-        {items.map(renderNavItem)}
+        {items.map((item) => {
+          const isActive = router.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={handleNavClick}
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                isActive
+                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100'
+              }`}
+            >
+              <item.icon className="h-5 w-5 mr-3" />
+              {item.name}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

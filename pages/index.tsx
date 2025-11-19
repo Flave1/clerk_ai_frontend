@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Image from 'next/image';
 import {
   MicrophoneIcon,
@@ -20,6 +21,8 @@ import {
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
+import LandingHeader from '@/components/layout/LandingHeader';
+import LandingFooter from '@/components/layout/LandingFooter';
 import { getCurrentUser } from '@/lib/auth';
 import { useUIStore } from '@/store';
 
@@ -30,16 +33,10 @@ export default function Landing() {
   const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { theme, setTheme } = useUIStore();
+  const { theme } = useUIStore();
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
   const y = useTransform(scrollY, [0, 300], [0, -50]);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  console.log('Landing component render - isVideoModalOpen:', isVideoModalOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -129,7 +126,7 @@ export default function Landing() {
     { 
       name: 'Google Meet', 
       tooltip: 'Video conferencing', 
-      image: '/images/integrations/meet.png' 
+      image: '/images/integrations/google_meet.png' 
     },
     { 
       name: 'Microsoft 365', 
@@ -139,7 +136,7 @@ export default function Landing() {
     { 
       name: 'Microsoft Teams', 
       tooltip: 'Team collaboration', 
-      image: '/images/integrations/teams.png' 
+      image: '/images/integrations/microsoft-teams.png' 
     },
     { 
       name: 'Slack', 
@@ -205,102 +202,21 @@ export default function Landing() {
           ? 'bg-[#0D1117] text-[#E5E7EB]' 
           : 'bg-[#F7FAFC] text-[#1C1C1C]'
       }`}>
-        {/* Navigation */}
-        <motion.nav
-          initial={{ y: -100 }}
-          animate={{ y: 0 }}
-          className={`fixed top-0 w-full z-50 backdrop-blur-lg border-b transition-colors duration-200 ${
-            theme === 'dark'
-              ? 'bg-[#0D1117]/80 border-primary-500/20'
-              : 'bg-white/80 border-primary-500/20'
-          }`}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
-                style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}
-              >
-                AURRAY
-              </motion.div>
-              <div className="hidden md:flex space-x-8">
-                {['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map(
-                  (item) => (
-                    <button
-                      key={item}
-                      onClick={() => {
+        <LandingHeader
+          showAuthButtons={true}
+          isAuthenticated={isAuthenticated}
+          isCheckingAuth={isCheckingAuth}
+          onLoginClick={() => router.push('/login')}
+          onDashboardClick={() => router.push('/dashboard')}
+          onEarlyAccessClick={() => setIsEarlyAccessModalOpen(true)}
+          navItems={['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map((item) => ({
+            label: item,
+            onClick: () => {
                         const id = item.toLowerCase().replace(/\s+/g, '');
                         scrollToSection(id);
-                      }}
-                      className={`transition-colors duration-200 font-medium ${
-                        theme === 'dark'
-                          ? 'text-gray-300 hover:text-white'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
-              </div>
-              <div className="flex items-center gap-4">
-                {!isCheckingAuth && (
-                  <>
-                    {isAuthenticated ? (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => router.push('/dashboard')}
-                        className="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"
-                      >
-                        Dashboard
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => router.push('/login')}
-                        className={`px-6 py-2 font-semibold hover:underline transition-all duration-300 ${
-                          theme === 'dark'
-                            ? 'text-white'
-                            : 'text-gray-700 hover:text-gray-900'
-                        }`}
-                      >
-                        Login
-                      </motion.button>
-                    )}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setIsEarlyAccessModalOpen(true)}
-                      className="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"
-                    >
-                      Get Early Access
-                    </motion.button>
-                  </>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={toggleTheme}
-                  className={`p-2 rounded-lg transition-all duration-300 ${
-                    theme === 'dark'
-                      ? 'bg-white/10 text-white hover:bg-white/20'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                  aria-label="Toggle theme"
-                >
-                  {theme === 'dark' ? (
-                    <SunIcon className="h-5 w-5" />
-                  ) : (
-                    <MoonIcon className="h-5 w-5" />
-                  )}
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.nav>
+            },
+          }))}
+        />
 
         {/* Hero Section */}
         <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -362,10 +278,7 @@ export default function Landing() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
-                    console.log('Watch Demo button clicked - current state:', isVideoModalOpen);
-                    console.log('Setting isVideoModalOpen to true');
                     setIsVideoModalOpen(true);
-                    console.log('State set, new value should be true');
                   }}
                   className={`px-8 py-4 backdrop-blur-lg border rounded-xl font-bold text-lg transition-all duration-300 flex items-center gap-2 ${
                     theme === 'dark'
@@ -703,81 +616,15 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer id="contact" className={`relative py-16 px-4 sm:px-6 lg:px-8 border-t ${
-          theme === 'dark' ? 'border-primary-500/20' : 'border-primary-500/30'
-        }`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-              <div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
-                >
-                  Aurray
-                </motion.div>
-                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                  Your voice in every meeting. AI-powered meeting assistance for modern teams.
-                </p>
-              </div>
-              <div>
-                <h4 className={`font-bold mb-4 ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>Quick Links</h4>
-                <ul className="space-y-2">
-                  {['Home', 'Features', 'How It Works', 'Integrations'].map((link) => (
-                    <li key={link}>
-                      <button
-                        onClick={() => scrollToSection(link.toLowerCase().replace(' ', ''))}
-                        className={`transition-colors ${
-                          theme === 'dark'
-                            ? 'text-gray-400 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        {link}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h4 className={`font-bold mb-4 ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>Connect</h4>
-                <div className="flex gap-4">
-                  {socialLinks.map((social, index) => (
-                    <motion.a
-                      key={index}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileHover={{ scale: 1.1, y: -5 }}
-                      className={`w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gradient-to-r hover:from-primary-500 hover:to-accent-500 transition-all duration-300 ${
-                        theme === 'dark'
-                          ? 'bg-[#161B22] border-primary-500/20'
-                          : 'bg-white border-primary-500/30 shadow-sm'
-                      }`}
-                    >
-                      <span className={`text-xs font-bold ${
-                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                      }`}>{social.name[0]}</span>
-                    </motion.a>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className={`text-center pt-8 border-t ${
-              theme === 'dark' ? 'border-primary-500/20' : 'border-primary-500/30'
-            }`}>
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Copyright © 2025 Aurray. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter
+          id="contact"
+          socialLinks={socialLinks}
+          quickLinks={['Home', 'Features', 'How It Works', 'Integrations'].map((link) => ({
+            label: link,
+            onClick: () => scrollToSection(link.toLowerCase().replace(' ', '')),
+          }))}
+          showQuickLinks={true}
+        />
       </div>
 
       <style jsx global>{`
@@ -793,9 +640,7 @@ export default function Landing() {
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={() => {
-          console.log('VideoModal onClose called');
           setIsVideoModalOpen(false);
-          console.log('isVideoModalOpen set to false');
         }}
         videoUrl="https://www.youtube.com/watch?v=FbG2LXDd0js"
       />

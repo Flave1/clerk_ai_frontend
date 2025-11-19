@@ -39,7 +39,6 @@ export default function Login() {
           console.error('[Login] Token not found in localStorage after sign in!');
           throw new Error('Token storage failed');
         }
-        console.log('[Login] Token verified in localStorage, redirecting to dashboard...');
         // Small delay to ensure everything is ready
         setTimeout(() => {
           router.push('/dashboard');
