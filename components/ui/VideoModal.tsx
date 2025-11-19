@@ -10,11 +10,8 @@ interface VideoModalProps {
 }
 
 const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) => {
-  console.log('VideoModal render - isOpen:', isOpen, 'videoUrl:', videoUrl);
-
   // Convert YouTube URL to embed format
   const getEmbedUrl = (url: string) => {
-    console.log('getEmbedUrl called with:', url);
     const videoId = url.includes('youtube.com/watch?v=')
       ? url.split('v=')[1]?.split('&')[0]
       : url.includes('youtu.be/')
@@ -22,53 +19,39 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
       : null;
     
     const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-    console.log('getEmbedUrl result:', embedUrl);
     return embedUrl;
   };
 
   const embedUrl = getEmbedUrl(videoUrl);
-  console.log('Final embedUrl:', embedUrl);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    console.log('VideoModal useEffect - isOpen changed to:', isOpen);
     if (isOpen) {
-      console.log('Setting body overflow to hidden');
       document.body.style.overflow = 'hidden';
     } else {
-      console.log('Setting body overflow to unset');
       document.body.style.overflow = 'unset';
     }
     return () => {
-      console.log('VideoModal cleanup - restoring body overflow');
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
 
   // Handle ESC key
   useEffect(() => {
-    console.log('Setting up ESC key handler, isOpen:', isOpen);
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        console.log('ESC key pressed, closing modal');
         onClose();
       }
     };
     document.addEventListener('keydown', handleEsc);
     return () => {
-      console.log('Removing ESC key handler');
       document.removeEventListener('keydown', handleEsc);
     };
   }, [isOpen, onClose]);
 
   if (typeof window === 'undefined') {
-    console.log('Window is undefined, returning null (SSR)');
     return null;
   }
-
-  console.log('About to create portal, isOpen:', isOpen, 'document.body exists:', !!document.body);
-
-  console.log('Creating modalContent, isOpen:', isOpen);
   
   const modalContent = (
     <AnimatePresence>
@@ -81,7 +64,6 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => {
-              console.log('Backdrop clicked, closing modal');
               onClose();
             }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
@@ -95,7 +77,6 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
             transition={{ duration: 0.3 }}
             className="relative z-[10000] w-full max-w-5xl"
             onClick={(e) => {
-              console.log('Modal content clicked, stopping propagation');
               e.stopPropagation();
             }}
           >
@@ -107,7 +88,6 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
                 </h3>
                 <button
                   onClick={() => {
-                    console.log('Close button clicked');
                     onClose();
                   }}
                   className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-300"
@@ -134,9 +114,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoUrl }) =>
     </AnimatePresence>
   );
 
-  console.log('Creating portal to document.body');
   const portal = createPortal(modalContent, document.body);
-  console.log('Portal created:', portal);
   return portal;
 };
 

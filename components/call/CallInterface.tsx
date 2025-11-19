@@ -48,9 +48,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
   }, [loadMeetingContexts]);
 
   useEffect(() => {
-    if (existingConversation && !loadingConversation) {
-      console.log('Existing conversation detected:', existingConversation);
-    }
+    // Conversation handling logic
   }, [existingConversation, loadingConversation]);
 
   const toggleContextExpansion = (contextId: string) => {

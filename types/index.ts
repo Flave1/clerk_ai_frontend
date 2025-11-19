@@ -150,7 +150,7 @@ export interface Meeting {
   audio_enabled: boolean;
   video_enabled: boolean;
   recording_enabled: boolean;
-  bot_joined?: boolean;
+  meeting_started?: boolean;
   transcript?: boolean;
   voice_id?: string;
   bot_name?: string;

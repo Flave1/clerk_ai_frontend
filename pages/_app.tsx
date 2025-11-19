@@ -40,7 +40,9 @@ export default function App({ Component, pageProps, router }: AppProps) {
     && router.pathname !== '/register'
     && !router.pathname.startsWith('/meeting-room')
     && router.pathname !== '/'
-    && !router.pathname.startsWith('/join/');
+    && !router.pathname.startsWith('/join/')
+    && router.pathname !== '/privacy-policy'
+    && router.pathname !== '/terms-and-conditions';
 
   useEffect(() => {
     // Set up WebSocket event handlers

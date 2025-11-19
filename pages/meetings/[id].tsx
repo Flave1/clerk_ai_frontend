@@ -220,6 +220,7 @@ const MeetingDetailPage: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'transcription' | 'summary' | 'actions'>('overview');
 
   useEffect(() => {
@@ -286,6 +287,35 @@ const MeetingDetailPage: NextPage = () => {
       toast.error('Failed to leave meeting');
     } finally {
       setIsLeaving(false);
+    }
+  };
+
+  const handleStartMeeting = async () => {
+    if (!meeting) return;
+    
+    try {
+      setIsStarting(true);
+      const result = await apiClient.startMeeting(meeting.id);
+      toast.success('Meeting started successfully');
+      
+      // Update meeting optimistically
+      const updatedMeeting = { 
+        ...meeting, 
+        meeting_started: true,
+        status: 'active' as any 
+      };
+      setMeeting(updatedMeeting);
+      updateMeeting(updatedMeeting);
+      
+      // If there's a meeting_ui_url, open it in a new tab
+      if (result.meeting_ui_url) {
+        window.open(result.meeting_ui_url, '_blank');
+      }
+    } catch (error) {
+      console.error('Failed to start meeting:', error);
+      toast.error('Failed to start meeting');
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -496,13 +526,24 @@ const MeetingDetailPage: NextPage = () => {
                     Send Summary
                   </button>
                   
-                  <button
-                    onClick={() => handleSendNotification('action_items')}
-                    className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Send Action Items
-                  </button>
+                  {meeting.meeting_started ? (
+                    <button
+                      onClick={() => handleSendNotification('action_items')}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <CheckCircleIcon className="h-4 w-4 mr-2" />
+                      Send Action Items
+                    </button>
+                  ) : !meeting.meeting_started && meeting.status !== 'ended' && meeting.status !== 'cancelled' ? (
+                    <button
+                      onClick={handleStartMeeting}
+                      disabled={isStarting}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <PlayIcon className="h-4 w-4 mr-2" />
+                      {isStarting ? 'Starting...' : 'Start Meeting Now'}
+                    </button>
+                  ) : null}
                   
                   <a
                     href={meeting.meeting_url}
@@ -600,13 +641,13 @@ const MeetingDetailPage: NextPage = () => {
                   <div className="card-body">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Bot Joined</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Meeting Started</span>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          meeting.bot_joined 
+                          meeting.meeting_started 
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                         }`}>
-                          {meeting.bot_joined ? 'Yes' : 'No'}
+                          {meeting.meeting_started ? 'Yes' : 'No'}
                         </span>
                       </div>
                       {meeting.last_join_attempt && (

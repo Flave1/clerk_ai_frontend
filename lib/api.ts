@@ -132,6 +132,16 @@ class ApiClient {
     return response.data;
   }
 
+  async startMeeting(id: string): Promise<{
+    conversation_id: string;
+    meeting_id: string;
+    meeting_ui_url: string | null;
+    status: string;
+  }> {
+    const response = await this.client.post(this.withPrefix(`/meetings/${id}/start`));
+    return response.data;
+  }
+
   async leaveMeeting(id: string): Promise<void> {
     await this.client.post(this.withPrefix(`/meetings/${id}/leave`));
   }
@@ -350,6 +360,30 @@ class ApiClient {
     return response.data;
   }
 
+  // Google Workspace Services
+  async getGoogleWorkspaceServices(): Promise<Array<{ service: string; enabled: boolean; connected: boolean }>> {
+    const response = await this.client.get(this.withPrefix('/integrations/google_workspace/services'));
+    return response.data;
+  }
+
+  async connectGoogleWorkspaceService(serviceName: string): Promise<{ success: boolean; service: string; message: string }> {
+    const response = await this.client.post(this.withPrefix(`/integrations/google_workspace/services/${serviceName}/connect`));
+    return response.data;
+  }
+
+  async disconnectGoogleWorkspaceService(serviceName: string): Promise<{ success: boolean; service: string; message: string }> {
+    const response = await this.client.post(this.withPrefix(`/integrations/google_workspace/services/${serviceName}/disconnect`));
+    return response.data;
+  }
+
+  async getIntegrationOAuthUrlWithServices(integrationId: string, services?: string[]): Promise<{ oauth_url: string; state: string }> {
+    const servicesParam = services && services.length > 0 ? services.join(',') : undefined;
+    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}/oauth/authorize`), {
+      params: servicesParam ? { services: servicesParam } : {},
+    });
+    return response.data;
+  }
+
   // Meeting Contexts
   async getMeetingContexts(): Promise<MeetingContext[]> {
     const response = await this.client.get(this.withPrefix('/meeting-contexts'));
@@ -379,6 +413,39 @@ class ApiClient {
   async signupNewsletter(data: { name: string; email: string; country: string }): Promise<{ success: boolean; message: string; timestamp: string }> {
     // Newsletter endpoint is public, so we use Axios directly without auth
     const response = await axiosInstance.post(this.withPrefix('/newsletter'), data);
+    return response.data;
+  }
+
+  // User Profile
+  async getCurrentUser(): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    phone: string | null;
+    timezone: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  }> {
+    const response = await this.client.get(this.withPrefix('/auth/me'));
+    return response.data;
+  }
+
+  async updateUserProfile(data: {
+    name?: string;
+    phone?: string;
+    timezone?: string;
+  }): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    phone: string | null;
+    timezone: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  }> {
+    const response = await this.client.put(this.withPrefix('/auth/me'), data);
     return response.data;
   }
 }

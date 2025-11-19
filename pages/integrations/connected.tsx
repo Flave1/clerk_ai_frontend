@@ -51,9 +51,7 @@ const ConnectedAppsPage: NextPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        console.log('[Connected Apps] Loading connected integrations...');
         const connected = await apiClient.getConnectedIntegrations();
-        console.log('[Connected Apps] Received integrations:', connected);
         
         setIntegrations(connected);
         

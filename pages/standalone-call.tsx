@@ -27,18 +27,14 @@ const StandaloneCallPage: React.FC = () => {
         id: participantId,
         name: decodeURIComponent(name)
       });
-      console.log('Participant joining meeting:', { meetingId, participantId, name, joined });
-      
       // If this is a new join, establish the connection
       if (joined === 'true') {
-        console.log('Established connection for participant:', participantId);
         // Connection is already established via the API call in join page
       }
     }
   }, []);
 
   const handleCallStart = (conversationId: string) => {
-    console.log('Call started with conversation ID:', conversationId);
     // Update URL with conversation ID
     const url = new URL(window.location.href);
     url.searchParams.set('conversationId', conversationId);

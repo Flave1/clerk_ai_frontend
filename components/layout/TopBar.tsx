@@ -9,7 +9,7 @@ import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
  */
 export default function TopBar() {
   const { user } = useAuth();
-  const { theme, setTheme } = useUIStore();
+  const { theme, setTheme, sidebarCollapsed } = useUIStore();
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -26,7 +26,9 @@ export default function TopBar() {
 
   return (
     <div className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4 shadow-sm">
-      <div className="flex items-center justify-between ml-7">
+      <div className={`flex items-center justify-between transition-all duration-300 ${
+        sidebarCollapsed ? 'ml-16' : 'ml-0'
+      }`}>
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
             <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">

@@ -121,9 +121,6 @@ export const isAuthenticated = (): boolean => {
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
   try {
     const baseURL = axiosInstance.defaults.baseURL || 'unknown';
-    console.log('[Auth] Registering user:', data.email);
-    console.log('[Auth] API Base URL:', baseURL);
-    console.log('[Auth] Full URL will be:', `${baseURL}/auth/register`);
     
     const response = await axiosInstance.post(`${API_PREFIX}/auth/register`, data, {
       timeout: 60000, // 60 seconds timeout for registration
@@ -143,7 +140,6 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
       name: authData.name,
     });
     
-    console.log('[Auth] Registration successful for:', authData.email);
     return authData;
   } catch (error: any) {
     console.error('[Auth] Registration error:', error);
@@ -162,7 +158,6 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
  */
 export const signIn = async (data: SignInRequest): Promise<AuthResponse> => {
   try {
-    console.log('[Auth] Signing in user:', data.email);
     const response = await axiosInstance.post(`${API_PREFIX}/auth/signin`, data, {
       timeout: 60000, // 60 seconds timeout for sign in
     });
@@ -189,8 +184,6 @@ export const signIn = async (data: SignInRequest): Promise<AuthResponse> => {
       throw new Error('Failed to store authentication token');
     }
     
-    console.log('[Auth] Sign in successful for:', authData.email);
-    console.log('[Auth] Token stored and verified. Token length:', storedToken.length);
     return authData;
   } catch (error: any) {
     console.error('[Auth] Sign in error:', error);

@@ -29,7 +29,6 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, meetingId, m
     
     try {
       // TODO: Implement email invitation API call
-      console.log('Sending invitation to:', email);
       setEmail('');
       // Show success message
     } catch (error) {

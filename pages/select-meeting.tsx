@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { ClipboardIcon, RocketLaunchIcon, XMarkIcon, SparklesIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useUIStore, useAuthStore } from '@/store';
 import ComingSoonModal from '@/components/ui/ComingSoonModal';
+import MeetingConfigModal from '@/components/ui/MeetingConfigModal';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api';
@@ -24,34 +25,30 @@ interface PlatformOption {
 	description: string;
 }
 
-const PLATFORMS: PlatformOption[] = [
+const PLATFORMS_BASE: Omit<PlatformOption, 'image'>[] = [
 	{
 		key: 'aurray',
-		name: 'Aurray Meeting',
-		image: '/images/logo/logo.png',
+		name: 'Aurray Connect',
 		gradient: 'from-primary-500/20 via-accent-500/10 to-transparent',
-		description: 'Spin up a native Aurray environment with real-time AI note-taking, action item tracking, and automated follow-ups built in.',
+		description: 'Launch Aurray Connect and your bot will join the meeting',
 	},
 	{
 		key: 'teams',
 		name: 'Microsoft Teams',
-		image: '/images/integrations/teams.png',
 		gradient: 'from-[#4F46E5]/20 via-[#6366F1]/10 to-transparent',
-		description: 'Generate a Teams meeting link that keeps all participants in sync with advanced note sharing and meeting intelligence.',
+		description: 'Launch a Teams while your bot joins the meeting using your voice',
 	},
 	{
 		key: 'zoom',
 		name: 'Zoom',
-		image: '/images/integrations/zoom.png',
 		gradient: 'from-[#38BDF8]/20 via-[#0EA5E9]/10 to-transparent',
-		description: 'Launch a Zoom call with embedded Aurray insights so every conversation is searchable, actionable, and archived instantly.',
+		description: 'Launch a Zoom while your bot joins the meeting using your voice',
 	},
 	{
 		key: 'google_meet',
 		name: 'Google Meet',
-		image: '/images/integrations/meet.png',
 		gradient: 'from-[#10B981]/20 via-[#34D399]/10 to-transparent',
-		description: 'Create a Meet link that plugs directly into your Google Workspace with automated docs, notes, and calendar updates.',
+		description: 'Launch a Google Meet while your bot joins the meeting using your voice',
 	},
 ];
 
@@ -61,8 +58,8 @@ const DEFAULT_VOICE_ID = 'f5HLTX707KIM4SzJYzSz';
 const PLATFORM_TO_INTEGRATION: Record<PlatformKey, string | null> = {
 	'aurray': null, // No integration needed for Aurray
 	'zoom': 'zoom',
-	'google_meet': 'google_workspace',
-	'teams': 'microsoft_365',
+	'google_meet': 'google_meet', // Check for specific Google Meet integration
+	'teams': 'microsoft_teams', // Check for specific Microsoft Teams integration
 };
 
 export default function SelectMeetingPage() {
@@ -78,6 +75,11 @@ export default function SelectMeetingPage() {
 		platformImage: undefined,
 		platformKey: undefined,
 	});
+	const [configModal, setConfigModal] = useState<{ isOpen: boolean; platformKey: PlatformKey | null }>({
+		isOpen: false,
+		platformKey: null,
+	});
+	const [pendingPlatformKey, setPendingPlatformKey] = useState<PlatformKey | null>(null);
 	const [connectedIntegrations, setConnectedIntegrations] = useState<Set<string>>(new Set());
 	const [integrationsLoading, setIntegrationsLoading] = useState(true);
 
@@ -85,6 +87,22 @@ export default function SelectMeetingPage() {
 	const pageBackground = isDark
 		? 'from-[#05060f] via-[#0f1324] to-[#090b16]'
 		: 'from-white via-[#f8fafc] to-[#eef2ff]';
+
+	// Get platforms with theme-aware image for Aurray Connect
+	const PLATFORMS: PlatformOption[] = PLATFORMS_BASE.map((platform) => {
+		if (platform.key === 'aurray') {
+			return {
+				...platform,
+				image: !isDark ? '/images/logo/logo-light.png' : '/images/logo/logo-dark.png',
+			};
+		}
+		return {
+			...platform,
+			image: platform.key === 'teams' ? '/images/integrations/microsoft-teams.png' :
+				   platform.key === 'zoom' ? '/images/integrations/zoom.png' :
+				   '/images/integrations/google_meet.png',
+		};
+	});
 
 	// Fetch user integrations on mount
 	useEffect(() => {
@@ -142,6 +160,31 @@ export default function SelectMeetingPage() {
 			return;
 		}
 
+		// Show configuration modal before proceeding
+		setPendingPlatformKey(key);
+		setConfigModal({
+			isOpen: true,
+			platformKey: key,
+		});
+	}
+
+	async function handleCreateMeeting(config: {
+		title: string;
+		participants: string[];
+		contextId: string | null;
+		meetingDescription: string;
+		audioRecord: boolean;
+		screenRecord: boolean;
+		transcript: boolean;
+		startRightAway: boolean;
+		startTime?: string;
+		endTime?: string;
+	}) {
+		if (!pendingPlatformKey) return;
+
+		const key = pendingPlatformKey;
+		setConfigModal({ isOpen: false, platformKey: null });
+
 		try {
 			setLoadingKey(key);
 			
@@ -155,40 +198,56 @@ export default function SelectMeetingPage() {
 					room_id: tempRoomId,
 					user_id: userId,
 					meeting_platform: key,
+					title: config.title,
+					participants: config.participants,
+					context_id: config.contextId || undefined,
+					meeting_description: config.meetingDescription || undefined,
+					transcript: config.transcript,
+					audio_record: config.audioRecord,
+					video_record: config.screenRecord,
+					start_time: config.startTime,
+					end_time: config.endTime,
+					start_right_away: config.startRightAway,
 				});
 				const data = res.data;
 
-				// Navigate directly to meeting-room
-				const query = new URLSearchParams({
-					meetingId: data.meeting_id || data.conversation_id,
-					conversationId: data.conversation_id,
-					isHost: 'true',
-				});
-				
-				if (data.meeting_url) {
-					query.set('meetingUrl', data.meeting_url);
+				// Check if meeting is scheduled or started
+				if (data.status === 'scheduled') {
+					toast.success('Meeting Scheduled');
+				} else if (data.status === 'started' && config.startRightAway) {
+					// Navigate directly to meeting-room if started and startRightAway is true
+					const query = new URLSearchParams({
+						meetingId: data.meeting_id || data.conversation_id,
+						conversationId: data.conversation_id,
+						isHost: 'true',
+					});
+					
+					if (data.meeting_url) {
+						query.set('meetingUrl', data.meeting_url);
+					}
+					const meetingRoomUrl = `/meeting-room?${query.toString()}`;
+					
+					// Open Aurray meeting in a new tab
+					if (typeof window !== 'undefined') {
+						window.open(meetingRoomUrl, '_blank', 'noopener,noreferrer');
+					} else {
+						// Fallback for non-browser environments
+						router.push(meetingRoomUrl);
+					}
+					toast.success('Starting Aurray meeting in a new tab...');
 				}
-				const meetingRoomUrl = `/meeting-room?${query.toString()}`;
-				
-				// Open Aurray meeting in a new tab
-				if (typeof window !== 'undefined') {
-					window.open(meetingRoomUrl, '_blank', 'noopener,noreferrer');
-				} else {
-					// Fallback for non-browser environments
-				router.push(meetingRoomUrl);
-				}
-				toast.success('Starting Aurray meeting in a new tab...');
 			} else {
 				// Call external meeting start endpoint instead of conversations/start
 				const res = await axios.post('/conversations/start-external', {
 					meeting_url: '',
 					type: key,
-					transcript: true,
-					audio_record: false,
-					video_record: false,
+					transcript: config.transcript,
+					audio_record: config.audioRecord,
+					video_record: config.screenRecord,
 					voice_id: DEFAULT_VOICE_ID,
 					bot_name: 'Aurray Bot',
-					context_id: null,
+					context_id: config.contextId || null,
+					participants: config.participants,
 				});
 				const data = res.data || {};
 				const platformConfig = PLATFORMS.find((platform) => platform.key === key);
@@ -211,6 +270,7 @@ export default function SelectMeetingPage() {
 			toast.error(msg);
 		} finally {
 			setLoadingKey(null);
+			setPendingPlatformKey(null);
 		}
 	}
 
@@ -266,11 +326,11 @@ export default function SelectMeetingPage() {
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div className="mb-8">
 						<button
-							onClick={() => router.push('/meetings')}
+							onClick={() => router.back()}
 							className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
 						>
 							<ArrowLeftIcon className="h-4 w-4 mr-2" />
-							Back to Meetings
+							Back
 						</button>
 					</div>
 					<motion.div
@@ -467,19 +527,19 @@ export default function SelectMeetingPage() {
 						<>
 							{comingSoonModal.platformKey === 'teams' ? (
 								<>
-									Microsoft Teams is part of Microsoft 365. Please{' '}
+									Microsoft Teams integration is not installed. Please{' '}
 									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
 										go to Integrations
 									</Link>
-									{' '}to install Microsoft 365 integration.
+									{' '}to install Microsoft Teams integration.
 								</>
 							) : comingSoonModal.platformKey === 'google_meet' ? (
 								<>
-									Google Meet is part of Google Workspace. Please{' '}
+									Google Meet integration is not installed. Please{' '}
 									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
 										go to Integrations
 									</Link>
-									{' '}to install Google Workspace integration.
+									{' '}to install Google Meet integration.
 								</>
 							) : (
 								<>
@@ -497,6 +557,20 @@ export default function SelectMeetingPage() {
 				}
 				image={comingSoonModal.platformImage}
 			/>
+
+			{/* Meeting Configuration Modal */}
+			{configModal.platformKey && (
+				<MeetingConfigModal
+					isOpen={configModal.isOpen}
+					onClose={() => {
+						setConfigModal({ isOpen: false, platformKey: null });
+						setPendingPlatformKey(null);
+					}}
+					onSubmit={handleCreateMeeting}
+					platformName={PLATFORMS.find((p) => p.key === configModal.platformKey)?.name || 'Meeting'}
+					platformImage={PLATFORMS.find((p) => p.key === configModal.platformKey)?.image}
+				/>
+			)}
 		</>
 	);
 }

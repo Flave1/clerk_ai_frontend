@@ -22,11 +22,13 @@ import apiClient from '@/lib/api';
 import { Meeting } from '@/types';
 import toast from 'react-hot-toast';
 import Header from '@/components/layout/Header';
+import ComingSoonModal from '@/components/ui/ComingSoonModal';
 import { format, isToday, isTomorrow, parseISO, differenceInMinutes } from 'date-fns';
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
   const { meetings, setMeetings } = useDashboardStore();
 
   // Load meetings
@@ -118,29 +120,29 @@ const Dashboard: NextPage = () => {
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                      <VideoCameraIcon className="h-6 w-6 text-white" />
+                      <CalendarIcon className="h-6 w-6 text-white" />
                     </div>
                     <ArrowRightIcon className="h-5 w-5 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Start Meeting</h3>
-                  <p className="text-white/90 text-sm">Join or create a new meeting</p>
+                  <h3 className="text-xl font-bold text-white mb-2">Schedule Meeting</h3>
+                  <p className="text-white/90 text-sm">Create new meeting on Teams, Zoom, Google Meet and Aurray Connect</p>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>
 
               <button
-                onClick={() => router.push('/call')}
+                onClick={() => setIsComingSoonModalOpen(true)}
                 className="group relative overflow-hidden bg-gradient-to-br from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                      <PhoneIcon className="h-6 w-6 text-white" />
+                      <VideoCameraIcon className="h-6 w-6 text-white" />
                     </div>
                     <ArrowRightIcon className="h-5 w-5 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Quick Call</h3>
-                  <p className="text-white/90 text-sm"> Aurray joins a call with you using a selected context</p>
+                  <h3 className="text-xl font-bold text-white mb-2">Send Aurray Bot to Meeting</h3>
+                  <p className="text-white/90 text-sm">Aurray bot joins already scheduled meetings using your voice and personality</p>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>
@@ -351,6 +353,14 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
       </div>
+
+      <ComingSoonModal
+        isOpen={isComingSoonModalOpen}
+        onClose={() => setIsComingSoonModalOpen(false)}
+        title="Send Aurray Bot to Meeting"
+        featureName="Send Aurray Bot to Meeting"
+        message="This feature is coming soon! Aurray bot will be able to join your already scheduled meetings using your voice and personality. Stay tuned for updates!"
+      />
     </>
   );
 };

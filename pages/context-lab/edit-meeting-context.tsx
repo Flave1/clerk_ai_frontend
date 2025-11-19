@@ -31,7 +31,18 @@ const getShortDescription = (integrationId: string, description: string): string
   const shortDescriptions: Record<string, string> = {
     'zoom': 'Can schedule Zoom meetings',
     'google_workspace': 'Can schedule meetings and send emails',
-    'microsoft_365': 'Can manage calendar and access files',
+    'google_calendar': 'Can schedule meetings and manage calendar',
+    'google_gmail': 'Can send and receive emails',
+    'google_drive': 'Can access and manage files',
+    'google_docs': 'Can read and access documents',
+    'google_meet': 'Can create meeting links and manage meetings',
+    'microsoft_email': 'Can send and receive emails',
+    'microsoft_calendar': 'Can schedule meetings and manage calendar',
+    'microsoft_contacts': 'Can manage contacts',
+    'microsoft_teams': 'Can create Teams meetings and send messages',
+    'microsoft_onedrive': 'Can access and manage files',
+    'microsoft_sharepoint': 'Can access SharePoint sites and documents',
+    'microsoft_office': 'Can work with Word, Excel, and PowerPoint',
     'slack': 'Can send messages and notifications',
     'hubspot': 'Can sync contacts and deals',
     'salesforce': 'Can manage leads and opportunities',
@@ -202,7 +213,7 @@ const EditMeetingContextPage: NextPage = () => {
           <Link href="/context-lab">
             <button className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4">
               <ArrowLeftIcon className="h-4 w-4 mr-2" />
-              Back to Context Lab
+              Back
             </button>
           </Link>
           

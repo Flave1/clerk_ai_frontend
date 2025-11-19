@@ -223,7 +223,7 @@ export const useUIStore = create<UIState>()(
   devtools(
     (set, get) => ({
       theme: 'light',
-      sidebarCollapsed: false,
+      sidebarCollapsed: true,
       notifications: [],
       
       setTheme: (theme) => set({ theme }),
@@ -408,6 +408,104 @@ export const useMeetingStore = create<MeetingState>()(
     })),
     {
       name: 'meeting-store',
+    }
+  )
+);
+
+// Participants Store
+interface ParticipantsState {
+  participants: string[]; // List of participant emails
+  addParticipant: (email: string) => void;
+  removeParticipant: (email: string) => void;
+  clearParticipants: () => void;
+}
+
+const DEFAULT_PARTICIPANT = 'Aurray Bot';
+
+export const useParticipantsStore = create<ParticipantsState>()(
+  devtools(
+    (set, get) => {
+      // Load from localStorage on initialization
+      const loadParticipants = (): string[] => {
+        if (typeof window === 'undefined') return [DEFAULT_PARTICIPANT];
+        try {
+          const stored = localStorage.getItem('meeting-participants');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // Ensure Aurray Bot is always first in the list
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const emailsOnly = parsed.filter(p => p !== DEFAULT_PARTICIPANT);
+              return [DEFAULT_PARTICIPANT, ...emailsOnly];
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load participants from localStorage:', e);
+        }
+        return [DEFAULT_PARTICIPANT];
+      };
+
+      const saveParticipants = (participants: string[]) => {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('meeting-participants', JSON.stringify(participants));
+          } catch (e) {
+            console.error('Failed to save participants to localStorage:', e);
+          }
+        }
+      };
+
+      return {
+        participants: loadParticipants(),
+
+        addParticipant: (email: string) => {
+          const trimmedEmail = email.trim().toLowerCase();
+          if (!trimmedEmail) return;
+          
+          // Don't add "Aurray Bot" to persisted list (it's always included by default)
+          if (trimmedEmail === DEFAULT_PARTICIPANT.toLowerCase()) {
+            return;
+          }
+          
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(trimmedEmail)) {
+            return;
+          }
+          
+          set((state) => {
+            // Don't add duplicates
+            if (state.participants.includes(trimmedEmail)) {
+              return state;
+            }
+            // Ensure Aurray Bot is always first, then add the new email
+            const emailsOnly = state.participants.filter(p => p !== DEFAULT_PARTICIPANT);
+            const newParticipants = [DEFAULT_PARTICIPANT, ...emailsOnly, trimmedEmail];
+            saveParticipants(newParticipants);
+            return { participants: newParticipants };
+          });
+        },
+
+        removeParticipant: (email: string) => {
+          set((state) => {
+            // Don't allow removing Aurray Bot
+            if (email === DEFAULT_PARTICIPANT) {
+              return state;
+            }
+            const newParticipants = state.participants.filter(p => p !== email);
+            saveParticipants(newParticipants);
+            return { participants: newParticipants };
+          });
+        },
+
+        clearParticipants: () => {
+          const defaultList = [DEFAULT_PARTICIPANT];
+          saveParticipants(defaultList);
+          set({ participants: defaultList });
+        },
+      };
+    },
+    {
+      name: 'participants-store',
     }
   )
 );
