@@ -177,9 +177,9 @@ export default function Landing() {
   ];
 
   const socialLinks = [
-    { name: 'LinkedIn', href: 'https://linkedin.com' },
-    { name: 'Twitter', href: 'https://twitter.com' },
-    { name: 'GitHub', href: 'https://github.com' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/auray-ai' },
+    // { name: 'X', href: 'https://x.com/auray_ai' },
+    // { name: 'GitHub', href: 'https://github.com/auray-ai' },
   ];
 
   if (!mounted) {
