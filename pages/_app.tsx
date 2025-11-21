@@ -98,10 +98,13 @@ export default function App({ Component, pageProps, router }: AppProps) {
   return (
     <>
       <Head>
-        <title>Aurray Dashboard</title>
-        <meta name="description" content="Aurray and Meeting Assistant Dashboard" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        {shouldShowLayout && (
+          <>
+            <title>Aurray Dashboard</title>
+            <meta name="description" content="Aurray AI meeting assistant dashboard for managing meetings, voice profiles, and integrations." />
+          </>
+        )}
       </Head>
       
       {shouldShowLayout ? (

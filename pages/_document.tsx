@@ -2,12 +2,12 @@ import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="en-GB">
       <Head>
         {/* Favicon */}
-        <link rel="icon" href="/images/logo/logo.png" type="image/png" />
-        <link rel="shortcut icon" href="/images/logo/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo/logo.png" />
+        <link rel="icon" href="/images/logo/logo-light.png" type="image/png" />
+        <link rel="shortcut icon" href="/images/logo/logo-light.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/images/logo/logo-light.png" />
         
         {/* Google Fonts - Inter */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

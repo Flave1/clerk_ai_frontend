@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -28,19 +28,13 @@ import { useUIStore } from '@/store';
 
 export default function Landing() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { theme } = useUIStore();
-  const { scrollY } = useScroll();
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const y = useTransform(scrollY, [0, 300], [0, -50]);
 
   useEffect(() => {
-    setMounted(true);
-    
     // Check authentication status by calling the me endpoint
     const checkAuth = async () => {
       try {
@@ -182,19 +176,63 @@ export default function Landing() {
     // { name: 'GitHub', href: 'https://github.com/auray-ai' },
   ];
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
     <>
       <Head>
-        <title>Aurray - Your Voice in Every Meeting</title>
-        <meta name="description" content="Aurray joins your meetings, listens, speaks, and acts — just like you." />
+        <title>Aurray – AI Meeting Assistant That Joins Calls As You</title>
+        <meta
+          name="description"
+          content="Aurray is a voice-enabled AI meeting assistant that joins Zoom, Google Meet, and Microsoft Teams on your behalf, using your own voice and personality to listen, speak, and take action."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/images/logo/logo.png" type="image/png" />
-        <link rel="shortcut icon" href="/images/logo/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo/logo.png" />
+        <link rel="icon" href="/images/logo/logo-light.png" type="image/png" />
+        <link rel="shortcut icon" href="/images/logo/logo-light.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/images/logo/logo-light.png" />
+        <link rel="canonical" href="https://www.aurray.co.uk/" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Aurray – AI Meeting Assistant That Joins Calls As You" />
+        <meta
+          property="og:description"
+          content="Let Aurray attend meetings for you in your own voice and personality. Join Zoom, Google Meet, and Microsoft Teams automatically with AI that listens, speaks, and follows up."
+        />
+        <meta property="og:url" content="https://www.aurray.co.uk/" />
+        <meta property="og:site_name" content="Aurray" />
+        <meta property="og:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Aurray – AI Meeting Assistant That Joins Calls As You" />
+        <meta
+          name="twitter:description"
+          content="Aurray is a voice-enabled AI meeting assistant that joins meetings on your behalf, speaks in your voice, and syncs notes and actions to your tools."
+        />
+        <meta name="twitter:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
+
+        {/* Structured data */}
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'Aurray',
+              applicationCategory: 'BusinessApplication',
+              description:
+                'Aurray is a voice-enabled AI meeting assistant that joins meetings on your behalf, using your own voice and personality to listen, speak, and take action.',
+              operatingSystem: 'Web',
+              url: 'https://www.aurray.co.uk/',
+              image: 'https://www.aurray.co.uk/images/logo/logo-light.png',
+              publisher: {
+                '@type': 'Organization',
+                name: 'Aurray',
+                url: 'https://www.aurray.co.uk/',
+              },
+            }),
+          }}
+        />
       </Head>
 
       <div className={`min-h-screen overflow-x-hidden transition-colors duration-200 ${

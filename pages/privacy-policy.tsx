@@ -12,6 +12,28 @@ const PrivacyPolicyPage: NextPage = () => {
       <Head>
         <title>Privacy Policy - Aurray</title>
         <meta name="description" content="Aurray Privacy Policy - Learn how we protect your data and privacy." />
+        <link rel="canonical" href="https://www.aurray.co.uk/privacy-policy" />
+        <meta name="robots" content="index,follow" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="Privacy Policy - Aurray" />
+        <meta
+          property="og:description"
+          content="Learn how Aurray, the voice-enabled AI meeting assistant, protects your privacy, secures your data, and handles connected services like Google Workspace, Microsoft 365, Slack, and Zoom."
+        />
+        <meta property="og:url" content="https://www.aurray.co.uk/privacy-policy" />
+        <meta property="og:site_name" content="Aurray" />
+        <meta property="og:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Privacy Policy - Aurray" />
+        <meta
+          name="twitter:description"
+          content="Aurray's Privacy Policy explains how we collect, use, and protect your data when you use our AI meeting assistant and connect tools like Google Workspace, Microsoft 365, Slack, and Zoom."
+        />
+        <meta name="twitter:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
       </Head>
 
       <div className={`min-h-screen transition-colors duration-200 ${
