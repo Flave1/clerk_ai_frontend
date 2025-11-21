@@ -11,6 +11,14 @@ import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
 import { useUIStore } from '@/store';
 
 export default function Register() {
+  
+  return (
+    <div>
+      <h1>Register is not available yet</h1>
+      <p>Please check back later</p>
+      <Link href="/">Back to home</Link>
+    </div>
+  );
   const router = useRouter();
   const { theme } = useUIStore();
   const [formData, setFormData] = useState({
@@ -143,6 +151,7 @@ export default function Register() {
       setLoading(false);
     }
   };
+
 
   return (
     <>

@@ -12,6 +12,28 @@ const TermsAndConditionsPage: NextPage = () => {
       <Head>
         <title>Terms and Conditions - Aurray</title>
         <meta name="description" content="Aurray Terms and Conditions - Read our terms of service." />
+        <link rel="canonical" href="https://www.aurray.co.uk/terms-and-conditions" />
+        <meta name="robots" content="index,follow" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="Terms and Conditions - Aurray" />
+        <meta
+          property="og:description"
+          content="Review the Terms and Conditions for using Aurray, the voice-enabled AI meeting assistant that joins meetings on your behalf and connects to tools like Google Workspace, Microsoft 365, Slack, and Zoom."
+        />
+        <meta property="og:url" content="https://www.aurray.co.uk/terms-and-conditions" />
+        <meta property="og:site_name" content="Aurray" />
+        <meta property="og:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Terms and Conditions - Aurray" />
+        <meta
+          name="twitter:description"
+          content="Read Aurray's Terms and Conditions to understand your rights, responsibilities, and how our AI meeting assistant operates across your connected tools."
+        />
+        <meta name="twitter:image" content="https://www.aurray.co.uk/images/logo/logo-light.png" />
       </Head>
 
       <div className={`min-h-screen transition-colors duration-200 ${
