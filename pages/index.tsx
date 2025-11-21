@@ -642,7 +642,7 @@ export default function Landing() {
         onClose={() => {
           setIsVideoModalOpen(false);
         }}
-        videoUrl="https://www.youtube.com/watch?v=FbG2LXDd0js"
+        videoUrl="https://www.youtube.com/watch?v=nVdULo3CKd4"
       />
 
       {/* Early Access Modal */}

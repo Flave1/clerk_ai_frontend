@@ -66,10 +66,21 @@ const TermsAndConditionsPage: NextPage = () => {
                 <li>Real-time meeting transcription and recording</li>
                 <li>Meeting scheduling and calendar management</li>
                 <li>Email follow-ups and task management</li>
-                <li>Integration with third-party services (Google Workspace, Microsoft 365, Slack, Zoom, etc.)</li>
+                <li>
+                  Integration with third-party services, including but not limited to Google Workspace (Calendar, Gmail, 
+                  Drive, Docs, Meet), Microsoft 365 (Outlook, Teams, OneDrive), Slack, Zoom and other tools you choose to connect
+                </li>
                 <li>Meeting summaries and action item extraction</li>
                 <li>CRM updates and note-taking</li>
               </ul>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+                By connecting these services, you authorize Aurray to access only the data necessary to perform the actions you 
+                explicitly request or enable (for example: reading calendar events to schedule or join meetings, sending emails 
+                or messages you trigger, or storing notes and summaries). <strong>You remain in control of what Aurray does with 
+                your tools:</strong> features are opt-in, configurable by you, and you can disconnect any integration at any time. 
+                We do not use your connected accounts for any purpose outside of providing and improving the Service, and we do 
+                not access or act on your data without your consent.
+              </p>
             </section>
 
             <section>

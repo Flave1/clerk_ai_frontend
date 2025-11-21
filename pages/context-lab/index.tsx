@@ -51,7 +51,7 @@ const ContextLabPage: NextPage = () => {
     return (
       <>
         <Head>
-          <title>Context Lab - Aurray</title>
+          <title>Personality & Context - Aurray</title>
         </Head>
         <Header />
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -67,7 +67,7 @@ const ContextLabPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Context Lab - Aurray</title>
+        <title>Personality & Context - Aurray</title>
       </Head>
 
       <Header />
@@ -77,7 +77,7 @@ const ContextLabPage: NextPage = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Context Lab</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Personality & Context</h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 Customize how Aurray behaves in different meeting scenarios.
               </p>
