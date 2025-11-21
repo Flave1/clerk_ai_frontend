@@ -115,6 +115,9 @@ export default function SelectMeetingPage() {
 			try {
 				const integrations = await apiClient.getConnectedIntegrations();
 				const connectedIds = new Set(integrations.map((integration: any) => integration.integration_id));
+				console.log('[Select Meeting] Connected integrations:', integrations);
+				console.log('[Select Meeting] Connected integration IDs:', Array.from(connectedIds));
+				console.log('[Select Meeting] Teams installed?', connectedIds.has('microsoft_teams'));
 				setConnectedIntegrations(connectedIds);
 			} catch (error) {
 				console.error('Failed to load integrations:', error);
@@ -147,8 +150,8 @@ export default function SelectMeetingPage() {
 			return;
 		}
 
-		// Check if Zoom or Google Meet (temporarily down)
-		if (key === 'zoom' || key === 'google_meet') {
+		// Check if Zoom (temporarily down)
+		if (key === 'zoom') {
 			const platform = PLATFORMS.find((platform) => platform.key === key);
 			const platformName = platform?.name || 'This service';
 			setComingSoonModal({
@@ -188,6 +191,12 @@ export default function SelectMeetingPage() {
 		try {
 			setLoadingKey(key);
 			
+			// Replace "Aurray Bot" with email address for backend submission
+			const AURRAY_BOT_EMAIL = 'stemvision433@gmail.com';
+			const processedParticipants = config.participants.map(p => 
+				p === 'Aurray Bot' ? AURRAY_BOT_EMAIL : p
+			);
+			
 			if (key === 'aurray') {
 				// Use authenticated user's ID, or generate UUID as fallback
 				const userId = user?.user_id || uuidv4();
@@ -199,7 +208,7 @@ export default function SelectMeetingPage() {
 					user_id: userId,
 					meeting_platform: key,
 					title: config.title,
-					participants: config.participants,
+					participants: processedParticipants,
 					context_id: config.contextId || undefined,
 					meeting_description: config.meetingDescription || undefined,
 					transcript: config.transcript,
@@ -247,7 +256,7 @@ export default function SelectMeetingPage() {
 					voice_id: DEFAULT_VOICE_ID,
 					bot_name: 'Aurray Bot',
 					context_id: config.contextId || null,
-					participants: config.participants,
+					participants: processedParticipants,
 				});
 				const data = res.data || {};
 				const platformConfig = PLATFORMS.find((platform) => platform.key === key);

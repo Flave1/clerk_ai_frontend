@@ -43,13 +43,27 @@ const PrivacyPolicyPage: NextPage = () => {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">1. Introduction</h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                Welcome to Aurray ("we," "our," or "us"). Aurray is a voice-enabled AI meeting assistant that joins meetings 
+                Welcome to Aurray (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). Aurray is a voice-enabled AI meeting assistant that joins meetings 
                 on behalf of users using their own voice and personality. We are committed to protecting your privacy and 
                 ensuring the security of your personal information.
               </p>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
                 This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our 
                 service, including our website, mobile application, and AI meeting assistant features.
+              </p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+                When you choose to connect your accounts, Aurray may request access to data from services such as Google Calendar, 
+                Gmail and other email providers, Google Drive and Docs, Google Meet, your contacts, Microsoft Teams, OneDrive, 
+                Zoom, Slack, and other integrations you explicitly enable (&quot;Connected Services&quot;). <strong>You stay in control:</strong> 
+                you decide which tools to connect and what Aurray is allowed to do with them. We only access and use this 
+                data to deliver the specific features you turn on (for example, scheduling and joining meetings, sending 
+                follow-ups you trigger, updating tasks, and storing notes or summaries in your tools).
+              </p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+                We do <strong>not</strong> sell your data, and we do <strong>not</strong> use or access your calendars, emails, 
+                files, contacts, or meetings for any purpose without your consent or beyond what is necessary to provide and 
+                secure the service you requested. You can revoke access at any time by disconnecting a Connected Service and may 
+                request deletion of stored data as described in this policy.
               </p>
             </section>
 

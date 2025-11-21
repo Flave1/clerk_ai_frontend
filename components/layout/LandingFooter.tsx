@@ -144,7 +144,7 @@ export default function LandingFooter({
               </div>
             ) : (
               <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Questions? Contact us at support@aurray.com
+                Questions? Contact us at support@aurray.co.uk
               </p>
             )}
           </div>
