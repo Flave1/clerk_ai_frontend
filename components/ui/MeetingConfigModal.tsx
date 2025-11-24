@@ -228,8 +228,17 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
       newErrors.title = 'Title is required';
     }
 
+    // Build cleaned list of participants from ONLY what's currently selected in the UI
+    const cleanedParticipants = Array.from(
+      new Set(
+        selectedParticipants
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0)
+      )
+    );
+
     // Validate at least one participant
-    if (selectedParticipants.length === 0) {
+    if (cleanedParticipants.length === 0) {
       newErrors.participants = 'At least one participant is required';
     }
 
@@ -248,7 +257,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
     setErrors({});
     onSubmit({
       title: title.trim(),
-      participants: selectedParticipants,
+      participants: cleanedParticipants,
       contextId: selectedContextId || null,
       meetingDescription,
       audioRecord,
@@ -287,7 +296,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-stretch justify-end">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -297,18 +306,22 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
           />
 
-          {/* Modal */}
+          {/* Right-side drawer */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative z-[10000] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="relative z-[10000] h-full w-full max-w-lg sm:max-w-xl lg:max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`relative ${isDark ? 'bg-[#161B22]' : 'bg-white'} backdrop-blur-lg border border-primary-500/20 rounded-2xl shadow-2xl overflow-hidden`}>
+            <div
+              className={`relative flex h-full flex-col ${
+                isDark ? 'bg-[#161B22]' : 'bg-white'
+              } backdrop-blur-lg border-l border-primary-500/20 shadow-2xl overflow-hidden`}
+            >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-primary-500/20">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-primary-500/20">
                 <div className="flex items-center gap-3">
                 {/* bg-gradient-to-br */}
                   <div className="w-10 h-10 rounded-xl  from-primary-500 to-accent-500 flex items-center justify-center overflow-hidden">
@@ -338,7 +351,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-6">
+              <div className="flex-1 px-5 py-4 space-y-4 overflow-y-auto">
                 {/* Title Field - First field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -354,7 +367,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                       }
                     }}
                     placeholder="Enter meeting title..."
-                    className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
                       errors.title
                         ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-transparent'
@@ -371,11 +384,11 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                     Participants <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 min-h-[48px]">
+                    <div className="flex flex-wrap gap-1.5 px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 min-h-[38px]">
                       {selectedParticipants.map((participant) => (
                         <span
                           key={participant}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs"
                         >
                           {participant}
                           <button
@@ -485,7 +498,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                 )}
 
                 {/* Purpose of the Meeting and Recording Options - Side by side on desktop, stacked on mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-stretch">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:items-stretch">
                   {/* Purpose of the Meeting */}
                   <div className="flex flex-col">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -496,17 +509,17 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                       onChange={(e) => setMeetingDescription(e.target.value)}
                       placeholder="Enter the purpose or description of this meeting..."
                       rows={3}
-                      className="w-full flex-1 min-h-[200px] px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
+                      className="w-full flex-1 min-h-[140px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
                     />
                   </div>
 
                   {/* Recording Options */}
                   <div className="flex flex-col space-y-3">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Recording Options
                     </label>
                     
-                    <label className="flex items-center gap-3 p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={audioRecord}
@@ -517,7 +530,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                       <span className="text-gray-900 dark:text-gray-100">Audio Record</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={screenRecord}
@@ -528,7 +541,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                       <span className="text-gray-900 dark:text-gray-100">Screen Record</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={transcript}
@@ -543,7 +556,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-primary-500/20 space-y-4">
+              <div className="px-5 py-4 border-t border-primary-500/20 space-y-3 mt-auto">
                 {/* Start Meeting Right Away Checkbox */}
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-3 cursor-pointer group">
@@ -576,7 +589,7 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
                         min={new Date().toISOString().slice(0, 16)}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
@@ -588,23 +601,23 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
                         min={startTime || new Date().toISOString().slice(0, 16)}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       />
                     </div>
                   </motion.div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-2.5">
                   <button
                     onClick={onClose}
-                    className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold text-white hover:from-primary-600 hover:to-accent-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="px-5 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold text-white hover:from-primary-600 hover:to-accent-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     Create Meeting
                   </button>

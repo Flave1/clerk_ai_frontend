@@ -186,7 +186,7 @@ export default function SelectMeetingPage() {
 		if (!pendingPlatformKey) return;
 
 		const key = pendingPlatformKey;
-		setConfigModal({ isOpen: false, platformKey: null });
+		setConfigModal({ isOpen: true, platformKey: null });
 
 		try {
 			setLoadingKey(key);
