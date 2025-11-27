@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUIStore } from '@/store';
 
 interface LogoProps {
@@ -18,6 +18,22 @@ export default function Logo({
 }: LogoProps) {
   const { theme } = useUIStore();
   const [isHovered, setIsHovered] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [flipCount, setFlipCount] = useState(0);
+
+  useEffect(() => {
+    // Trigger multiple flips on page load to make it more noticeable
+    const flipSequence = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500)); // Initial delay
+      setFlipCount(1); // First flip
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setFlipCount(2); // Second flip (back)
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setFlipCount(3); // Third flip (final position)
+      setHasLoaded(true);
+    };
+    flipSequence();
+  }, []);
 
   const sizeClasses = {
     sm: 'text-lg sm:text-xl',
@@ -50,8 +66,14 @@ export default function Logo({
         <div className={`relative ${iconSizeClasses[size]} ${sizeClasses[size]} flex items-center justify-center`}>
           <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 opacity-30 blur-sm rounded-full" />
           <motion.div
-            animate={{ scaleX: isHovered ? -1 : 1 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            initial={{ scaleX: -1 }}
+            animate={{ 
+              scaleX: isHovered ? -1 : (flipCount % 2 === 0 ? 1 : -1)
+            }}
+            transition={{ 
+              duration: 0.5, 
+              ease: "easeInOut"
+            }}
             className="h-full w-full relative"
           >
             <svg 
