@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import { 
   Bars3Icon,
   XMarkIcon,
-  ChatBubbleLeftRightIcon,
   ChartBarIcon,
   PhoneIcon,
   VideoCameraIcon,
@@ -24,6 +23,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useUIStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
+import Logo from '@/components/ui/Logo';
 
 const mainNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
@@ -135,12 +135,7 @@ export default function Header() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Aurray</span>
-            </Link>
+            <Logo href="/dashboard" size="md" />
             <button
               onClick={() => setSidebarCollapsed(true)}
               className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-gray-200"

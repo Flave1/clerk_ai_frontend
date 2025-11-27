@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useUIStore } from '@/store';
+import Logo from '@/components/ui/Logo';
 
 interface SocialLink {
   name: string;
@@ -42,9 +43,9 @@ export default function LandingFooter({
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
+              className="mb-4"
             >
-              Aurray
+              <Logo size="lg" />
             </motion.div>
             <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
               Your voice in every meeting. AI-powered meeting assistance for modern teams.
