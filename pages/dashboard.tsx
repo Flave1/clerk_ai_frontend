@@ -22,22 +22,43 @@ import apiClient from '@/lib/api';
 import { Meeting } from '@/types';
 import toast from 'react-hot-toast';
 import Header from '@/components/layout/Header';
-import ComingSoonModal from '@/components/ui/ComingSoonModal';
+import UserPreferencesModal from '@/components/ui/UserPreferencesModal';
+import SendAurrayBotModal from '@/components/ui/SendAurrayBotModal';
 import { format, isToday, isTomorrow, parseISO, differenceInMinutes } from 'date-fns';
+
+interface CalendarIntegration {
+  connected: boolean;
+  integration_id: string;
+  name: string;
+  image_url: string;
+}
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
+  const [isSendBotModalOpen, setIsSendBotModalOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+  const [calendarIntegrations, setCalendarIntegrations] = useState<{
+    google_calendar: CalendarIntegration;
+    microsoft_calendar: CalendarIntegration;
+  } | null>(null);
   const { meetings, setMeetings } = useDashboardStore();
 
-  // Load meetings
+  // Load meetings and calendar integrations
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         const meetingsData = await apiClient.getMeetings().catch(() => []);
         setMeetings(meetingsData);
+        
+        // Load calendar integration status
+        try {
+          const calendarStatus = await apiClient.getCalendarIntegrationStatus();
+          setCalendarIntegrations(calendarStatus);
+        } catch (error) {
+          console.error('Failed to load calendar integrations:', error);
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
         toast.error('Failed to load dashboard data');
@@ -131,7 +152,7 @@ const Dashboard: NextPage = () => {
               </button>
 
               <button
-                onClick={() => setIsComingSoonModalOpen(true)}
+                onClick={() => setIsSendBotModalOpen(true)}
                 className="group relative overflow-hidden bg-gradient-to-br from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 rounded-xl p-6 text-left transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 <div className="relative z-10">
@@ -236,20 +257,96 @@ const Dashboard: NextPage = () => {
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendar Settings</h2>
                 </div>
               </div>
-              <div className="card-body">
-                <Link
-                  href="/settings"
-                  className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer group"
+              <div className="card-body space-y-4">
+                {/* Calendar Integrations */}
+                {calendarIntegrations && (
+                  <div className="flex items-center justify-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    {/* Google Calendar */}
+                    {calendarIntegrations.google_calendar.connected ? (
+                      <button
+                        onClick={() => router.push('/calendar?integration=google_calendar')}
+                        className="flex flex-col items-center gap-1 group"
+                      >
+                        <div className="p-1 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-500 dark:border-green-600 hover:border-green-600 dark:hover:border-green-500 transition-all cursor-pointer">
+                          <div className="h-8 w-8 rounded bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden p-1">
+                            <img
+                              src={calendarIntegrations.google_calendar.image_url}
+                              alt={calendarIntegrations.google_calendar.name}
+                              className="h-full w-full object-contain group-hover:scale-110 transition-transform"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs text-green-600 dark:text-green-400 font-medium group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">Connected</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push(`/integrations?search=${encodeURIComponent(calendarIntegrations.google_calendar.name)}`)}
+                        className="flex flex-col items-center gap-1 group"
+                      >
+                        <div className="p-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 transition-all cursor-pointer">
+                          <div className="h-8 w-8 rounded bg-white dark:bg-gray-700 flex items-center justify-center overflow-hidden p-1">
+                            <img
+                              src={calendarIntegrations.google_calendar.image_url}
+                              alt={calendarIntegrations.google_calendar.name}
+                              className="h-full w-full object-contain opacity-50 group-hover:opacity-100 transition-opacity"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors font-medium">Not connected</span>
+                      </button>
+                    )}
+                    
+                    {/* Outlook Calendar */}
+                    {calendarIntegrations.microsoft_calendar.connected ? (
+                      <button
+                        onClick={() => router.push('/calendar?integration=microsoft_calendar')}
+                        className="flex flex-col items-center gap-1 group"
+                      >
+                        <div className="p-1 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-500 dark:border-green-600 hover:border-green-600 dark:hover:border-green-500 transition-all cursor-pointer">
+                          <div className="h-8 w-8 rounded bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden p-1">
+                            <img
+                              src={calendarIntegrations.microsoft_calendar.image_url}
+                              alt={calendarIntegrations.microsoft_calendar.name}
+                              className="h-full w-full object-contain group-hover:scale-110 transition-transform"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs text-green-600 dark:text-green-400 font-medium group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">Connected</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push(`/integrations?search=${encodeURIComponent(calendarIntegrations.microsoft_calendar.name)}`)}
+                        className="flex flex-col items-center gap-1 group"
+                      >
+                        <div className="p-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 transition-all cursor-pointer">
+                          <div className="h-8 w-8 rounded bg-white dark:bg-gray-700 flex items-center justify-center overflow-hidden p-1">
+                            <img
+                              src={calendarIntegrations.microsoft_calendar.image_url}
+                              alt={calendarIntegrations.microsoft_calendar.name}
+                              className="h-full w-full object-contain opacity-50 group-hover:opacity-100 transition-opacity"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors font-medium">Not connected</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Auto-join & Preferences Link */}
+                <button
+                  onClick={() => setIsPreferencesModalOpen(true)}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer group"
                 >
                   <div className="flex items-center space-x-3">
                     <CogIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                    <div>
+                    <div className="text-left">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Auto-join & Preferences</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Configure meeting settings</p>
                     </div>
                   </div>
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
-                </Link>
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
+                </button>
               </div>
             </div>
 
@@ -354,12 +451,18 @@ const Dashboard: NextPage = () => {
         </div>
       </div>
 
-      <ComingSoonModal
-        isOpen={isComingSoonModalOpen}
-        onClose={() => setIsComingSoonModalOpen(false)}
-        title="Send Aurray Bot to Meeting"
-        featureName="Send Aurray Bot to Meeting"
-        message="This feature is coming soon! Aurray bot will be able to join your already scheduled meetings using your voice and personality. Stay tuned for updates!"
+      <SendAurrayBotModal
+        isOpen={isSendBotModalOpen}
+        onClose={() => setIsSendBotModalOpen(false)}
+      />
+
+      <UserPreferencesModal
+        isOpen={isPreferencesModalOpen}
+        onClose={() => setIsPreferencesModalOpen(false)}
+        onSave={() => {
+          // Optionally reload calendar integrations or other data after save
+          // toast.success('Preferences updated successfully');
+        }}
       />
     </>
   );

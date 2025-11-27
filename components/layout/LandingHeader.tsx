@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store';
 import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import Logo from '@/components/ui/Logo';
 
 interface NavItem {
   label: string;
@@ -53,13 +54,7 @@ export default function LandingHeader({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
-              style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}
-            >
-              <Link href="/">AURRAY</Link>
-            </motion.div>
+            <Logo />
             
             {/* Desktop Navigation */}
             {navItems && navItems.length > 0 && (

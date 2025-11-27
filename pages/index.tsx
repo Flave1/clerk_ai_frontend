@@ -18,6 +18,8 @@ import {
   SparklesIcon,
   SunIcon,
   MoonIcon,
+  DocumentTextIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
@@ -286,21 +288,49 @@ export default function Landing() {
                 </span>
               </motion.h1>
 
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.8 }}
-                className={`text-xl md:text-2xl mb-12 max-w-3xl mx-auto ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}
+                className="mb-12 max-w-3xl mx-auto"
               >
-                Aurray joins your meetings, listens, speaks, and acts — just like you.
-              </motion.p>
+                <ul className={`text-lg md:text-xl space-y-4 text-left ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    className="flex items-start gap-3"
+                  >
+                    <MicrophoneIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
+                    <span>Aurray joins your meetings, listens, speaks and acts just like you.</span>
+                  </motion.li>
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                    className="flex items-start gap-3"
+                  >
+                    <DocumentTextIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
+                    <span>Provide Transcripts, Recordings and metadata from meetings</span>
+                  </motion.li>
+                  {/* <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                    className="flex items-start gap-3"
+                  >
+                    <CpuChipIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
+                    <span>APIs for developers to integrate meeting data into your applications</span>
+                  </motion.li> */}
+                </ul>
+              </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
+                transition={{ delay: 0.8, duration: 0.8 }}
                 className="flex flex-col sm:flex-row gap-4 justify-center items-center"
               >
                 <motion.button

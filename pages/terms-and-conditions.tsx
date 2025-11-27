@@ -54,7 +54,7 @@ const TermsAndConditionsPage: NextPage = () => {
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Terms and Conditions</h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Last updated: November 20, 2025
               </p>
             </div>
 

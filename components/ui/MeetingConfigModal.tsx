@@ -18,6 +18,7 @@ interface MeetingConfigModalProps {
     audioRecord: boolean;
     screenRecord: boolean;
     transcript: boolean;
+    botShouldRespond: boolean;
     startRightAway: boolean;
     startTime?: string;
     endTime?: string;
@@ -37,7 +38,8 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
 }) => {
   const { theme } = useUIStore();
   const { participants: storedParticipants, addParticipant } = useParticipantsStore();
-  const [title, setTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>('New Meeting');
+  const [duration, setDuration] = useState<number>(60); // Duration in minutes, default 60 minutes (1 hour)
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([DEFAULT_PARTICIPANT]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -48,9 +50,10 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
   const [audioRecord, setAudioRecord] = useState(false);
   const [screenRecord, setScreenRecord] = useState(false);
   const [transcript, setTranscript] = useState(true);
+  const [botShouldRespond, setBotShouldRespond] = useState(false);
   const [startRightAway, setStartRightAway] = useState(true);
   const [startTime, setStartTime] = useState<string>('');
-  const [endTime, setEndTime] = useState<string>('');
+  const [showParticipantsList, setShowParticipantsList] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     participants?: string;
@@ -61,7 +64,6 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isDark = theme === 'dark';
-  const hasAurrayBot = selectedParticipants.includes(DEFAULT_PARTICIPANT);
 
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -151,7 +153,8 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setTitle('');
+      setTitle('New Meeting');
+      setDuration(60); // Default 1 hour
       setSelectedParticipants([DEFAULT_PARTICIPANT]);
       setSearchQuery('');
       setSelectedContextId('');
@@ -159,10 +162,11 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
       setAudioRecord(false);
       setScreenRecord(false);
       setTranscript(true);
+      setBotShouldRespond(false);
       setStartRightAway(true);
       setStartTime('');
-      setEndTime('');
       setShowDropdown(false);
+      setShowParticipantsList(false);
       setErrors({});
     }
   }, [isOpen]);
@@ -242,15 +246,30 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
       newErrors.participants = 'At least one participant is required';
     }
 
-    // Validate context if Aurray Bot is selected
-    if (hasAurrayBot && !selectedContextId) {
-      newErrors.contextId = 'Personality context is required when Aurray Bot is selected';
+    // Validate context if "Bot should respond" is checked
+    if (botShouldRespond && !selectedContextId) {
+      newErrors.contextId = 'Personality context is required when "Bot should respond" is enabled';
     }
 
     // If there are errors, set them and return
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
+    }
+
+    // Calculate end time from start time + duration
+    let calculatedEndTime: string | undefined = undefined;
+    if (!startRightAway && startTime) {
+      const startDate = new Date(startTime);
+      const endDate = new Date(startDate.getTime() + duration * 60 * 1000); // Add duration in milliseconds
+      
+      // Format as YYYY-MM-DDTHH:mm
+      const year = endDate.getFullYear();
+      const month = String(endDate.getMonth() + 1).padStart(2, '0');
+      const day = String(endDate.getDate()).padStart(2, '0');
+      const hours = String(endDate.getHours()).padStart(2, '0');
+      const minutes = String(endDate.getMinutes()).padStart(2, '0');
+      calculatedEndTime = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
     // Clear errors and submit
@@ -263,18 +282,18 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
       audioRecord,
       screenRecord,
       transcript,
+      botShouldRespond,
       startRightAway,
       startTime: startRightAway ? undefined : startTime,
-      endTime: startRightAway ? undefined : endTime,
+      endTime: startRightAway ? undefined : calculatedEndTime,
     });
   };
 
-  // Set default times when modal opens or when startRightAway changes
+  // Set default start time when modal opens or when startRightAway changes
   useEffect(() => {
     if (isOpen && !startRightAway && !startTime) {
       const now = new Date();
       const start = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
-      const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
       
       // Format as YYYY-MM-DDTHH:mm for datetime-local input
       const formatDateTime = (date: Date) => {
@@ -287,7 +306,6 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
       };
       
       setStartTime(formatDateTime(start));
-      setEndTime(formatDateTime(end));
     }
   }, [isOpen, startRightAway, startTime]);
 
@@ -352,30 +370,54 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
 
               {/* Content */}
               <div className="flex-1 px-5 py-4 space-y-4 overflow-y-auto">
-                {/* Title Field - First field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value);
-                      if (errors.title) {
-                        setErrors({ ...errors, title: undefined });
-                      }
-                    }}
-                    placeholder="Enter meeting title..."
-                    className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
-                      errors.title
-                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-transparent'
-                    }`}
-                  />
-                  {errors.title && (
-                    <p className="mt-1 text-sm text-red-500">{errors.title}</p>
-                  )}
+                {/* Title and Duration - Side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Title Field */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        if (errors.title) {
+                          setErrors({ ...errors, title: undefined });
+                        }
+                      }}
+                      placeholder="Enter meeting title..."
+                      className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
+                        errors.title
+                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-transparent'
+                      }`}
+                    />
+                    {errors.title && (
+                      <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+                    )}
+                  </div>
+
+                  {/* Duration Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Duration
+                    </label>
+                    <select
+                      value={duration}
+                      onChange={(e) => setDuration(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    >
+                      <option value={15}>15 min</option>
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>1 hour</option>
+                      <option value={90}>1.5 hours</option>
+                      <option value={120}>2 hours</option>
+                      <option value={180}>3 hours</option>
+                      <option value={240}>4 hours</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Participants Field */}
@@ -442,10 +484,125 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                   {errors.participants && (
                     <p className="mt-1 text-sm text-red-500">{errors.participants}</p>
                   )}
+                  
+                  {/* Display selected participants count - clickable to expand/collapse */}
+                  {selectedParticipants.length > 0 && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowParticipantsList(!showParticipantsList)}
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            Selected Participants ({selectedParticipants.length})
+                          </p>
+                          <svg 
+                            className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${showParticipantsList ? 'rotate-180' : ''}`}
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+                      
+                      {/* Expandable participants list */}
+                      <AnimatePresence>
+                        {showParticipantsList && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-2 p-3 bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 space-y-1">
+                              {selectedParticipants.map((participant, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                                  <span>{participant}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
 
-                {/* Aurray Bot Personality Context - Only visible if Aurray Bot is selected */}
-                {hasAurrayBot && (
+                {/* Purpose of the Meeting and Meeting Settings - Side by side on desktop, stacked on mobile */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:items-stretch">
+                  {/* Purpose of the Meeting */}
+                  <div className="flex flex-col">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Purpose of the Meeting
+                    </label>
+                    <textarea
+                      value={meetingDescription}
+                      onChange={(e) => setMeetingDescription(e.target.value)}
+                      placeholder="Enter the purpose or description of this meeting..."
+                      rows={3}
+                      className="w-full flex-1 min-h-[140px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
+                    />
+                  </div>
+
+                  {/* Meeting Settings */}
+                  <div className="flex flex-col space-y-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      Meeting Settings
+                    </label>
+                    
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={audioRecord}
+                        onChange={(e) => setAudioRecord(e.target.checked)}
+                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+                      />
+                      <MicrophoneIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-gray-900 dark:text-gray-100">Audio Record</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={screenRecord}
+                        onChange={(e) => setScreenRecord(e.target.checked)}
+                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+                      />
+                      <VideoCameraIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-gray-900 dark:text-gray-100">Screen Record</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={transcript}
+                        onChange={(e) => setTranscript(e.target.checked)}
+                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+                      />
+                      <DocumentTextIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-gray-900 dark:text-gray-100">Transcript</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={botShouldRespond}
+                        onChange={(e) => setBotShouldRespond(e.target.checked)}
+                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+                      />
+                      <SparklesIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-gray-900 dark:text-gray-100">Bot should respond</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Aurray Bot Personality Context - Only visible if "Bot should respond" is checked */}
+                {botShouldRespond && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -496,63 +653,6 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                     )}
                   </motion.div>
                 )}
-
-                {/* Purpose of the Meeting and Recording Options - Side by side on desktop, stacked on mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:items-stretch">
-                  {/* Purpose of the Meeting */}
-                  <div className="flex flex-col">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Purpose of the Meeting
-                    </label>
-                    <textarea
-                      value={meetingDescription}
-                      onChange={(e) => setMeetingDescription(e.target.value)}
-                      placeholder="Enter the purpose or description of this meeting..."
-                      rows={3}
-                      className="w-full flex-1 min-h-[140px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
-                    />
-                  </div>
-
-                  {/* Recording Options */}
-                  <div className="flex flex-col space-y-3">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                      Recording Options
-                    </label>
-                    
-                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={audioRecord}
-                        onChange={(e) => setAudioRecord(e.target.checked)}
-                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
-                      />
-                      <MicrophoneIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-900 dark:text-gray-100">Audio Record</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={screenRecord}
-                        onChange={(e) => setScreenRecord(e.target.checked)}
-                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
-                      />
-                      <VideoCameraIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-900 dark:text-gray-100">Screen Record</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={transcript}
-                        onChange={(e) => setTranscript(e.target.checked)}
-                        className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
-                      />
-                      <DocumentTextIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-900 dark:text-gray-100">Transcript</span>
-                    </label>
-                  </div>
-                </div>
               </div>
 
               {/* Footer */}
@@ -572,13 +672,13 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                   </label>
                 </div>
 
-                {/* Date/Time Pickers - Show when startRightAway is false */}
+                {/* Date/Time Picker - Show when startRightAway is false */}
                 {!startRightAway && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-900/20 dark:to-accent-900/20 rounded-xl border border-primary-200 dark:border-primary-700"
+                    className="p-4 bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-900/20 dark:to-accent-900/20 rounded-xl border border-primary-200 dark:border-primary-700"
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -589,20 +689,11 @@ const MeetingConfigModal: React.FC<MeetingConfigModalProps> = ({
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
                         min={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        End Date & Time
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        min={startTime || new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                      />
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Meeting will end {duration >= 60 ? `${Math.floor(duration / 60)} hour${Math.floor(duration / 60) > 1 ? 's' : ''}${duration % 60 > 0 ? ` ${duration % 60} min` : ''}` : `${duration} minutes`} after start time
+                      </p>
                     </div>
                   </motion.div>
                 )}
