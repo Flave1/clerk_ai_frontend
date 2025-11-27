@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import apiClient from '@/lib/api';
 import ComingSoonModal from '@/components/ui/ComingSoonModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { getIntegrationDetail } from '@/constants/integrationDetails';
 
 interface Integration {
   id: string;
@@ -55,6 +56,15 @@ const IntegrationsPage: NextPage = () => {
         setLoading(true);
         const data = await apiClient.getIntegrations();
         setIntegrations(data);
+        
+        // Check for search query param
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const searchParam = params.get('search');
+          if (searchParam) {
+            setSearchQuery(searchParam);
+          }
+        }
       } catch (error) {
         console.error('Failed to load integrations:', error);
         toast.error('Failed to load integrations');
@@ -86,8 +96,18 @@ const IntegrationsPage: NextPage = () => {
     try {
       setConnecting(integration.id);
       
-      // Get OAuth URL from backend - call the specific integration directly
-      const response = await apiClient.getIntegrationOAuthUrl(integration.id);
+      // Get integration details to check for required integrations
+      const integrationDetail = getIntegrationDetail(integration.id);
+      const additionalIntegrations = integrationDetail?.requiredWith?.filter(reqId => {
+        const reqIntegration = integrations.find(i => i.id === reqId);
+        return reqIntegration && !reqIntegration.connected;
+      }) || [];
+      
+      // Get OAuth URL from backend - call the specific integration directly with additional integrations
+      const response = await apiClient.getIntegrationOAuthUrl(
+        integration.id,
+        additionalIntegrations.length > 0 ? additionalIntegrations.join(',') : undefined
+      );
       const { oauth_url } = response;
       
       // Open OAuth popup window
@@ -409,23 +429,31 @@ const IntegrationsPage: NextPage = () => {
                     Disconnect
                   </button>
                 ) : (
-                  <button
-                    onClick={() => handleConnect(integration)}
-                    disabled={connecting === integration.id}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {connecting === integration.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        Connect
-                        <ArrowRightIcon className="h-4 w-4 ml-2" />
-                      </>
-                    )}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => router.push(`/integration-tool-detail?id=${integration.id}`)}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                    >
+                      Learn More
+                      <ArrowRightIcon className="h-4 w-4 ml-2" />
+                    </button>
+                    <button
+                      onClick={() => handleConnect(integration)}
+                      disabled={connecting === integration.id}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {connecting === integration.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          Connect
+                        </>
+                      )}
+                    </button>
+                  </>
                 )}
               </div>
             </div>

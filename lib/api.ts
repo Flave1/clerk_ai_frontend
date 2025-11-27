@@ -306,6 +306,8 @@ class ApiClient {
     video_record: boolean;
     voice_id: string;
     bot_name: string;
+    bot_should_respond?: boolean;
+    context_id?: string;
   }, apiKey?: string): Promise<JoinMeetingResponse> {
     const prefixPattern = API_PREFIX
       ? new RegExp(`${API_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i')
@@ -346,8 +348,17 @@ class ApiClient {
     return response.data;
   }
 
-  async getIntegrationOAuthUrl(integrationId: string): Promise<{ oauth_url: string; state: string }> {
-    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}/oauth/authorize`));
+  async getCalendarIntegrationStatus(): Promise<{
+    google_calendar: { connected: boolean; integration_id: string; name: string; image_url: string };
+    microsoft_calendar: { connected: boolean; integration_id: string; name: string; image_url: string };
+  }> {
+    const response = await this.client.get(this.withPrefix('/integrations/calendar-status'));
+    return response.data;
+  }
+
+  async getIntegrationOAuthUrl(integrationId: string, additionalIntegrations?: string): Promise<{ oauth_url: string; state: string }> {
+    const params = additionalIntegrations ? { additional_integrations: additionalIntegrations } : {};
+    const response = await this.client.get(this.withPrefix(`/integrations/${integrationId}/oauth/authorize`), { params });
     return response.data;
   }
 
@@ -368,6 +379,66 @@ class ApiClient {
 
   async connectGoogleWorkspaceService(serviceName: string): Promise<{ success: boolean; service: string; message: string }> {
     const response = await this.client.post(this.withPrefix(`/integrations/google_workspace/services/${serviceName}/connect`));
+    return response.data;
+  }
+
+  // User Preferences
+  async getUserPreferences(): Promise<{
+    id: string;
+    user_id: string;
+    auto_join_google_calendar_meeting: boolean;
+    auto_join_outlook_calendar_meeting: boolean;
+  }> {
+    const response = await this.client.get(this.withPrefix('/preferences'));
+    return response.data;
+  }
+
+  async updateUserPreferences(preferences: {
+    auto_join_google_calendar_meeting?: boolean;
+    auto_join_outlook_calendar_meeting?: boolean;
+  }): Promise<{
+    id: string;
+    user_id: string;
+    auto_join_google_calendar_meeting: boolean;
+    auto_join_outlook_calendar_meeting: boolean;
+  }> {
+    const response = await this.client.put(this.withPrefix('/preferences'), preferences);
+    return response.data;
+  }
+
+  // Calendar Events
+  async getCalendarEvents(params: {
+    integration_key: 'google_calendar' | 'microsoft_calendar';
+    start_date?: string; // YYYY-MM-DD format
+    end_date?: string; // YYYY-MM-DD format
+  }): Promise<{
+    events: Array<{
+      id: string;
+      title: string;
+      start_time: string;
+      end_time: string;
+      location?: string;
+      description?: string;
+      attendees: Array<{
+        email: string;
+        name?: string;
+        response_status?: string;
+      }>;
+      attendee_count: number;
+      join_url?: string;
+      organizer?: string;
+      is_online_meeting: boolean;
+      color?: string;
+      calendar_type: 'google' | 'microsoft';
+    }>;
+    total_count: number;
+    integration_key: string;
+    start_date: string;
+    end_date: string;
+  }> {
+    const response = await this.client.get(this.withPrefix('/calendar/events'), {
+      params
+    });
     return response.data;
   }
 

@@ -11,6 +11,8 @@ interface ComingSoonModalProps {
   message?: string | React.ReactNode;
   featureName?: string;
   image?: string;
+  onNavigateToIntegrations?: () => void;
+  showIntegrationsButton?: boolean;
 }
 
 const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ 
@@ -19,7 +21,9 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
   title,
   message,
   featureName,
-  image
+  image,
+  onNavigateToIntegrations,
+  showIntegrationsButton = false
 }) => {
   const defaultTitle = featureName ? `${featureName}` : 'Coming Soon';
   const defaultMessage = message || "We're working hard to bring you this feature. Stay tuned for updates!";
@@ -124,7 +128,18 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end p-6 border-t border-primary-500/20 dark:border-primary-500/20">
+              <div className={`flex ${showIntegrationsButton ? 'justify-between' : 'justify-end'} p-6 border-t border-primary-500/20 dark:border-primary-500/20`}>
+                {showIntegrationsButton && onNavigateToIntegrations && (
+                  <button
+                    onClick={() => {
+                      onNavigateToIntegrations();
+                      onClose();
+                    }}
+                    className="px-6 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-300"
+                  >
+                    Go to Integrations
+                  </button>
+                )}
                 <button
                   onClick={onClose}
                   className="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold hover:from-primary-600 hover:to-accent-600 transition-all duration-300"

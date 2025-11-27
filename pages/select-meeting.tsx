@@ -136,6 +136,10 @@ export default function SelectMeetingPage() {
 		return connectedIntegrations.has(integrationId);
 	}
 
+	const handleNavigateToIntegrations = (platformName: string) => {
+		router.push(`/integrations?search=${encodeURIComponent(platformName)}`);
+	};
+
 	async function handleSelect(key: PlatformKey) {
 		// Check if platform is installed
 		if (!isPlatformInstalled(key)) {
@@ -179,6 +183,7 @@ export default function SelectMeetingPage() {
 		audioRecord: boolean;
 		screenRecord: boolean;
 		transcript: boolean;
+		botShouldRespond: boolean;
 		startRightAway: boolean;
 		startTime?: string;
 		endTime?: string;
@@ -202,22 +207,23 @@ export default function SelectMeetingPage() {
 				const userId = user?.user_id || uuidv4();
 				const tempRoomId = `room-${userId}`;
 
-				// Call conversations/start endpoint for Aurray
-				const res = await axios.post('/conversations/start', {
-					room_id: tempRoomId,
-					user_id: userId,
-					meeting_platform: key,
-					title: config.title,
-					participants: processedParticipants,
-					context_id: config.contextId || undefined,
-					meeting_description: config.meetingDescription || undefined,
-					transcript: config.transcript,
-					audio_record: config.audioRecord,
-					video_record: config.screenRecord,
-					start_time: config.startTime,
-					end_time: config.endTime,
-					start_right_away: config.startRightAway,
-				});
+			// Call conversations/start endpoint for Aurray
+			const res = await axios.post('/conversations/start', {
+				room_id: tempRoomId,
+				user_id: userId,
+				meeting_platform: key,
+				title: config.title,
+				participants: processedParticipants,
+				context_id: config.contextId || undefined,
+				meeting_description: config.meetingDescription || undefined,
+				transcript: config.transcript,
+				audio_record: config.audioRecord,
+				video_record: config.screenRecord,
+				bot_should_respond: config.botShouldRespond,
+				start_time: config.startTime,
+				end_time: config.endTime,
+				start_right_away: config.startRightAway,
+			});
 				const data = res.data;
 
 				// Check if meeting is scheduled or started
@@ -246,18 +252,23 @@ export default function SelectMeetingPage() {
 					toast.success('Starting Aurray meeting in a new tab...');
 				}
 			} else {
-				// Call external meeting start endpoint instead of conversations/start
-				const res = await axios.post('/conversations/start-external', {
-					meeting_url: '',
-					type: key,
-					transcript: config.transcript,
-					audio_record: config.audioRecord,
-					video_record: config.screenRecord,
-					voice_id: DEFAULT_VOICE_ID,
-					bot_name: 'Aurray Bot',
-					context_id: config.contextId || null,
-					participants: processedParticipants,
-				});
+			// Call external meeting start endpoint instead of conversations/start
+			const res = await axios.post('/conversations/start-external', {
+				meeting_url: '',
+				type: key,
+				title: config.title,
+				description: config.meetingDescription || undefined,
+				transcript: config.transcript,
+				audio_record: config.audioRecord,
+				video_record: config.screenRecord,
+				bot_should_respond: config.botShouldRespond,
+				voice_id: DEFAULT_VOICE_ID,
+				bot_name: 'Aurray Bot',
+				context_id: config.contextId || null,
+				participants: processedParticipants,
+				start_time: config.startTime,
+				end_time: config.endTime,
+			});
 				const data = res.data || {};
 				const platformConfig = PLATFORMS.find((platform) => platform.key === key);
 
@@ -536,27 +547,15 @@ export default function SelectMeetingPage() {
 						<>
 							{comingSoonModal.platformKey === 'teams' ? (
 								<>
-									Microsoft Teams integration is not installed. Please{' '}
-									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
-										go to Integrations
-									</Link>
-									{' '}to install Microsoft Teams integration.
+									Microsoft Teams integration is not installed. Click below to go to Integrations and install Microsoft Teams.
 								</>
 							) : comingSoonModal.platformKey === 'google_meet' ? (
 								<>
-									Google Meet integration is not installed. Please{' '}
-									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
-										go to Integrations
-									</Link>
-									{' '}to install Google Meet integration.
+									Google Meet integration is not installed. Click below to go to Integrations and install Google Meet.
 								</>
 							) : (
 								<>
-									{comingSoonModal.platformName} integration is not installed. Please{' '}
-									<Link href="/integrations" className="text-primary-500 hover:text-primary-600 underline font-semibold">
-										go to Integrations
-									</Link>
-									{' '}to install it.
+									{comingSoonModal.platformName} integration is not installed. Click below to go to Integrations and install it.
 								</>
 							)}
 						</>
@@ -565,6 +564,8 @@ export default function SelectMeetingPage() {
 					)
 				}
 				image={comingSoonModal.platformImage}
+				showIntegrationsButton={comingSoonModal.platformKey !== undefined && !isPlatformInstalled(comingSoonModal.platformKey)}
+				onNavigateToIntegrations={() => handleNavigateToIntegrations(comingSoonModal.platformName)}
 			/>
 
 			{/* Meeting Configuration Modal */}
