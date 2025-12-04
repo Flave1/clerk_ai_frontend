@@ -27,7 +27,9 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
   const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
   const [showPlatformPrompt, setShowPlatformPrompt] = useState(false);
   const [pendingPlatform, setPendingPlatform] = useState<Platform>(null);
+  const [showConnectionTimeout, setShowConnectionTimeout] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const totalSteps = 3; // welcome, platform, email (meeting is step 4 but shown differently)
   
@@ -96,6 +98,55 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     }
   }, [messages]);
 
+  // Monitor socket connection and timeout after 5 minutes if no status received
+  useEffect(() => {
+    // Only monitor when in meeting step and connected
+    if (currentStep === 'meeting' && isConnected && meetingId) {
+      // Clear any existing timeout first
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      // Reset timeout state when connection is established
+      setShowConnectionTimeout(false);
+
+      // Set 5 minute timeout only if we have no messages yet
+      if (messages.length === 0) {
+        timeoutRef.current = setTimeout(() => {
+          // Double-check we still have no messages after 5 minutes
+          setShowConnectionTimeout(true);
+        }, 2 * 60 * 1000); // 5 minutes
+      }
+
+      // Cleanup timeout when component unmounts or conditions change
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+      };
+    } else {
+      // Reset timeout state when not in meeting or disconnected
+      setShowConnectionTimeout(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+  }, [currentStep, isConnected, meetingId]);
+
+  // Reset timeout state and clear timer when messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowConnectionTimeout(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+  }, [messages.length]);
+
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -108,6 +159,11 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
       setMeetingUrl(null);
       setShowPlatformPrompt(false);
       setPendingPlatform(null);
+      setShowConnectionTimeout(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   }, [isOpen]);
 
@@ -517,7 +573,19 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                               {/* Status Messages Log */}
                               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                                 <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 max-h-[300px] min-h-[200px]">
-                                  {messages.length === 0 ? (
+                                  {showConnectionTimeout ? (
+                                    <div className="flex items-center justify-center h-full text-red-400">
+                                      <div className="text-center max-w-md">
+                                        <div className="flex items-center justify-center gap-2 mb-4">
+                                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                        </div>
+                                        <p className="text-sm font-semibold mb-2">Connection Issue Detected</p>
+                                        <p className="text-xs text-gray-400">
+                                          We haven't received status updates in 5 minutes. There may be a problem with the connection. Please try again or contact support.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : messages.length === 0 ? (
                                     <div className="flex items-center justify-center h-full text-gray-400">
                                       <div className="text-center">
                                         <div className="flex items-center justify-center gap-2 mb-2">
@@ -525,7 +593,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                                           <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                                         </div>
-                                        <p className="text-sm">Waiting for status updates...</p>
+                                        <p className="text-sm">Please use the {selectedPlatform} link to join the meeting...</p>
                                       </div>
                                     </div>
                                   ) : (
