@@ -189,17 +189,6 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     }, 300);
   };
 
-  const handleContinueAnyway = () => {
-    if (pendingPlatform) {
-      setSelectedPlatform(pendingPlatform);
-      setShowPlatformPrompt(false);
-      setPendingPlatform(null);
-      setError(null);
-      setTimeout(() => {
-        setCurrentStep('email');
-      }, 300);
-    }
-  };
 
   const handleStartMeeting = async () => {
     if (!name.trim()) {
@@ -345,32 +334,23 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-full flex items-center justify-center">
+                  {/* <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-full flex items-center justify-center">
                     <SparklesIcon className="w-8 h-8 text-primary-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Try Google Meet for Demo
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    For the best demo experience, we recommend using Google Meet. It provides the smoothest demonstration of Aurray's capabilities.
+                  </div> */}
+                  <p className="text-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    Please use Google Meet for demo
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowPlatformPrompt(false)}
-                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium"
+                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium whitespace-nowrap"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleContinueAnyway}
-                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium"
-                  >
-                    Continue Anyway
+                    Close
                   </button>
                   <button
                     onClick={handleUseGoogleMeet}
-                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300"
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 whitespace-nowrap"
                   >
                     Use Google Meet
                   </button>
