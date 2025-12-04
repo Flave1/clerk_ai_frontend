@@ -98,7 +98,8 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     }
   }, [messages]);
 
-  // Monitor socket connection and timeout after 5 minutes if no status received
+  // Monitor socket connection and timeout if no status received
+  // Note: Errors are now handled upfront in handleStartMeeting, so this is mainly for WebSocket connection issues
   useEffect(() => {
     // Only monitor when in meeting step and connected
     if (currentStep === 'meeting' && isConnected && meetingId) {
@@ -111,12 +112,11 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
       // Reset timeout state when connection is established
       setShowConnectionTimeout(false);
 
-      // Set 5 minute timeout only if we have no messages yet
+      // Set timeout only if we have no messages yet (to detect WebSocket issues)
       if (messages.length === 0) {
         timeoutRef.current = setTimeout(() => {
-          // Double-check we still have no messages after 5 minutes
           setShowConnectionTimeout(true);
-        }, 2 * 60 * 1000); // 5 minutes
+        }, 2 * 60 * 1000); // 2 minutes
       }
 
       // Cleanup timeout when component unmounts or conditions change
@@ -134,18 +134,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
         timeoutRef.current = null;
       }
     }
-  }, [currentStep, isConnected, meetingId]);
-
-  // Reset timeout state and clear timer when messages arrive
-  useEffect(() => {
-    if (messages.length > 0) {
-      setShowConnectionTimeout(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    }
-  }, [messages.length]);
+  }, [currentStep, isConnected, meetingId, messages.length]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -276,14 +265,25 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
         }
       );
 
-      // Store meeting info and show meeting environment
+      // Check if the response indicates failure
       const data = response.data;
+      if (data.success === false) {
+        const errorMessage = data.message || 'Failed to start demo meeting';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        setIsLoading(false);
+        return;
+      }
+
+      // Store meeting info and show meeting environment
       setMeetingId(data.meeting_id || data.session_id);
       setMeetingUrl(data.meeting_url);
       setCurrentStep('meeting');
+      toast.success('Demo meeting started successfully!');
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.detail || err?.message || 'Failed to start demo meeting';
+      const errorMessage = err?.response?.data?.detail || err?.response?.data?.message || err?.message || 'Failed to start demo meeting';
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -299,7 +299,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     setIsLoading(true);
     try {
       // Call the leave meeting endpoint
-      await axiosInstance.post(`/meetings/${meetingId}/leave`);
+      await axiosInstance.post(`${API_PREFIX}/meetings/${meetingId}/leave`);
       toast.success('Meeting ended successfully');
     } catch (err: any) {
       // Log error but continue with reset anyway
