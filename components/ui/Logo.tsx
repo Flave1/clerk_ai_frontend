@@ -65,7 +65,32 @@ export default function Logo({
         </span>
         <div className={`relative ${iconSizeClasses[size]} ${sizeClasses[size]} flex items-center justify-center`}>
           <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 opacity-30 blur-sm rounded-full" />
-          <motion.div
+          <AurrayIcon isHovered={isHovered} flipCount={flipCount} />
+        </div>
+        <span className={`${sizeClasses[size]} font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent tracking-tight leading-none ml-0.5 sm:ml-1`}
+          style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}>
+          RRAY
+        </span>
+      </div>
+    </div>
+  );
+
+  if (showLink) {
+    return (
+      <motion.div whileHover={{ scale: 1.05 }} className="flex items-center">
+        <Link href={href}>
+          {logoContent}
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return logoContent;
+}
+
+export const AurrayIcon = ({isHovered, flipCount}: {isHovered: boolean, flipCount: number}) => {
+  return (
+    <motion.div
             initial={{ scaleX: -1 }}
             animate={{ 
               scaleX: isHovered ? -1 : (flipCount % 2 === 0 ? 1 : -1)
@@ -124,25 +149,5 @@ export default function Logo({
               />
             </svg>
           </motion.div>
-        </div>
-        <span className={`${sizeClasses[size]} font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent tracking-tight leading-none ml-0.5 sm:ml-1`}
-          style={theme === 'dark' ? { textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' } : undefined}>
-          RRAY
-        </span>
-      </div>
-    </div>
   );
-
-  if (showLink) {
-    return (
-      <motion.div whileHover={{ scale: 1.05 }} className="flex items-center">
-        <Link href={href}>
-          {logoContent}
-        </Link>
-      </motion.div>
-    );
-  }
-
-  return logoContent;
-}
-
+};

@@ -58,7 +58,7 @@ const validatedBaseURL = getValidatedBaseURL(API_BASE_URL);
 
 const axiosInstance = Axios.create({
   baseURL: validatedBaseURL,
-  timeout: 60000, // Increased to 60 seconds to prevent premature timeouts
+  timeout: 180000, // Increased to 3 minutes (180,000 ms) to prevent premature timeouts
   headers: {
     'Content-Type': 'application/json'
   }

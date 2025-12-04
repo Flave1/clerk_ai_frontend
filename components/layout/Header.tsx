@@ -44,7 +44,7 @@ const settingsNavigation = [
 
 const developerNavigation = [
   { name: 'API Keys', href: '/developer/api-keys', icon: KeyIcon },
-  { name: 'Webhooks', href: '/developer/webhooks', icon: GlobeAltIcon },
+  { name: 'APIs & Webhooks', href: '/developer/webhooks', icon: GlobeAltIcon },
   { name: 'Logs', href: '/developer/logs', icon: DocumentTextIcon },
 ];
 
