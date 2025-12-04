@@ -20,9 +20,21 @@ import {
   MoonIcon,
   DocumentTextIcon,
   VideoCameraIcon,
+  UserGroupIcon,
+  BriefcaseIcon,
+  ClipboardDocumentCheckIcon,
+  ChartBarIcon,
+  PresentationChartLineIcon,
+  MegaphoneIcon,
+  PhoneIcon,
+  HeartIcon,
+  CodeBracketIcon,
+  ServerIcon,
+  RocketLaunchIcon,
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
+import DemoMeetingModal from '@/components/ui/DemoMeetingModal';
 import LandingHeader from '@/components/layout/LandingHeader';
 import LandingFooter from '@/components/layout/LandingFooter';
 import { getCurrentUser } from '@/lib/auth';
@@ -32,6 +44,7 @@ export default function Landing() {
   const router = useRouter();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isEarlyAccessModalOpen, setIsEarlyAccessModalOpen] = useState(false);
+  const [isDemoMeetingModalOpen, setIsDemoMeetingModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { theme } = useUIStore();
@@ -59,95 +72,124 @@ export default function Landing() {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const features = [
+  const whyAurrayFeatures = [
     {
-      icon: MicrophoneIcon,
-      title: 'Voice-enabled AI participation',
-      description: 'Speak naturally and AI responds in real-time with context awareness.',
+      icon: VideoCameraIcon,
+      title: 'Attend Meetings For You',
+      subtitle: 'Your AI Representative',
+      description: 'Let Aurray attend meetings on your behalf using your voice. Joins video calls, participates in discussions, and represents you professionally.',
+      detailedPoints: [
+        'Speaks in your voice and style',
+        'Joins Zoom, Google Meet, and Teams automatically',
+        'Handles discussions with your guidance',
+        'Provides Transcripts, Recordings and metadata from meetings'
+      ],
       gradient: 'from-blue-500 to-cyan-500',
+      image: '/images/features/attend_meetings_1.jpg',
+      imageAlt: 'Aurray attending meetings on your behalf',
+      reverse: false,
     },
     {
-      icon: CalendarIcon,
-      title: 'Auto-scheduling & follow-ups',
-      description: 'Automatically manage your calendar and send follow-ups without lifting a finger.',
+      icon: BriefcaseIcon,
+      title: 'Your Digital Sales & Marketing Team',
+      subtitle: 'Always-On Business Development',
+      description: 'Transform Aurray into your dedicated sales and marketing staff. Perfect for daily standups, client calls, and team meetings with CRM integration.',
+      detailedPoints: [
+        'Manages sales pipeline and relationships',
+        'Conducts standups and sync meetings',
+        'Integrates with Salesforce, HubSpot, and email',
+      ],
       gradient: 'from-primary-500 to-accent-500',
-    },
-    {
-      icon: CpuChipIcon,
-      title: 'Context-aware CRM updates',
-      description: 'Intelligently sync meeting insights to your CRM with full context.',
-      gradient: 'from-primary-400 to-accent-400',
+      image: '/images/features/sales_marketing_1.jpg',
+      imageAlt: 'Aurray as digital sales and marketing team',
+      reverse: true,
     },
     {
       icon: ChatBubbleLeftRightIcon,
-      title: 'Real-time transcription & summaries',
-      description: 'Get instant transcripts and AI-powered summaries delivered automatically.',
-      gradient: 'from-rose-500 to-orange-500',
-    },
-    {
-      icon: CogIcon,
-      title: 'Integrates with Google Meet, Zoom, and Teams',
-      description: 'Seamlessly join any video call platform with zero configuration.',
-      gradient: 'from-green-500 to-emerald-500',
+      title: '24/7 Customer Care Support',
+      subtitle: 'Always-On Customer Service',
+      description: 'Your dedicated customer care team. Handles inquiries, support calls, and service meetings around the clock with platform integrations.',
+      detailedPoints: [
+        '24/7 availability for support calls',
+        'Integrates with Zendesk, Intercom, and Freshdesk',
+        'Manages tickets and escalates when needed',
+      ],
+      gradient: 'from-emerald-500 to-teal-500',
+      image: '/images/features/customer_care_1.jpg',
+      imageAlt: 'Aurray providing 24/7 customer care support',
+      reverse: false,
     },
   ];
 
-  const steps = [
-    {
-      number: '01',
-      title: 'Connect Aurray to your workflow',
-      description: 'Invite Aurray to your meeting as a participant, or integrate directly into your applications using our powerful API.',
-      icon: LinkIcon,
-    },
-    {
-      number: '02',
-      title: 'Aurray listens, speaks, and records insights',
-      description: 'AI participates actively, taking notes, asking questions, and contributing meaningfully.',
-      icon: SparklesIcon,
-    },
-    {
-      number: '03',
-      title: 'Automatically syncs summaries and actions',
-      description: 'Get detailed summaries and action items delivered to your workspace instantly.',
-      icon: CheckCircleIcon,
-    },
-  ];
+  const restApiCode = `curl https://api.aurray.co.uk/v1/meetings \\
+  -H 'Content-Type: application/json' \\
+  -H "x-api-key: $AURRAY_API_KEY" \\
+  -d '{
+    "platform": "google_meet",
+    "meeting_url": "https://meet.google.com/abc-defg-hij",
+    "bot_name": "Aurray Assistant"
+  }'`;
+
+  const webhooksCode = `POST /webhooks/meeting-events
+{
+  "event": "meeting.started",
+  "meeting_id": "123e4567-e89b-12d3",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "platform": "zoom",
+    "participants": 5
+  }
+}`;
+
+  const sdkCode = `# Python SDK
+from aurray import AurrayClient
+
+client = AurrayClient(api_key="your-key")
+meeting = client.meetings.create(
+  platform="google_meet",
+  meeting_url="https://meet.google.com/..."
+)`;
 
   const integrations = [
     { 
-      name: 'Google Workspace', 
-      tooltip: 'Automated scheduling', 
-      image: '/images/integrations/google.png' 
-    },
-    { 
-      name: 'Google Meet', 
+      name: 'Meet', 
       tooltip: 'Video conferencing', 
       image: '/images/integrations/google_meet.png' 
     },
     { 
-      name: 'Microsoft 365', 
-      tooltip: 'Calendar integration', 
-      image: '/images/integrations/microsoft-office.png' 
-    },
-    { 
-      name: 'Microsoft Teams', 
-      tooltip: 'Team collaboration', 
-      image: '/images/integrations/microsoft-teams.png' 
-    },
-    { 
-      name: 'Slack', 
-      tooltip: 'Live voice updates', 
-      image: '/images/integrations/slack.png' 
-    },
-    { 
       name: 'Zoom', 
-      tooltip: 'Native integration', 
+      tooltip: 'Video conferencing', 
       image: '/images/integrations/zoom.png' 
     },
     { 
+      name: 'Teams', 
+      tooltip: 'Video conferencing', 
+      image: '/images/integrations/microsoft-teams.png' 
+    },
+    { 
       name: 'Salesforce', 
-      tooltip: 'CRM sync', 
+      tooltip: 'CRM integration', 
       image: '/images/integrations/salesforce.png' 
+    },
+    { 
+      name: 'HubSpot', 
+      tooltip: 'Sales & marketing', 
+      image: 'https://www.hubspot.com/hubfs/HubSpot_Logos/HSLogo_color.svg' 
+    },
+    { 
+      name: 'Zendesk', 
+      tooltip: 'Customer support', 
+      image: 'https://www.zendesk.com/favicon.ico' 
+    },
+    { 
+      name: 'Intercom', 
+      tooltip: 'Customer support', 
+      image: '/images/integrations/intercom.avif' 
+    },
+    { 
+      name: 'Freshdesk', 
+      tooltip: 'Support platform', 
+      image: '/images/integrations/freshdesk.png' 
     },
   ];
 
@@ -249,7 +291,7 @@ export default function Landing() {
           onLoginClick={() => router.push('/login')}
           onDashboardClick={() => router.push('/dashboard')}
           onEarlyAccessClick={() => setIsEarlyAccessModalOpen(true)}
-          navItems={['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map((item) => ({
+          navItems={['Home', 'Features', 'API', 'Integrations', 'Community', 'Contact'].map((item) => ({
             label: item,
             onClick: () => {
                         const id = item.toLowerCase().replace(/\s+/g, '');
@@ -304,9 +346,9 @@ export default function Landing() {
                     className="flex items-start gap-3"
                   >
                     <MicrophoneIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
-                    <span>Aurray joins your meetings, listens, speaks and acts just like you.</span>
+                    <span>Aurray joins meetings, listens, speaks and acts like you OR your Digital staff.</span>
                   </motion.li>
-                  <motion.li
+                  {/* <motion.li
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.6, duration: 0.6 }}
@@ -314,7 +356,7 @@ export default function Landing() {
                   >
                     <DocumentTextIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
                     <span>Provide Transcripts, Recordings and metadata from meetings</span>
-                  </motion.li>
+                  </motion.li> */}
                   {/* <motion.li
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -342,7 +384,7 @@ export default function Landing() {
                   Get Early Access
                   <ArrowRightIcon className="w-5 h-5" />
                 </motion.button>
-                <motion.button
+                {/* <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
@@ -356,6 +398,21 @@ export default function Landing() {
                 >
                   <PlayIcon className="w-5 h-5" />
                   Watch Demo
+                </motion.button> */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setIsDemoMeetingModalOpen(true);
+                  }}
+                  className={`px-8 py-4 backdrop-blur-lg border rounded-xl font-bold text-lg transition-all duration-300 flex items-center gap-2 ${
+                    theme === 'dark'
+                      ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
+                      : 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-900'
+                  }`}
+                >
+                  <VideoCameraIcon className="w-5 h-5" />
+                  Try Demo
                 </motion.button>
               </motion.div>
 
@@ -411,118 +468,427 @@ export default function Landing() {
           </motion.div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="relative py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
+        {/* Why Aurray is Useful Section */}
+        <section id="features" className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/5 rounded-full filter blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full filter blur-3xl animate-pulse delay-700" />
+          </div>
+
+          <div className="max-w-7xl mx-auto relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="text-center mb-16"
+              className="text-center mb-20"
             >
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                Powerful Features for{' '}
-                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                  Modern Teams
+              {/* <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="inline-block mb-4"
+              >
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                  theme === 'dark'
+                    ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                    : 'bg-primary-100 text-primary-600 border border-primary-200'
+                }`}>
+                  Why Choose Aurray
                 </span>
+              </motion.div> */}
+              <h2 className="text-4xl md:text-6xl font-bold mb-6">
+                Why{' '}
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                  Aurray
+                </span>{' '}
+                is Useful
               </h2>
-              <p className={`text-xl max-w-2xl mx-auto ${
+              <p className={`text-xl md:text-2xl max-w-3xl mx-auto ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                Everything you need to make AI an integral part of your meeting workflow.
+                Three powerful ways Aurray transforms how you work and collaborate.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
+            <div className="space-y-20 md:space-y-28">
+              {whyAurrayFeatures.map((feature, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="relative group"
+                  viewport={{ once: true, margin: '-100px' }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                  className={`relative ${
+                    feature.reverse
+                      ? 'md:flex md:flex-row-reverse md:items-center md:gap-12'
+                      : 'md:flex md:flex-row md:items-center md:gap-12'
+                  }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
-                  <div className={`relative backdrop-blur-lg border rounded-2xl p-8 h-full ${
-                    theme === 'dark'
-                      ? 'bg-[#161B22]/50 border-primary-500/20'
-                      : 'bg-white border-primary-500/30 shadow-sm'
-                  }`}>
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <feature.icon className="w-7 h-7 text-white" />
+                  {/* Content Side */}
+                  <div className="flex-1 mb-12 md:mb-0">
+                    <motion.div
+                      initial={{ opacity: 0, x: feature.reverse ? 50 : -50 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: index * 0.2 + 0.3 }}
+                      className="relative"
+                >
+                      {/* Icon with animated glow */}
+                      {/* <div className="relative inline-block mb-6">
+                        <motion.div
+                          animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [0.5, 0.8, 0.5],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          }}
+                          className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl blur-xl`}
+                        />
+                        <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}>
+                          <feature.icon className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className={`text-2xl font-bold mb-4 ${
-                      theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>{feature.title}</h3>
-                    <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{feature.description}</p>
+                      </div> */}
+
+                      {/* Subtitle */}
+                      {/* <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.2 + 0.4 }}
+                        className={`text-sm font-semibold uppercase tracking-wider mb-3 ${
+                          theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
+                        }`}
+                      >
+                        {feature.subtitle}
+                      </motion.p> */}
+
+                      {/* Title */}
+                      <motion.h3
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.2 + 0.5 }}
+                        className={`text-2xl md:text-3xl font-bold mb-4 leading-tight ${
+                          theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
+                        {feature.title}
+                      </motion.h3>
+
+                      {/* Description */}
+                      <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.2 + 0.6 }}
+                        className={`text-base md:text-lg mb-6 leading-relaxed ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        }`}
+                      >
+                        {feature.description}
+                      </motion.p>
+
+                      {/* Detailed Points */}
+                      <motion.ul
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.2 + 0.7 }}
+                        className="space-y-3"
+                      >
+                        {feature.detailedPoints.map((point, pointIndex) => (
+                          <motion.li
+                            key={pointIndex}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.2 + 0.8 + pointIndex * 0.1 }}
+                            className="flex items-start gap-3"
+                          >
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              whileInView={{ scale: 1 }}
+                              viewport={{ once: true }}
+                              transition={{
+                                delay: index * 0.2 + 0.8 + pointIndex * 0.1,
+                                type: 'spring',
+                                stiffness: 200,
+                              }}
+                              className={`flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br ${feature.gradient} flex items-center justify-center mt-0.5`}
+                            >
+                              <CheckCircleIcon className="w-4 h-4 text-white" />
+                            </motion.div>
+                            <span className={`text-sm md:text-base ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {point}
+                            </span>
+                          </motion.li>
+                        ))}
+                      </motion.ul>
+                    </motion.div>
                   </div>
+
+                  {/* Image Side */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, x: feature.reverse ? -50 : 50 }}
+                    whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: index * 0.2 + 0.4 }}
+                    className="flex-1 relative max-w-md mx-auto"
+                  >
+                    <div className="relative">
+                      {/* Decorative gradient circles - smaller */}
+                      <div className={`absolute -top-4 -right-4 w-40 h-40 bg-gradient-to-br ${feature.gradient} rounded-full opacity-10 blur-3xl animate-pulse`} />
+                      <div className={`absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br ${feature.gradient} rounded-full opacity-10 blur-3xl animate-pulse delay-700`} />
+                      
+                      {/* Image container with hover effect */}
+                      <motion.div
+                        whileHover={{ scale: 1.05, rotate: 1 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                        className="relative rounded-2xl overflow-hidden"
+                      >
+                        {/* Image container - smaller aspect ratio */}
+                        <div className="aspect-[3/2] relative flex items-center justify-center overflow-hidden">
+                          {/* Animated icon fallback - always visible as decorative element */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center p-8 w-full h-full flex flex-col items-center justify-center relative">
+                              <motion.div
+                                animate={{
+                                  scale: [1, 1.1, 1],
+                                  rotate: [0, 5, -5, 0],
+                                }}
+                                transition={{
+                                  duration: 4,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                                className={`w-24 h-24 mb-4 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-xl`}
+                              >
+                                <feature.icon className="w-12 h-12 text-white" />
+                </motion.div>
+                              <p className={`text-sm font-medium ${
+                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                              }`}>
+                                {feature.imageAlt}
+                              </p>
+                              {/* Decorative animated dots */}
+                              <div className="absolute top-4 right-4 flex gap-2">
+                                {[...Array(3)].map((_, i) => (
+                                  <motion.div
+                                    key={i}
+                                    animate={{
+                                      scale: [1, 1.2, 1],
+                                      opacity: [0.5, 1, 0.5],
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      delay: i * 0.2,
+                                    }}
+                                    className={`w-2 h-2 rounded-full bg-gradient-to-br ${feature.gradient}`}
+                                  />
+                                ))}
+                              </div>
+                              {/* Floating particles effect */}
+                              {[...Array(6)].map((_, i) => (
+                                <motion.div
+                                  key={`particle-${i}`}
+                                  className="absolute"
+                                  style={{
+                                    left: `${20 + i * 15}%`,
+                                    top: `${30 + (i % 3) * 20}%`,
+                                  }}
+                                  animate={{
+                                    y: [0, -20, 0],
+                                    opacity: [0.3, 0.6, 0.3],
+                                    scale: [0.8, 1, 0.8],
+                                  }}
+                                  transition={{
+                                    duration: 3 + i * 0.5,
+                                    repeat: Infinity,
+                                    delay: i * 0.3,
+                                  }}
+                                >
+                                  <div className={`w-1 h-1 rounded-full bg-gradient-to-br ${feature.gradient}`} />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Overlay image if provided */}
+                          {feature.image && (
+                            <div className="absolute inset-0 z-10 rounded-2xl overflow-hidden">
+                              <Image
+                                src={feature.image}
+                                alt={feature.imageAlt}
+                                fill
+                                className="object-cover rounded-2xl"
+                                unoptimized
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* How It Works Section */}
-        <section id="howitworks" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-primary-900/10 to-transparent">
+        {/* Aurray API for Developers Section */}
+        <section id="api" className="relative py-24 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="text-center mb-16"
+              className="mb-12"
             >
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                How{' '}
+              <p className={`text-sm font-semibold uppercase tracking-wider mb-4 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                SIMPLE AND POWERFUL APIS
+              </p>
+              <h2 className={`text-2xl md:text-3xl font-bold mb-6 whitespace-nowrap ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                Quickly build AI Meeting Agents with our{' '}
                 <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                  It Works
+                  API
                 </span>
               </h2>
-              <p className={`text-xl max-w-2xl mx-auto ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Three simple steps to bring AI into every meeting.
-              </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {steps.map((step, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.2, duration: 0.6 }}
-                  className="relative"
+            {/* Large API Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className={`rounded-3xl overflow-hidden relative ${
+                theme === 'dark'
+                  ? 'bg-[#161B22] border border-gray-800'
+                  : 'bg-white border border-gray-200 shadow-2xl'
+              }`}
+            >
+              {/* View Documentation Button - Top Right */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="absolute top-6 right-6 z-10"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsEarlyAccessModalOpen(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-semibold text-sm shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 flex items-center gap-2"
                 >
-                  <div className={`backdrop-blur-lg border rounded-2xl p-8 h-full text-center ${
-                    theme === 'dark'
-                      ? 'bg-[#161B22]/50 border-primary-500/20'
-                      : 'bg-white border-primary-500/30 shadow-sm'
-                  }`}>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.2 + 0.3, duration: 0.5, type: 'spring' }}
-                      className="text-6xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
-                    >
-                      {step.number}
-                    </motion.div>
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-                      <step.icon className="w-8 h-8 text-white" />
+                  <DocumentTextIcon className="w-5 h-5" />
+                  View Documentation
+                </motion.button>
+              </motion.div>
+
+              <div className="p-8 md:p-12">
+                {/* Main Content: Three Code Sections in One Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* REST API Code */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="flex-1"
+                  >
+                    <div className={`p-6 rounded-2xl h-full border-2 ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-br from-primary-500/10 to-accent-500/10 border-primary-500/30'
+                        : 'bg-gradient-to-br from-primary-50 to-accent-50 border-primary-200'
+                    }`}>
+                      <div className={`text-xs font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent`}>
+                        REST API
+                      </div>
+                      <div className={`rounded-lg p-4 font-mono text-xs overflow-x-auto ${
+                        theme === 'dark'
+                          ? 'bg-[#0D1117] border border-gray-800 text-gray-300'
+                          : 'bg-gray-900 text-gray-100'
+                      }`}>
+                        <pre className="whitespace-pre-wrap break-words">
+                          <code>{restApiCode}</code>
+                        </pre>
+                      </div>
                     </div>
-                    <h3 className={`text-2xl font-bold mb-4 ${
-                      theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>{step.title}</h3>
-                    <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{step.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+
+                  {/* Webhooks Code */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="flex-1"
+                  >
+                    <div className={`p-6 rounded-2xl h-full border-2 ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-br from-primary-500/10 to-accent-500/10 border-primary-500/30'
+                        : 'bg-gradient-to-br from-primary-50 to-accent-50 border-primary-200'
+                    }`}>
+                      <div className={`text-xs font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent`}>
+                        Webhooks
+                      </div>
+                      <div className={`rounded-lg p-4 font-mono text-xs overflow-x-auto ${
+                        theme === 'dark'
+                          ? 'bg-[#0D1117] border border-gray-800 text-gray-300'
+                          : 'bg-gray-900 text-gray-100'
+                      }`}>
+                        <pre className="whitespace-pre-wrap break-words">
+                          <code>{webhooksCode}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* SDK Code Section */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="flex-1"
+                  >
+                    <div className={`p-6 rounded-2xl h-full border-2 ${
+                      theme === 'dark'
+                        ? 'bg-gradient-to-br from-primary-500/10 to-accent-500/10 border-primary-500/30'
+                        : 'bg-gradient-to-br from-primary-50 to-accent-50 border-primary-200'
+                    }`}>
+                      <div className={`text-xs font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent`}>
+                        SDKs
+                      </div>
+                      <div className={`rounded-lg p-4 font-mono text-xs overflow-x-auto ${
+                        theme === 'dark'
+                          ? 'bg-[#0D1117] border border-gray-800 text-gray-300'
+                          : 'bg-gray-900 text-gray-100'
+                      }`}>
+                        <pre className="whitespace-pre-wrap break-words">
+                          <code>{sdkCode}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 
@@ -687,7 +1053,7 @@ export default function Landing() {
         <LandingFooter
           id="contact"
           socialLinks={socialLinks}
-          quickLinks={['Home', 'Features', 'How It Works', 'Integrations'].map((link) => ({
+          quickLinks={['Home', 'Features', 'API', 'Integrations'].map((link) => ({
             label: link,
             onClick: () => scrollToSection(link.toLowerCase().replace(' ', '')),
           }))}
@@ -711,6 +1077,13 @@ export default function Landing() {
           setIsVideoModalOpen(false);
         }}
         videoUrl="https://youtu.be/pFJS_9D6gQ4"
+      />
+      {/* Demo Meeting Modal */}
+      <DemoMeetingModal
+        isOpen={isDemoMeetingModalOpen}
+        onClose={() => {
+          setIsDemoMeetingModalOpen(false);
+        }}
       />
 
       {/* Early Access Modal */}

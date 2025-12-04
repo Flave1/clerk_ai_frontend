@@ -197,7 +197,7 @@ export default function SelectMeetingPage() {
 			setLoadingKey(key);
 			
 			// Replace "Aurray Bot" with email address for backend submission
-			const AURRAY_BOT_EMAIL = 'stemvision433@gmail.com';
+			const AURRAY_BOT_EMAIL = 'bot@aurray.co.uk';
 			const processedParticipants = config.participants.map(p => 
 				p === 'Aurray Bot' ? AURRAY_BOT_EMAIL : p
 			);
@@ -256,6 +256,7 @@ export default function SelectMeetingPage() {
 			const res = await axios.post('/conversations/start-external', {
 				meeting_url: '',
 				type: key,
+				platform: key,
 				title: config.title,
 				description: config.meetingDescription || undefined,
 				transcript: config.transcript,

@@ -121,33 +121,53 @@ export default function LandingFooter({
           <div>
             <h4 className={`font-bold mb-4 ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>Connect</h4>
-            {socialLinks.length > 0 ? (
-              <div className="flex gap-4">
-                {socialLinks.map((social, index) => (
-                  <motion.a
-                    key={index}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.1, y: -5 }}
-                    className={`w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gradient-to-r hover:from-primary-500 hover:to-accent-500 transition-all duration-300 ${
-                      theme === 'dark'
-                        ? 'bg-[#161B22] border-primary-500/20'
-                        : 'bg-white border-primary-500/30 shadow-sm'
-                    }`}
-                  >
-                    <span className={`text-xs font-bold ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>{social.name[0]}</span>
-                  </motion.a>
-                ))}
-              </div>
-            ) : (
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Questions? Contact us at support@aurray.co.uk
-              </p>
-            )}
+            }`}>Contact Support</h4>
+            <div className="space-y-3">
+              <motion.a
+                href="tel:+447881153992"
+                whileHover={{ scale: 1.05, x: 5 }}
+                className={`block transition-colors ${
+                  theme === 'dark'
+                    ? 'text-gray-400 hover:text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                +44 788 115 3992
+              </motion.a>
+              <motion.a
+                href="mailto:support@aurray.co.uk"
+                whileHover={{ scale: 1.05, x: 5 }}
+                className={`block transition-colors ${
+                  theme === 'dark'
+                    ? 'text-gray-400 hover:text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                support@aurray.co.uk
+              </motion.a>
+              {socialLinks.length > 0 && (
+                <div className="flex gap-4 mt-4">
+                  {socialLinks.map((social, index) => (
+                    <motion.a
+                      key={index}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.1, y: -5 }}
+                      className={`w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gradient-to-r hover:from-primary-500 hover:to-accent-500 transition-all duration-300 ${
+                        theme === 'dark'
+                          ? 'bg-[#161B22] border-primary-500/20'
+                          : 'bg-white border-primary-500/30 shadow-sm'
+                      }`}
+                    >
+                      <span className={`text-xs font-bold ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{social.name[0]}</span>
+                    </motion.a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className={`text-center pt-8 border-t ${
