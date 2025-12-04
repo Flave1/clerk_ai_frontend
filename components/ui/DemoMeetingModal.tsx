@@ -386,27 +386,24 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="relative z-[10002] bg-white dark:bg-[#161B22] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-primary-500/20"
+                className="relative z-[10002] bg-white dark:bg-[#161B22] rounded-2xl shadow-2xl max-w-md w-full mx-4 p-4 sm:p-6 border border-primary-500/20"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-center mb-6">
-                  {/* <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-full flex items-center justify-center">
-                    <SparklesIcon className="w-8 h-8 text-primary-500" />
-                  </div> */}
-                  <p className="text-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                <div className="text-center mb-4 sm:mb-6">
+                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">
                     Please use Google Meet for demo
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => setShowPlatformPrompt(false)}
-                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium whitespace-nowrap"
+                    className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium text-sm sm:text-base whitespace-nowrap"
                   >
                     Close
                   </button>
                   <button
                     onClick={handleUseGoogleMeet}
-                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 whitespace-nowrap"
+                    className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold text-sm sm:text-base shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 whitespace-nowrap"
                   >
                     Use Google Meet
                   </button>
@@ -415,7 +412,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
             </motion.div>
           )}
 
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -430,27 +427,27 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.3 }}
-              className="relative z-[10000] w-[85vw] h-[85vh] max-w-4xl"
+              className="relative z-[10000] w-full sm:w-[90vw] md:w-[85vw] h-full sm:h-[90vh] md:h-[85vh] max-w-4xl sm:rounded-3xl overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
               }}
             >
-              <div className="relative bg-white dark:bg-[#161B22] backdrop-blur-lg border border-primary-500/20 dark:border-primary-500/20 rounded-3xl shadow-2xl overflow-hidden h-full flex flex-col">
+              <div className="relative bg-white dark:bg-[#161B22] backdrop-blur-lg border border-primary-500/20 dark:border-primary-500/20 sm:rounded-3xl shadow-2xl overflow-hidden h-full flex flex-col">
                 {/* Progress Indicator */}
                 {currentStep !== 'meeting' && (
-                  <div className="px-8 pt-6 pb-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-primary-500"></div>
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4">
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-500"></div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                           Step {getCurrentStepNumber()} of {totalSteps}
                         </span>
                       </div>
                       <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300"
+                        className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300"
                       >
-                        <XMarkIcon className="w-5 h-5" />
+                        <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </div>
                     {/* Progress Bar */}
@@ -466,7 +463,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                 )}
 
                 {/* Content Area with Page Transitions */}
-                <div className={`flex-1 ${currentStep === 'meeting' ? 'p-0' : 'p-8 overflow-y-auto'}`}>
+                <div className={`flex-1 ${currentStep === 'meeting' ? 'p-0' : 'p-4 sm:p-6 md:p-8 overflow-y-auto'}`}>
                   <AnimatePresence mode="wait">
                     {currentStep === 'meeting' ? (
                       // Meeting Environment
@@ -480,16 +477,16 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                       >
                         <div className="absolute inset-0 flex flex-col">
                           {/* Meeting Header Bar */}
-                          <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-white/10 p-4 flex items-center justify-between z-10">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center">
-                                <VideoCameraIcon className="w-6 h-6 text-primary-400" />
+                          <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-white/10 p-3 sm:p-4 flex items-center justify-between z-10">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                                <VideoCameraIcon className="w-4 h-4 sm:w-6 sm:h-6 text-primary-400" />
                               </div>
-                              <div>
-                                <h4 className="text-white font-semibold">
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-white font-semibold text-sm sm:text-base truncate">
                                   {platforms.find(p => p.id === selectedPlatform)?.name || 'Demo Meeting'}
                                 </h4>
-                                <p className="text-gray-400 text-sm">
+                                <p className="text-gray-400 text-xs sm:text-sm truncate">
                                   {currentStage === 'in_meeting' ? 'Ready for you!' :
                                    currentStage === 'waiting_for_host' ? 'Waiting to be let in' :
                                    currentStage === 'waiting_to_admit' ? 'Ready to admit you' :
@@ -502,14 +499,14 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                             </div>
                             <button
                               onClick={onClose}
-                              className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-300"
+                              className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-300 flex-shrink-0"
                             >
-                              <XMarkIcon className="w-5 h-5" />
+                              <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                           </div>
 
                           {/* Meeting Content Area */}
-                          <div className="w-full flex-1 flex flex-col p-8 pt-20 pb-24">
+                          <div className="w-full flex-1 flex flex-col p-4 sm:p-6 md:p-8 pt-16 sm:pt-20 pb-20 sm:pb-24">
                             {/* Meeting URL Section */}
                             {meetingUrl && (
                               <motion.div
@@ -517,7 +514,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                 animate={{ opacity: 1, y: 0 }}
                                 className="mb-6"
                               >
-                                <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                                <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
                                   <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">
                                     Join Meeting URL
                                   </label>
@@ -526,7 +523,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                       type="text"
                                       readOnly
                                       value={meetingUrl}
-                                      className="flex-1 px-4 py-2 rounded-lg bg-black/30 text-white font-mono text-sm border border-white/10 focus:outline-none focus:border-primary-500"
+                                      className="flex-1 px-2 sm:px-4 py-2 rounded-lg bg-black/30 text-white font-mono text-xs sm:text-sm border border-white/10 focus:outline-none focus:border-primary-500 break-all"
                                     />
                                     <button
                                       onClick={async () => {
@@ -537,10 +534,10 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           toast.error('Failed to copy');
                                         }
                                       }}
-                                      className="p-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 transition-colors"
+                                      className="flex-shrink-0 p-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 transition-colors"
                                       title="Copy meeting URL"
                                     >
-                                      <ClipboardIcon className="w-5 h-5" />
+                                      <ClipboardIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
                                   </div>
                                   <p className="text-xs text-gray-400 mt-2">
@@ -552,8 +549,8 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
 
                             {/* Status Section */}
                             <div className="flex-1 flex flex-col min-h-0">
-                              <div className="text-center mb-4">
-                                <h3 className="text-xl font-bold text-white mb-2">
+                              <div className="text-center mb-3 sm:mb-4">
+                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 px-2">
                                   {currentStage === 'in_meeting' ? "I'm in the meeting!" : 
                                    currentStage === 'waiting_for_host' ? 'Waiting for the host to let me in...' :
                                    currentStage === 'waiting_to_admit' ? 'I\'ll let you in as soon as I see you!' :
@@ -564,7 +561,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                 </h3>
                                 <div className="flex items-center justify-center gap-2">
                                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                                  <span className="text-sm text-gray-400">
+                                  <span className="text-xs sm:text-sm text-gray-400">
                                     {isConnected ? 'Connected' : 'Connecting...'}
                                   </span>
                                 </div>
@@ -572,15 +569,15 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
 
                               {/* Status Messages Log */}
                               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                                <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 max-h-[300px] min-h-[200px]">
+                                <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/10 max-h-[200px] sm:max-h-[250px] md:max-h-[300px] min-h-[150px] sm:min-h-[180px] md:min-h-[200px]">
                                   {showConnectionTimeout ? (
                                     <div className="flex items-center justify-center h-full text-red-400">
                                       <div className="text-center max-w-md">
                                         <div className="flex items-center justify-center gap-2 mb-4">
                                           <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                                         </div>
-                                        <p className="text-sm font-semibold mb-2">Connection Issue Detected</p>
-                                        <p className="text-xs text-gray-400">
+                                        <p className="text-xs sm:text-sm font-semibold mb-2">Connection Issue Detected</p>
+                                        <p className="text-[10px] sm:text-xs text-gray-400 px-2">
                                           We haven't received status updates in 5 minutes. There may be a problem with the connection. Please try again or contact support.
                                         </p>
                                       </div>
@@ -593,32 +590,32 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                                           <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                                         </div>
-                                        <p className="text-sm">Please use the {selectedPlatform} link to join the meeting...</p>
+                                        <p className="text-xs sm:text-sm">Please use the {selectedPlatform} link to join the meeting...</p>
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5 sm:space-y-2">
                                       {messages.map((msg, index) => (
                                         <motion.div
                                           key={index}
                                           initial={{ opacity: 0, x: -10 }}
                                           animate={{ opacity: 1, x: 0 }}
-                                          className="flex items-start gap-3 text-left p-2 rounded-lg hover:bg-white/5 transition-colors"
+                                          className="flex items-start gap-2 sm:gap-3 text-left p-1.5 sm:p-2 rounded-lg hover:bg-white/5 transition-colors"
                                         >
-                                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                                          <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-2 flex-shrink-0 ${
                                             msg.stage === 'in_meeting' ? 'bg-green-500' :
                                             msg.stage === 'error' ? 'bg-red-500' :
                                             'bg-primary-500'
                                           }`}></div>
                                           <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
+                                            <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
                                               {msg.timestamp && (
-                                                <span className="text-xs text-gray-500">
+                                                <span className="text-[10px] sm:text-xs text-gray-500">
                                                   {new Date(msg.timestamp).toLocaleTimeString()}
                                                 </span>
                                               )}
                                             </div>
-                                            <p className="text-sm text-gray-300">
+                                            <p className="text-xs sm:text-sm text-gray-300 break-words">
                                               {personalizeMessage(msg)}
                                             </p>
                                           </div>
@@ -633,20 +630,17 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           </div>
 
                           {/* Meeting Controls Bar */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-t border-white/10 p-4 flex items-center justify-center gap-4">
-                            <div className="flex items-center gap-3">
-                              <button className="p-3 rounded-full bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-300">
-                                <VideoCameraIcon className="w-5 h-5" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-t border-white/10 p-3 sm:p-4 flex items-center justify-center gap-3 sm:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <button className="p-2 sm:p-3 rounded-full bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-300">
+                                <VideoCameraIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                               </button>
-                              {/* <button className="p-3 rounded-full bg-gray-700/50 hover:bg-gray-600/50 text-white transition-all duration-300">
-                                <MicrophoneIcon className="w-5 h-5" />
-                              </button> */}
                               <button 
                                 onClick={handleEndMeeting}
                                 disabled={isLoading}
-                                className="p-3 rounded-full bg-gray-700/50 hover:bg-gray-600/50 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 sm:p-3 rounded-full bg-gray-700/50 hover:bg-gray-600/50 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                <XMarkIcon className="w-5 h-5" />
+                                <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                               </button>
                             </div>
                           </div>
@@ -661,15 +655,15 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                         animate="animate"
                         exit="exit"
                         transition={pageTransition}
-                        className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto text-center"
+                        className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto text-center px-4"
                       >
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                          className="mb-8"
+                          className="mb-4 sm:mb-6 md:mb-8"
                         >
-                          <div className="w-24 h-24 mx-auto  from-primary-500 to-accent-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary-500/50">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto from-primary-500 to-accent-500 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-2xl shadow-primary-500/50">
                             <AurrayIcon isHovered={false} flipCount={0} />
                           </div>
                         </motion.div>
@@ -678,7 +672,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 }}
-                          className="text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-4"
+                          className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-3 sm:mb-4 px-2"
                         >
                           Welcome to Demo with Aurray
                         </motion.h2>
@@ -687,7 +681,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.4 }}
-                          className="text-xl text-gray-600 dark:text-gray-300 mb-8"
+                          className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 px-2"
                         >
                          You've got to follow the 3 steps below to get started.
                         </motion.p>
@@ -696,35 +690,35 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 }}
-                          className="space-y-4 w-full max-w-md"
+                          className="space-y-3 sm:space-y-4 w-full max-w-md"
                         >
-                          <div className="flex items-start gap-3 text-left p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5">
+                          <div className="flex items-start gap-2 sm:gap-3 text-left p-3 sm:p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
+                            <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5 text-xs sm:text-sm">
                               1
                             </span>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Choose Your Platform</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Zoom, Google Meet, or Microsoft Teams</p>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">Choose Your Platform</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Zoom, Google Meet, or Microsoft Teams</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-start gap-3 text-left p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5">
+                          <div className="flex items-start gap-2 sm:gap-3 text-left p-3 sm:p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
+                            <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5 text-xs sm:text-sm">
                               2
                             </span>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Aurray will invite you</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Aurray AI will instantly send you a meeting invite to join.</p>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">Aurray will invite you</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Aurray AI will instantly send you a meeting invite to join.</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-start gap-3 text-left p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5">
+                          <div className="flex items-start gap-2 sm:gap-3 text-left p-3 sm:p-4 bg-primary-500/10 dark:bg-primary-500/20 rounded-xl">
+                            <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary-500/10 text-primary-500 font-bold flex-shrink-0 mt-0.5 text-xs sm:text-sm">
                               3
                             </span>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">No Setup Required</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">No Setup Required</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                 Aurray will let you into the meeting.
                               </p>
                             </div>
@@ -735,16 +729,16 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.6 }}
-                          className="mt-10"
+                          className="mt-6 sm:mt-8 md:mt-10 w-full max-w-md px-4"
                         >
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={nextStep}
-                            className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 flex items-center gap-2"
+                            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold text-sm sm:text-base shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 flex items-center justify-center gap-2"
                           >
                             Get Started
-                            <ArrowRightIcon className="w-5 h-5" />
+                            <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </motion.button>
                         </motion.div>
                       </motion.div>
@@ -757,23 +751,23 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                         animate="animate"
                         exit="exit"
                         transition={pageTransition}
-                        className="flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
+                        className="flex flex-col items-center justify-center h-full max-w-4xl mx-auto px-4"
                       >
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 }}
-                          className="text-center mb-10"
+                          className="text-center mb-6 sm:mb-8 md:mb-10"
                         >
-                          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
                             Choose Your Meeting Platform
                           </h2>
-                          <p className="text-lg text-gray-600 dark:text-gray-400">
+                          <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400">
                             Select where you'd like to see Aurray in action
                           </p>
                         </motion.div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 w-full mb-6 sm:mb-8">
                           {platforms.map((platform, index) => (
                             <motion.button
                               key={platform.id}
@@ -783,7 +777,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                               whileHover={{ scale: 1.05, y: -5 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handlePlatformSelect(platform.id)}
-                              className={`p-4 rounded-xl border transition-all duration-300 flex flex-col items-center shadow ${
+                              className={`p-3 sm:p-4 rounded-xl border transition-all duration-300 flex flex-col items-center shadow ${
                                 selectedPlatform === platform.id
                                   ? 'border-primary-500 bg-gradient-to-br from-primary-500/20 to-accent-500/20 shadow-primary-500/30 ring-2 ring-primary-500/20'
                                   : 'border-gray-200 dark:border-gray-700 hover:border-primary-500/50 bg-white dark:bg-gray-800 hover:shadow-lg'
@@ -798,12 +792,12 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                 <Image
                                   src={platform.image}
                                   alt={platform.name}
-                                  width={36}
-                                  height={36}
-                                  className="object-contain"
+                                  width={32}
+                                  height={32}
+                                  className="sm:w-9 sm:h-9 object-contain"
                                 />
                               </motion.div>
-                              <div className="font-semibold text-base text-gray-900 dark:text-white text-center">
+                              <div className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white text-center">
                                 {platform.name}
                               </div>
                               {selectedPlatform === platform.id && (
@@ -819,14 +813,14 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           ))}
                         </div>
 
-                        <div className="flex w-full justify-center">
+                        <div className="flex w-full justify-center px-4">
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={previousStep}
-                            className="px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium shadow-sm flex items-center gap-2"
+                            className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium text-sm sm:text-base shadow-sm flex items-center justify-center gap-2"
                           >
-                            <ArrowLeftIcon className="w-5 h-5 mr-1" />
+                            <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                             Back
                           </motion.button>
                         </div>
@@ -840,29 +834,26 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                         animate="animate"
                         exit="exit"
                         transition={pageTransition}
-                        className="flex flex-col items-center justify-center h-full max-w-md mx-auto"
+                        className="flex flex-col items-center justify-center h-full max-w-md mx-auto px-4"
                       >
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 }}
-                          className="text-center mb-8"
+                          className="text-center mb-6 sm:mb-8 w-full"
                         >
-                          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-full flex items-center justify-center p-3">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto mb-3 sm:mb-4 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-full flex items-center justify-center p-2 sm:p-3">
                             {selectedPlatform && (
                               <Image
                                 src={platforms.find(p => p.id === selectedPlatform)?.image || ''}
                                 alt={platforms.find(p => p.id === selectedPlatform)?.name || 'Platform'}
-                                width={40}
-                                height={40}
-                                className="object-contain"
+                                width={32}
+                                height={32}
+                                className="sm:w-10 sm:h-10 object-contain"
                               />
                             )}
                           </div>
-                          {/* <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                            Almost There!
-                          </h2> */}
-                          <p className="text-lg text-gray-600 dark:text-gray-400">
+                          <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400">
                             Enter your name and email to start the meeting
                           </p>
                         </motion.div>
@@ -871,9 +862,9 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 }}
-                          className="w-full mb-6"
+                          className="w-full mb-4 sm:mb-6"
                         >
-                          <label htmlFor="demo-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          <label htmlFor="demo-name" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
                             Name
                           </label>
                           <input
@@ -891,12 +882,12 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                               }
                             }}
                             placeholder="Your name"
-                            className="w-full mb-6 px-4 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 shadow-sm text-lg"
+                            className="w-full mb-4 sm:mb-6 px-3 sm:px-4 py-3 sm:py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 shadow-sm text-base sm:text-lg"
                             disabled={isLoading}
                             autoFocus
                             autoComplete="name"
                           />
-                          <label htmlFor="demo-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          <label htmlFor="demo-email" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
                             Email Address
                           </label>
                           <input
@@ -914,7 +905,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                               }
                             }}
                             placeholder="your.email@example.com"
-                            className="w-full px-4 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 shadow-sm text-lg"
+                            className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 shadow-sm text-base sm:text-lg"
                             disabled={isLoading}
                             autoComplete="email"
                           />
@@ -933,16 +924,16 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.4 }}
-                          className="flex gap-4 w-full"
+                          className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full"
                         >
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={previousStep}
                             disabled={isLoading}
-                            className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
+                            className="flex-1 px-5 sm:px-6 py-3 sm:py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
                           >
-                            <ArrowLeftIcon className="w-5 h-5" />
+                            <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                             Back
                           </motion.button>
                           <motion.button
@@ -950,7 +941,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                             whileTap={{ scale: 0.98 }}
                             onClick={handleStartMeeting}
                             disabled={isLoading || !name.trim() || !email.trim()}
-                            className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="flex-1 px-5 sm:px-6 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold text-sm sm:text-base shadow-lg shadow-primary-500/50 hover:shadow-primary-500/70 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {isLoading ? (
                               <>
