@@ -7,6 +7,7 @@ import axiosInstance, { API_PREFIX } from '@/lib/axios';
 import { AurrayIcon } from './Logo';
 import { useMeetingAutomationWebSocket } from '@/hooks/useMeetingAutomationWebSocket';
 import toast from 'react-hot-toast';
+import QRCodeSVG from 'react-qr-code';
 
 interface DemoMeetingModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
   const [showPlatformPrompt, setShowPlatformPrompt] = useState(false);
   const [pendingPlatform, setPendingPlatform] = useState<Platform>(null);
   const [showConnectionTimeout, setShowConnectionTimeout] = useState(false);
+  const [showDoneStatusSpinner, setShowDoneStatusSpinner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -39,57 +41,184 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     currentStep === 'meeting' && meetingId !== null
   );
 
+  // Helper function to randomly select a message from an array
+  const getRandomMessage = (messages: string[]): string => {
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
   // Transform raw messages into personalized, friendly versions
   const personalizeMessage = (msg: { stage?: string; message?: string; metadata?: Record<string, any> }): string => {
     const stage = msg.stage?.toLowerCase();
     const originalMessage = msg.message?.toLowerCase() || '';
 
+    // Handle general_message - just return the message as-is
+    if (stage === 'general_message') {
+      return msg.message || "Getting things ready...";
+    }
+
+    // Handle done_status - this triggers/stops the spinner
+    // Note: Spinner state is managed by useEffect, not here (to avoid infinite re-renders)
+    if (stage === 'done_status') {
+      // Return the message if provided, otherwise a completion message
+      return msg.message || "Done!";
+    }
+
     // Personalized message transformations - making them friendly and conversational
     switch (stage) {
-      case 'initializing':
-        return "Hey there! I'm getting everything set up for our meeting...";
+      case 'initializing': {
+        const messages = [
+          "Hey there! I'm getting everything set up for our meeting...",
+          "Just setting things up on my end... be right there!",
+          "Preparing everything for our meeting... this won't take long!",
+          "Getting everything ready for you... almost done!",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'browser_launched':
-        return "All set! I'm opening the meeting room now...";
+      case 'browser_launched': {
+        const messages = [
+          "All set! I'm opening the meeting room now...",
+          "Perfect! Opening the meeting room for you...",
+          "Great! I'm launching the meeting room...",
+          "Everything's ready! Opening the meeting now...",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'navigating':
-        return "On my way to the meeting! Just a sec...";
+      case 'navigating': {
+        const messages = [
+          "On my way to the meeting! Just a sec...",
+          "Heading to the meeting room now...",
+          "Navigating to the meeting... almost there!",
+          "Making my way to the meeting... won't be long!",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'joining_meeting':
-        return "Joining the call now... almost there!";
+      case 'joining_meeting': {
+        const messages = [
+          "Joining the call now... almost there!",
+          "Entering the meeting room... just a moment!",
+          "Joining the call... this will only take a second!",
+          "Connecting to the meeting... almost ready!",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'in_meeting':
-        return "I've joined the meeting! Just waiting for you to join me...";
+      case 'in_meeting': {
+        const messages = [
+          "I've joined the meeting! Just waiting for you to join me...",
+          "I'm in! Waiting for you to join...",
+          "All set! I'm in the meeting, ready when you are!",
+          "I've made it in! Just waiting for you now...",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'waiting_to_admit':
+      case 'waiting_to_admit': {
         // Check the message content to differentiate between "waiting to admit" and "I have admitted"
         if (originalMessage.includes('i have admitted') || originalMessage.includes('have admitted')) {
-          return "Great! I've let you into the meeting. See you in there!";
+          const admittedMessages = [
+            "Great! I've let you into the meeting. See you in there!",
+            "Perfect! I've admitted you into the meeting. See you soon!",
+            "Awesome! You're in. Looking forward to meeting you!",
+            "Done! I've let you in. See you in the meeting!",
+          ];
+          return getRandomMessage(admittedMessages);
         }
-        return "I'll admit you into the meeting as soon as I see you!";
+        const waitingMessages = [
+          "I'll admit you into the meeting as soon as I see you!",
+          "Ready to let you in! Just waiting for you to join...",
+          "I'm here and ready to admit you when you arrive!",
+          "Waiting for you to join so I can let you in...",
+        ];
+        return getRandomMessage(waitingMessages);
+      }
       
-      case 'waiting_for_host':
-        return "I'm waiting for the host to let me in... shouldn't take long!";
+      case 'waiting_for_host': {
+        const messages = [
+          "I'm waiting for the host to let me in... shouldn't take long!",
+          "Waiting for the host to admit me... any moment now!",
+          "Holding on for the host to let me in...",
+          "Just waiting for the host's approval... won't be long!",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'cleaning_up':
-        return "Wrapping things up... thanks for meeting with me!";
+      case 'cleaning_up': {
+        const messages = [
+          "Wrapping things up... thanks for trying me out!",
+          "Cleaning up... thanks for the demo!",
+          "Finishing up... appreciate you trying Aurray!",
+          "Wrapping up... thanks for giving me a try!",
+        ];
+        return getRandomMessage(messages);
+      }
       
-      case 'error':
+      case 'error': {
         const errorMsg = msg.message || 'Something went wrong';
-        // ${errorMsg.replace(/^error:\s*/i, '')}
         if (errorMsg.toLowerCase().includes('error:')) {
-          return `Oops, something went wrong: Our technical team have been notified and will be looking into it shortly.`;
+          const errorMessages = [
+            "Oops, something went wrong: Our technical team have been notified and will be looking into it shortly.",
+            "Hmm, I encountered an issue: Our team has been alerted and will fix this soon.",
+            "Sorry about that! We've been notified of the problem and are working on it.",
+          ];
+          return getRandomMessage(errorMessages);
         }
-        return `Hmm, I ran into an issue: ${errorMsg}`;
+        const genericErrorMessages = [
+          `Hmm, I ran into an issue: ${errorMsg}`,
+          `Oops, something's not right: ${errorMsg}`,
+          `Sorry, I encountered a problem: ${errorMsg}`,
+        ];
+        return getRandomMessage(genericErrorMessages);
+      }
       
-      default:
+      default: {
         // If message is already personalized or we don't have a transformation, use it as-is
         if (msg.message) {
           return msg.message;
         }
-        return "Getting things ready...";
+        const defaultMessages = [
+          "Getting things ready...",
+          "Preparing everything...",
+          "Setting things up...",
+          "Almost there...",
+        ];
+        return getRandomMessage(defaultMessages);
+      }
     }
   };
+
+  // Monitor messages for done_status spinner trigger
+  useEffect(() => {
+    if (messages.length === 0) {
+      setShowDoneStatusSpinner(false);
+      return;
+    }
+
+    // Check if done_status was received anywhere in messages (spinner should stop)
+    const hasDoneStatus = messages.some(msg => msg.stage?.toLowerCase() === 'done_status');
+    if (hasDoneStatus) {
+      setShowDoneStatusSpinner(false);
+      return;
+    }
+
+    // Check if any message has triggered the spinner
+    // Look through all messages to see if spinner should be active
+    // Once triggered, it stays active until done_status is received
+    // Trigger spinner if message has metadata.showSpinner === true (works with any stage, including general_message)
+    const shouldShowSpinner = messages.some(msg => {
+      return msg.metadata?.showSpinner === true;
+    });
+
+    // If any message triggered spinner and we haven't received done_status, show it
+    // Once shown, it persists until done_status is received
+    if (shouldShowSpinner) {
+      setShowDoneStatusSpinner(true);
+    }
+    // Note: We don't set it to false here if shouldShowSpinner is false
+    // because once triggered, it should persist until done_status
+  }, [messages]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -149,6 +278,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
       setShowPlatformPrompt(false);
       setPendingPlatform(null);
       setShowConnectionTimeout(false);
+      setShowDoneStatusSpinner(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -515,34 +645,52 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                 className="mb-6"
                               >
                                 <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
-                                  <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">
-                                    Join Meeting URL
+                                  <label className="text-xs uppercase tracking-wide text-gray-400 mb-3 block">
+                                    Join Meeting
                                   </label>
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="text"
-                                      readOnly
-                                      value={meetingUrl}
-                                      className="flex-1 px-2 sm:px-4 py-2 rounded-lg bg-black/30 text-white font-mono text-xs sm:text-sm border border-white/10 focus:outline-none focus:border-primary-500 break-all"
-                                    />
-                                    <button
-                                      onClick={async () => {
-                                        try {
-                                          await navigator.clipboard.writeText(meetingUrl);
-                                          toast.success('Meeting URL copied!');
-                                        } catch {
-                                          toast.error('Failed to copy');
-                                        }
-                                      }}
-                                      className="flex-shrink-0 p-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 transition-colors"
-                                      title="Copy meeting URL"
-                                    >
-                                      <ClipboardIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                    </button>
+                                  
+                                  {/* QR Code and Link Section */}
+                                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                                    {/* QR Code */}
+                                    <div className="flex-shrink-0 bg-white p-3 rounded-lg">
+                                      <QRCodeSVG
+                                        value={meetingUrl}
+                                        size={120}
+                                        level="M"
+                                        bgColor="#ffffff"
+                                        fgColor="#000000"
+                                      />
+                                    </div>
+                                    
+                                    {/* Link Section */}
+                                    <div className="flex-1 w-full min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="text"
+                                          readOnly
+                                          value={meetingUrl}
+                                          className="flex-1 px-2 sm:px-4 py-2 rounded-lg bg-black/30 text-white font-mono text-xs sm:text-sm border border-white/10 focus:outline-none focus:border-primary-500 break-all"
+                                        />
+                                        <button
+                                          onClick={async () => {
+                                            try {
+                                              await navigator.clipboard.writeText(meetingUrl);
+                                              toast.success('Meeting URL copied!');
+                                            } catch {
+                                              toast.error('Failed to copy');
+                                            }
+                                          }}
+                                          className="flex-shrink-0 p-2 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 transition-colors"
+                                          title="Copy meeting URL"
+                                        >
+                                          <ClipboardIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        </button>
+                                      </div>
+                                      <p className="text-xs text-gray-400 mt-2">
+                                        Scan QR code or copy link to join the meeting
+                                      </p>
+                                    </div>
                                   </div>
-                                  <p className="text-xs text-gray-400 mt-2">
-                                    Copy this link to join the meeting
-                                  </p>
                                 </div>
                               </motion.div>
                             )}
@@ -559,12 +707,6 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                    currentStage === 'browser_launched' ? 'Opening the meeting room...' :
                                    'Getting everything ready...'}
                                 </h3>
-                                <div className="flex items-center justify-center gap-2">
-                                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                                  <span className="text-xs sm:text-sm text-gray-400">
-                                    {isConnected ? 'Connected' : 'Connecting...'}
-                                  </span>
-                                </div>
                               </div>
 
                               {/* Status Messages Log */}
@@ -605,6 +747,8 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-2 flex-shrink-0 ${
                                             msg.stage === 'in_meeting' ? 'bg-green-500' :
                                             msg.stage === 'error' ? 'bg-red-500' :
+                                            msg.stage === 'general_message' ? 'bg-blue-500' :
+                                            msg.stage === 'done_status' ? 'bg-green-500' :
                                             'bg-primary-500'
                                           }`}></div>
                                           <div className="flex-1 min-w-0">
@@ -621,6 +765,42 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           </div>
                                         </motion.div>
                                       ))}
+                                      {/* Spinner as last message when active */}
+                                      {showDoneStatusSpinner && (
+                                        <motion.div
+                                          initial={{ opacity: 0, x: -10 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          className="flex items-start gap-2 sm:gap-3 text-left p-1.5 sm:p-2 rounded-lg hover:bg-white/5 transition-colors bg-primary-500/10 border border-primary-500/20"
+                                        >
+                                          <div className="w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0 flex items-center justify-center">
+                                            <svg
+                                              className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-primary-400"
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                              ></circle>
+                                              <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                              ></path>
+                                            </svg>
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs sm:text-sm text-gray-300 font-medium">
+                                              Processing... Please wait
+                                            </p>
+                                          </div>
+                                        </motion.div>
+                                      )}
                                       <div ref={messagesEndRef} />
                                     </div>
                                   )}
@@ -657,7 +837,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                         transition={pageTransition}
                         className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto text-center px-4"
                       >
-                        <motion.div
+                        {/* <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
@@ -666,7 +846,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto from-primary-500 to-accent-500 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-2xl shadow-primary-500/50">
                             <AurrayIcon isHovered={false} flipCount={0} />
                           </div>
-                        </motion.div>
+                        </motion.div> */}
                         
                         <motion.h2
                           initial={{ opacity: 0, y: 20 }}
