@@ -480,6 +480,43 @@ class ApiClient {
     await this.client.delete(this.withPrefix(`/meeting-contexts/${contextId}`));
   }
 
+  // Active Bots Management
+  async getActiveBots(): Promise<{
+    success: boolean;
+    count: number;
+    bots: Record<string, {
+      deployment_method: string;
+      container_id?: string;
+      container_name?: string;
+      task_arn?: string;
+      task_id?: string;
+      cluster?: string;
+      process_id?: number;
+      process_group_id?: number;
+      log_file?: string;
+      provider_meeting_id?: string;
+      session_id: string;
+      started_at: string;
+      platform: string;
+      meeting_url: string;
+      user_id?: string;
+      provider_response?: any;
+      log_handle?: any;
+    }>;
+  }> {
+    const response = await this.client.get(this.withPrefix('/bot/active-bots'));
+    return response.data;
+  }
+
+  async removeBot(meetingId: string): Promise<{
+    success: boolean;
+    message: string;
+    meeting_id: string;
+  }> {
+    const response = await this.client.delete(this.withPrefix(`/bot/active-bots/${meetingId}`));
+    return response.data;
+  }
+
   // Newsletter/Waiting List
   async signupNewsletter(data: { name: string; email: string; country: string }): Promise<{ success: boolean; message: string; timestamp: string }> {
     // Newsletter endpoint is public, so we use Axios directly without auth

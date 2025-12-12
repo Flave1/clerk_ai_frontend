@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, VideoCameraIcon, MicrophoneIcon, SparklesIcon, CheckCircleIcon, ArrowRightIcon, ArrowLeftIcon, ClipboardIcon } from '@heroicons/react/24/outline';
@@ -227,6 +227,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     }
   }, [messages]);
 
+
   // Monitor socket connection and timeout if no status received
   // Note: Errors are now handled upfront in handleStartMeeting, so this is mainly for WebSocket connection issues
   useEffect(() => {
@@ -279,6 +280,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
       setPendingPlatform(null);
       setShowConnectionTimeout(false);
       setShowDoneStatusSpinner(false);
+      hasTriggeredCleanup.current = false; // Reset cleanup trigger
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -419,7 +421,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
     }
   };
 
-  const handleEndMeeting = async () => {
+  const handleEndMeeting = useCallback(async () => {
     if (!meetingId) {
       // If no meeting ID, just go back to welcome
       setCurrentStep('welcome');
@@ -442,7 +444,24 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
       setMeetingId(null);
       setMeetingUrl(null);
     }
-  };
+  }, [meetingId]);
+
+  // Auto-leave meeting when cleaning_up status is received
+  const hasTriggeredCleanup = useRef(false);
+  useEffect(() => {
+    // Check if cleaning_up status was received
+    const hasCleaningUp = messages.some(msg => msg.stage?.toLowerCase() === 'cleaning_up');
+    
+    if (hasCleaningUp && !hasTriggeredCleanup.current && currentStep === 'meeting') {
+      hasTriggeredCleanup.current = true;
+      // Small delay to ensure the status message is displayed before leaving
+      const timeoutId = setTimeout(() => {
+        handleEndMeeting();
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages, currentStep, handleEndMeeting]);
 
   if (typeof window === 'undefined') {
     return null;
@@ -609,8 +628,16 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           {/* Meeting Header Bar */}
                           <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-white/10 p-3 sm:p-4 flex items-center justify-between z-10">
                             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-                                <VideoCameraIcon className="w-4 h-4 sm:w-6 sm:h-6 text-primary-400" />
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {selectedPlatform && (
+                                  <Image
+                                    src={platforms.find(p => p.id === selectedPlatform)?.image || ''}
+                                    alt={platforms.find(p => p.id === selectedPlatform)?.name || 'Platform'}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-contain p-1"
+                                  />
+                                )}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <h4 className="text-white font-semibold text-sm sm:text-base truncate">
@@ -697,18 +724,6 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
 
                             {/* Status Section */}
                             <div className="flex-1 flex flex-col min-h-0">
-                              <div className="text-center mb-3 sm:mb-4">
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 px-2">
-                                  {currentStage === 'in_meeting' ? "I'm in the meeting!" : 
-                                   currentStage === 'waiting_for_host' ? 'Waiting for the host to let me in...' :
-                                   currentStage === 'waiting_to_admit' ? 'I\'ll let you in as soon as I see you!' :
-                                   currentStage === 'cleaning_up' ? 'Wrapping things up...' :
-                                   currentStage === 'joining_meeting' ? 'Just joining the call...' :
-                                   currentStage === 'browser_launched' ? 'Opening the meeting room...' :
-                                   'Getting everything ready...'}
-                                </h3>
-                              </div>
-
                               {/* Status Messages Log */}
                               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                                 <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/10 max-h-[200px] sm:max-h-[250px] md:max-h-[300px] min-h-[150px] sm:min-h-[180px] md:min-h-[200px]">
