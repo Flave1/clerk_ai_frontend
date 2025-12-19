@@ -2,35 +2,15 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import Image from 'next/image';
 import {
   MicrophoneIcon,
-  CalendarIcon,
-  CpuChipIcon,
-  SpeakerWaveIcon,
-  CogIcon,
   CheckCircleIcon,
   ArrowRightIcon,
-  PlayIcon,
-  LinkIcon,
   ChatBubbleLeftRightIcon,
-  SparklesIcon,
-  SunIcon,
-  MoonIcon,
   DocumentTextIcon,
   VideoCameraIcon,
-  UserGroupIcon,
   BriefcaseIcon,
-  ClipboardDocumentCheckIcon,
-  ChartBarIcon,
-  PresentationChartLineIcon,
-  MegaphoneIcon,
-  PhoneIcon,
-  HeartIcon,
-  CodeBracketIcon,
-  ServerIcon,
-  RocketLaunchIcon,
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
@@ -47,6 +27,8 @@ export default function Landing() {
   const [isDemoMeetingModalOpen, setIsDemoMeetingModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [playingAudioIndex, setPlayingAudioIndex] = useState<number | null>(null);
+  const [audioRefs, setAudioRefs] = useState<{ [key: number]: HTMLAudioElement | null }>({});
   const { theme } = useUIStore();
 
   useEffect(() => {
@@ -65,6 +47,19 @@ export default function Landing() {
     };
 
     checkAuth();
+  }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(audioRefs).forEach((audio) => {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -87,6 +82,7 @@ export default function Landing() {
       gradient: 'from-blue-500 to-cyan-500',
       image: '/images/features/attend_meetings_1.jpg',
       imageAlt: 'Aurray attending meetings on your behalf',
+      audioUrl: '/moments/meeting_one_audio.mp3',
       reverse: false,
     },
     {
@@ -102,6 +98,7 @@ export default function Landing() {
       gradient: 'from-primary-500 to-accent-500',
       image: '/images/features/sales_marketing_1.jpg',
       imageAlt: 'Aurray as digital sales and marketing team',
+      audioUrl: '', // Add audio URL here when available
       reverse: true,
     },
     {
@@ -117,9 +114,56 @@ export default function Landing() {
       gradient: 'from-emerald-500 to-teal-500',
       image: '/images/features/customer_care_1.jpg',
       imageAlt: 'Aurray providing 24/7 customer care support',
+      audioUrl: '', // Add audio URL here when available
       reverse: false,
     },
   ];
+
+  const handlePlayAudio = (index: number, audioUrl: string) => {
+    // If clicking the same button, pause it
+    if (playingAudioIndex === index && audioRefs[index]) {
+      audioRefs[index]?.pause();
+      audioRefs[index]!.currentTime = 0;
+      setPlayingAudioIndex(null);
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (playingAudioIndex !== null && audioRefs[playingAudioIndex]) {
+      audioRefs[playingAudioIndex]?.pause();
+      audioRefs[playingAudioIndex]!.currentTime = 0;
+    }
+
+    // Create new audio element if it doesn't exist (lazy loading - only when requested)
+    if (!audioRefs[index]) {
+      const audio = new Audio(audioUrl);
+      audio.preload = 'none'; // Don't preload - only load when play is requested
+      audio.addEventListener('ended', () => {
+        setPlayingAudioIndex(null);
+      });
+      audio.addEventListener('error', (e) => {
+        console.error('Error loading audio:', e);
+        setPlayingAudioIndex(null);
+      });
+      setAudioRefs((prev) => ({ ...prev, [index]: audio }));
+      // Load and play the audio
+      audio.load(); // Explicitly load when play is requested
+      audio.play().catch((error) => {
+        console.error('Error playing audio:', error);
+        setPlayingAudioIndex(null);
+      });
+      setPlayingAudioIndex(index);
+    } else {
+      // Use existing audio element
+      if (audioRefs[index]?.paused) {
+        audioRefs[index]?.play().catch((error) => {
+          console.error('Error playing audio:', error);
+          setPlayingAudioIndex(null);
+        });
+        setPlayingAudioIndex(index);
+      }
+    }
+  };
 
   const restApiCode = `curl https://api.aurray.co.uk/v1/meetings \\
   -H 'Content-Type: application/json' \\
@@ -477,13 +521,7 @@ meeting = client.meetings.create(
           </div>
 
           <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-20"
-            >
+            <div className="text-center mb-20">
               {/* <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -511,16 +549,12 @@ meeting = client.meetings.create(
               }`}>
                 Three powerful ways Aurray transforms how you work and collaborate.
               </p>
-            </motion.div>
+            </div>
 
             <div className="space-y-20 md:space-y-28">
               {whyAurrayFeatures.map((feature, index) => (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-100px' }}
-                  transition={{ duration: 0.8, delay: index * 0.2 }}
                   className={`relative ${
                     feature.reverse
                       ? 'md:flex md:flex-row-reverse md:items-center md:gap-12'
@@ -529,13 +563,7 @@ meeting = client.meetings.create(
                 >
                   {/* Content Side */}
                   <div className="flex-1 mb-12 md:mb-0">
-                    <motion.div
-                      initial={{ opacity: 0, x: feature.reverse ? 50 : -50 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: index * 0.2 + 0.3 }}
-                      className="relative"
-                >
+                    <div className="relative">
                       {/* Icon with animated glow */}
                       {/* <div className="relative inline-block mb-6">
                         <motion.div
@@ -569,91 +597,49 @@ meeting = client.meetings.create(
                       </motion.p> */}
 
                       {/* Title */}
-                      <motion.h3
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.2 + 0.5 }}
-                        className={`text-2xl md:text-3xl font-bold mb-4 leading-tight ${
-                          theme === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}
-                      >
+                      <h3 className={`text-2xl md:text-3xl font-bold mb-4 leading-tight ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {feature.title}
-                      </motion.h3>
+                      </h3>
 
                       {/* Description */}
-                      <motion.p
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.2 + 0.6 }}
-                        className={`text-base md:text-lg mb-6 leading-relaxed ${
-                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                        }`}
-                      >
+                      <p className={`text-base md:text-lg mb-6 leading-relaxed ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
                         {feature.description}
-                      </motion.p>
+                      </p>
 
                       {/* Detailed Points */}
-                      <motion.ul
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.2 + 0.7 }}
-                        className="space-y-3"
-                      >
+                      <ul className="space-y-3">
                         {feature.detailedPoints.map((point, pointIndex) => (
-                          <motion.li
+                          <li
                             key={pointIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.2 + 0.8 + pointIndex * 0.1 }}
                             className="flex items-start gap-3"
                           >
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: true }}
-                              transition={{
-                                delay: index * 0.2 + 0.8 + pointIndex * 0.1,
-                                type: 'spring',
-                                stiffness: 200,
-                              }}
-                              className={`flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br ${feature.gradient} flex items-center justify-center mt-0.5`}
-                            >
+                            <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br ${feature.gradient} flex items-center justify-center mt-0.5`}>
                               <CheckCircleIcon className="w-4 h-4 text-white" />
-                            </motion.div>
+                            </div>
                             <span className={`text-sm md:text-base ${
                               theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                             }`}>
                               {point}
                             </span>
-                          </motion.li>
+                          </li>
                         ))}
-                      </motion.ul>
-                    </motion.div>
+                      </ul>
+                    </div>
                   </div>
 
                   {/* Image Side */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, x: feature.reverse ? -50 : 50 }}
-                    whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: index * 0.2 + 0.4 }}
-                    className="flex-1 relative max-w-md mx-auto"
-                  >
+                  <div className="flex-1 relative max-w-md mx-auto">
                     <div className="relative">
                       {/* Decorative gradient circles - smaller */}
                       <div className={`absolute -top-4 -right-4 w-40 h-40 bg-gradient-to-br ${feature.gradient} rounded-full opacity-10 blur-3xl animate-pulse`} />
                       <div className={`absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br ${feature.gradient} rounded-full opacity-10 blur-3xl animate-pulse delay-700`} />
                       
-                      {/* Image container with hover effect */}
-                      <motion.div
-                        whileHover={{ scale: 1.05, rotate: 1 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                        className="relative rounded-2xl overflow-hidden"
-                      >
+                      {/* Image container */}
+                      <div className="relative rounded-2xl overflow-hidden">
                         {/* Image container - smaller aspect ratio */}
                         <div className="aspect-[3/2] relative flex items-center justify-center overflow-hidden">
                           {/* Animated icon fallback - always visible as decorative element */}
@@ -732,13 +718,45 @@ meeting = client.meetings.create(
                                 className="object-cover rounded-2xl"
                                 unoptimized
                               />
+                              {/* Dark overlay with play button */}
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                <button
+                                  onClick={() => feature.audioUrl && handlePlayAudio(index, feature.audioUrl)}
+                                  disabled={!feature.audioUrl}
+                                  aria-label={playingAudioIndex === index ? 'Pause audio' : 'Play audio'}
+                                  className={`relative flex items-center justify-center w-24 h-24 md:w-28 md:h-28 rounded-full transition-all duration-300 border-4 ${
+                                    feature.audioUrl
+                                      ? 'bg-white border-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl'
+                                      : 'bg-white/50 border-white/50 cursor-not-allowed opacity-50'
+                                  }`}
+                                >
+                                  {playingAudioIndex === index ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <div className="w-2 h-8 bg-gray-900 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                                      <div className="w-2 h-10 bg-gray-900 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                                      <div className="w-2 h-8 bg-gray-900 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                  ) : (
+                                    <div className="bg-white rounded-full p-2">
+                                      <Image
+                                        src="/images/features/play-button.png"
+                                        alt="Play"
+                                        width={64}
+                                        height={64}
+                                        className="w-14 h-14 md:w-16 md:h-16 opacity-100"
+                                        unoptimized
+                                      />
+                                    </div>
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
-                      </motion.div>
+                      </div>
                     </div>
-                  </motion.div>
-                </motion.div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
