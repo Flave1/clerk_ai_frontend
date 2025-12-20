@@ -55,7 +55,7 @@ const LogsPage: NextPage = () => {
   const [screenshots, setScreenshots] = useState<any[]>([]);
   const [loadingScreenshots, setLoadingScreenshots] = useState(false);
   
-  const BOT_SERVER_URL = 'http://localhost:3001';
+  const BOT_SERVER_URL = 'https://aurray-bot-crawler.fly.dev';
 
   const fetchActiveBots = async () => {
     try {
