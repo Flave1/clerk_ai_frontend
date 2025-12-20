@@ -13,7 +13,9 @@ import {
   LinkIcon,
   UserIcon,
   CalendarIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  PhotoIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import apiClient from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -48,6 +50,12 @@ const LogsPage: NextPage = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [botToDelete, setBotToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [screenshotsOpen, setScreenshotsOpen] = useState(false);
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [screenshots, setScreenshots] = useState<any[]>([]);
+  const [loadingScreenshots, setLoadingScreenshots] = useState(false);
+  
+  const BOT_SERVER_URL = 'https://aurray-bot-crawler.fly.dev';
 
   const fetchActiveBots = async () => {
     try {
@@ -92,6 +100,27 @@ const LogsPage: NextPage = () => {
   const openDeleteConfirm = (meetingId: string) => {
     setBotToDelete(meetingId);
     setDeleteConfirmOpen(true);
+  };
+
+  const openScreenshots = async (meetingId: string) => {
+    setSelectedMeetingId(meetingId);
+    setScreenshotsOpen(true);
+    setLoadingScreenshots(true);
+    
+    try {
+      const response = await fetch(`${BOT_SERVER_URL}/meetings/${meetingId}/screenshots`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch screenshots');
+      }
+      const data = await response.json();
+      setScreenshots(data.screenshots || []);
+    } catch (error: any) {
+      console.error('Failed to fetch screenshots:', error);
+      toast.error('Failed to load screenshots');
+      setScreenshots([]);
+    } finally {
+      setLoadingScreenshots(false);
+    }
   };
 
   const getDeploymentIcon = (method: string) => {
@@ -315,9 +344,106 @@ const LogsPage: NextPage = () => {
                     <CalendarIcon className="w-4 h-4" />
                     <span>Started {format(new Date(bot.started_at), 'MMM d, yyyy HH:mm:ss')}</span>
                   </div>
+
+                  {/* View Screenshots Button */}
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => openScreenshots(meetingId)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                    >
+                      <PhotoIcon className="w-4 h-4" />
+                      View Screenshots
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Screenshots Modal */}
+        {screenshotsOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              {/* Background overlay */}
+              <div
+                className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75"
+                onClick={() => setScreenshotsOpen(false)}
+              />
+
+              {/* Modal panel */}
+              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      Screenshots - {selectedMeetingId}
+                    </h3>
+                    <p className="text-sm text-primary-100 mt-1">
+                      {screenshots.length} screenshot{screenshots.length !== 1 ? 's' : ''} found
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setScreenshotsOpen(false)}
+                    className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                  {loadingScreenshots ? (
+                    <div className="flex items-center justify-center py-12">
+                      <ArrowPathIcon className="w-8 h-8 animate-spin text-primary-500" />
+                      <span className="ml-3 text-gray-600 dark:text-gray-400">Loading screenshots...</span>
+                    </div>
+                  ) : screenshots.length === 0 ? (
+                    <div className="text-center py-12">
+                      <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No screenshots found</h3>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        No screenshots have been captured for this meeting yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {screenshots.map((screenshot, index) => (
+                        <div
+                          key={index}
+                          className="relative group bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                        >
+                          <img
+                            src={`${BOT_SERVER_URL}${screenshot.url}`}
+                            alt={screenshot.filename}
+                            className="w-full h-48 object-contain bg-white dark:bg-gray-800"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                            <a
+                              href={`${BOT_SERVER_URL}${screenshot.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100"
+                            >
+                              View Full Size
+                            </a>
+                          </div>
+                          <div className="p-3 bg-white dark:bg-gray-800">
+                            <p className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate" title={screenshot.filename}>
+                              {screenshot.filename}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              {format(new Date(screenshot.createdAt), 'MMM d, yyyy HH:mm:ss')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
