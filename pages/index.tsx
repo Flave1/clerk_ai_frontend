@@ -11,6 +11,7 @@ import {
   DocumentTextIcon,
   VideoCameraIcon,
   BriefcaseIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import VideoModal from '@/components/ui/VideoModal';
 import EarlyAccessModal from '@/components/ui/EarlyAccessModal';
@@ -70,9 +71,9 @@ export default function Landing() {
   const whyAurrayFeatures = [
     {
       icon: VideoCameraIcon,
-      title: 'Attend Meetings For You',
+      title: 'Attend/Join Meetings With You',
       subtitle: 'Your AI Representative',
-      description: 'Let Aurray attend meetings on your behalf using your voice. Joins video calls, participates in discussions, and represents you professionally.',
+      description: 'Let Aurray attend/join meetings with you using your voice. Joins video calls, participates in discussions.',
       detailedPoints: [
         'Speaks in your voice and style',
         'Joins Zoom, Google Meet, and Teams automatically',
@@ -98,22 +99,23 @@ export default function Landing() {
       gradient: 'from-primary-500 to-accent-500',
       image: '/images/features/sales_marketing_1.jpg',
       imageAlt: 'Aurray as digital sales and marketing team',
-      audioUrl: '', // Add audio URL here when available
+      audioUrl: '/moments/sales_demo_audio.mp3',
       reverse: true,
     },
     {
-      icon: ChatBubbleLeftRightIcon,
-      title: '24/7 Customer Care Support',
-      subtitle: 'Always-On Customer Service',
-      description: 'Your dedicated customer care team. Handles inquiries, support calls, and service meetings around the clock with platform integrations.',
+      icon: UserGroupIcon,
+      title: 'Your Digital Interviewer & Hiring Assistant',
+      subtitle: 'Smart Recruitment',
+      description: 'Aurray can handle candidate interviews and screening calls.',
       detailedPoints: [
-        '24/7 availability for support calls',
-        'Integrates with Zendesk, Intercom, and Freshdesk',
-        'Manages tickets and escalates when needed',
+        'Conducts first-round interviews in your voice',
+        'Asks role-specific questions',
+        'Records responses and evaluates candidates',
+        'Shares structured interview feedback',
       ],
       gradient: 'from-emerald-500 to-teal-500',
       image: '/images/features/customer_care_1.jpg',
-      imageAlt: 'Aurray providing 24/7 customer care support',
+      imageAlt: 'Aurray as digital interviewer and hiring assistant',
       audioUrl: '', // Add audio URL here when available
       reverse: false,
     },
@@ -759,6 +761,23 @@ meeting = client.meetings.create(
                 </div>
               ))}
             </div>
+
+            {/* Discover More Button - Bottom Right */}
+            <div className="flex justify-end mt-16">
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/use-cases')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Discover other ways Aurray is Useful
+                <ArrowRightIcon className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
         </section>
 
@@ -775,16 +794,25 @@ meeting = client.meetings.create(
               <p className={`text-sm font-semibold uppercase tracking-wider mb-4 ${
                 theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                SIMPLE AND POWERFUL APIS
+                API for developers
               </p>
-              <h2 className={`text-2xl md:text-3xl font-bold mb-6 whitespace-nowrap ${
+              <h2 className={`text-2xl md:text-3xl font-bold mb-6 ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                Quickly build AI Meeting Agents with our{' '}
+                Send Aurray to your meetings with our{' '}
                 <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                   API
                 </span>
+                {' '}or{' '}
+                <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                  SDKs
+                </span>
               </h2>
+              <p className={`text-base md:text-lg mb-8 max-w-3xl ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                Integrate Aurray into your workflows with REST APIs, webhooks, or our ready-to-use SDKs for Python and JavaScript.
+              </p>
             </motion.div>
 
             {/* Large API Card */}

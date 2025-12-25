@@ -576,7 +576,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.3 }}
-              className="relative z-[10000] w-full sm:w-[90vw] md:w-[85vw] h-full sm:h-[90vh] md:h-[85vh] max-w-4xl sm:rounded-3xl overflow-hidden"
+              className="relative z-[10000] w-full sm:w-[90vw] md:w-[85vw] lg:w-[80vw] h-full sm:h-[90vh] md:h-[85vh] lg:h-[85vh] max-w-5xl sm:rounded-3xl overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -626,7 +626,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                       >
                         <div className="absolute inset-0 flex flex-col">
                           {/* Meeting Header Bar */}
-                          <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-white/10 p-3 sm:p-4 flex items-center justify-between z-10">
+                          <div className="absolute top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-white/10 p-3 sm:p-4 md:p-5 flex items-center justify-between z-10">
                             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                                 {selectedPlatform && (
@@ -671,8 +671,8 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                 animate={{ opacity: 1, y: 0 }}
                                 className="mb-6"
                               >
-                                <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/20">
-                                  <label className="text-xs uppercase tracking-wide text-gray-400 mb-3 block">
+                                <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-4 md:p-5 border border-white/20">
+                                  <label className="text-xs sm:text-sm uppercase tracking-wide text-gray-400 mb-3 block">
                                     Join Meeting
                                   </label>
                                   
@@ -726,7 +726,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                             <div className="flex-1 flex flex-col min-h-0">
                               {/* Status Messages Log */}
                               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                                <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/10 max-h-[200px] sm:max-h-[250px] md:max-h-[300px] min-h-[150px] sm:min-h-[180px] md:min-h-[200px]">
+                                <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-4 md:p-5 pb-6 sm:pb-8 md:pb-10 border border-white/10 max-h-[200px] sm:max-h-[250px] md:max-h-[300px] min-h-[150px] sm:min-h-[180px] md:min-h-[200px]">
                                   {showConnectionTimeout ? (
                                     <div className="flex items-center justify-center h-full text-red-400">
                                       <div className="text-center max-w-md">
@@ -816,7 +816,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                                           </div>
                                         </motion.div>
                                       )}
-                                      <div ref={messagesEndRef} />
+                                      <div ref={messagesEndRef} className="h-4" />
                                     </div>
                                   )}
                                 </div>
@@ -825,7 +825,7 @@ const DemoMeetingModal: React.FC<DemoMeetingModalProps> = ({ isOpen, onClose }) 
                           </div>
 
                           {/* Meeting Controls Bar */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-t border-white/10 p-3 sm:p-4 flex items-center justify-center gap-3 sm:gap-4">
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-t border-white/10 p-3 sm:p-4 md:p-5 flex items-center justify-center gap-3 sm:gap-4">
                             <div className="flex items-center gap-2 sm:gap-3">
                               <button className="p-2 sm:p-3 rounded-full bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-300">
                                 <VideoCameraIcon className="w-4 h-4 sm:w-5 sm:h-5" />
