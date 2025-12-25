@@ -122,18 +122,18 @@ export default function Landing() {
   ];
 
   const handlePlayAudio = (index: number, audioUrl: string) => {
-    // If clicking the same button, pause it
+    // If clicking the same button, pause it (don't reset position)
     if (playingAudioIndex === index && audioRefs[index]) {
       audioRefs[index]?.pause();
-      audioRefs[index]!.currentTime = 0;
       setPlayingAudioIndex(null);
       return;
     }
 
-    // Stop any currently playing audio
-    if (playingAudioIndex !== null && audioRefs[playingAudioIndex]) {
+    // Stop any currently playing audio when switching to another
+    if (playingAudioIndex !== null && playingAudioIndex !== index && audioRefs[playingAudioIndex]) {
       audioRefs[playingAudioIndex]?.pause();
       audioRefs[playingAudioIndex]!.currentTime = 0;
+      setPlayingAudioIndex(null);
     }
 
     // Create new audio element if it doesn't exist (lazy loading - only when requested)
@@ -156,7 +156,7 @@ export default function Landing() {
       });
       setPlayingAudioIndex(index);
     } else {
-      // Use existing audio element
+      // Use existing audio element - resume from where it was paused
       if (audioRefs[index]?.paused) {
         audioRefs[index]?.play().catch((error) => {
           console.error('Error playing audio:', error);
