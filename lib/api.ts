@@ -556,6 +556,24 @@ class ApiClient {
     const response = await this.client.put(this.withPrefix('/auth/me'), data);
     return response.data;
   }
+
+  /**
+   * Upload Google auth state file to bot server
+   * @param authState The Google auth state JSON object
+   */
+  async uploadGoogleAuthState(authState: any): Promise<{
+    ok: boolean;
+    message: string;
+    path?: string;
+    cookiesCount?: number;
+    originsCount?: number;
+  }> {
+    const response = await this.client.post(
+      this.withPrefix('/bot/google-auth/upload-state'),
+      { authState }
+    );
+    return response.data;
+  }
 }
 
 // Create and export a singleton instance
