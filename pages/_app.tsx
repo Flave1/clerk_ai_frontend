@@ -42,6 +42,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
     && router.pathname !== '/'
     && !router.pathname.startsWith('/join/')
     && router.pathname !== '/privacy-policy'
+    && router.pathname !== '/use-cases'
     && router.pathname !== '/terms-and-conditions';
 
   useEffect(() => {
