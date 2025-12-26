@@ -19,7 +19,8 @@ import {
   GlobeAltIcon,
   DocumentTextIcon,
   CheckCircleIcon,
-  BeakerIcon
+  BeakerIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { useUIStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,6 +31,7 @@ const mainNavigation = [
   { name: 'Meetings', href: '/meetings', icon: VideoCameraIcon },
   { name: 'Voice Profile', href: '/voice-profile', icon: MicrophoneIcon },
   { name: 'Personality & Context', href: '/context-lab', icon: BeakerIcon },
+  { name: 'Pricing', href: '/pricing', icon: CurrencyDollarIcon },
 ];
 
 const integrationsNavigation = [

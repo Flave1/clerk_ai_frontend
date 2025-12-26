@@ -337,13 +337,13 @@ meeting = client.meetings.create(
           onLoginClick={() => router.push('/login')}
           onDashboardClick={() => router.push('/dashboard')}
           onEarlyAccessClick={() => setIsEarlyAccessModalOpen(true)}
-          navItems={['Home', 'Features', 'API', 'Integrations', 'Community', 'Contact'].map((item) => ({
-            label: item,
-            onClick: () => {
-                        const id = item.toLowerCase().replace(/\s+/g, '');
-                        scrollToSection(id);
-            },
-          }))}
+          navItems={[
+            { label: 'Features', onClick: () => scrollToSection('features') },
+            { label: 'API', onClick: () => scrollToSection('api') },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Use Cases', href: '/use-cases' },
+            { label: 'Security', href: '/security' },
+          ]}
         />
 
         {/* Hero Section */}
@@ -1099,10 +1099,17 @@ meeting = client.meetings.create(
         <LandingFooter
           id="contact"
           socialLinks={socialLinks}
-          quickLinks={['Home', 'Features', 'API', 'Integrations'].map((link) => ({
-            label: link,
-            onClick: () => scrollToSection(link.toLowerCase().replace(' ', '')),
-          }))}
+          quickLinks={[
+            { label: 'Home', onClick: () => scrollToSection('home') },
+            { label: 'Features', onClick: () => scrollToSection('features') },
+            { label: 'API', onClick: () => scrollToSection('api') },
+            { label: 'Integrations', onClick: () => scrollToSection('integrations') },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Use Cases', href: '/use-cases' },
+            { label: 'Security', href: '/security' },
+            { label: 'Community', onClick: () => scrollToSection('community') },
+            { label: 'Contact', onClick: () => scrollToSection('contact') },
+          ]}
           showQuickLinks={true}
         />
       </div>
