@@ -55,14 +55,14 @@ export default function LandingFooter({
             <h4 className={`font-bold mb-4 ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>{showQuickLinks ? 'Quick Links' : 'Legal'}</h4>
-            <ul className="space-y-2">
-              {showQuickLinks && quickLinks.length > 0 ? (
-                quickLinks.map((link) => (
-                  <li key={link.label}>
+            {showQuickLinks && quickLinks.length > 0 ? (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                {quickLinks.map((link) => (
+                  <div key={link.label}>
                     {link.href ? (
                       <Link
                         href={link.href}
-                        className={`transition-colors ${
+                        className={`transition-colors text-sm ${
                           theme === 'dark'
                             ? 'text-gray-400 hover:text-white'
                             : 'text-gray-600 hover:text-gray-900'
@@ -73,7 +73,7 @@ export default function LandingFooter({
                     ) : (
                       <button
                         onClick={link.onClick}
-                        className={`transition-colors ${
+                        className={`transition-colors text-sm ${
                           theme === 'dark'
                             ? 'text-gray-400 hover:text-white'
                             : 'text-gray-600 hover:text-gray-900'
@@ -82,9 +82,11 @@ export default function LandingFooter({
                         {link.label}
                       </button>
                     )}
-                  </li>
-                ))
-              ) : (
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-2">
                 <>
                   <li>
                     <motion.div whileHover={{ scale: 1.05 }}>
@@ -115,8 +117,8 @@ export default function LandingFooter({
                     </motion.div>
                   </li>
                 </>
-              )}
-            </ul>
+              </ul>
+            )}
           </div>
           <div>
             <h4 className={`font-bold mb-4 ${

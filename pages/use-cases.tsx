@@ -184,7 +184,8 @@ export default function UseCasesPage() {
           { label: 'Home', href: '/' },
           { label: 'Features', href: '/#features' },
           { label: 'API', href: '/#api' },
-          { label: 'Integrations', href: '/#integrations' },
+          { label: 'Pricing', href: '/pricing' },
+          { label: 'Security', href: '/security' },
         ]}
       />
 
@@ -436,7 +437,23 @@ export default function UseCasesPage() {
         </section>
       </main>
 
-      <LandingFooter />
+      <LandingFooter
+        socialLinks={[
+          { name: 'LinkedIn', href: 'https://www.linkedin.com/company/auray-ai' },
+        ]}
+        quickLinks={[
+          { label: 'Home', href: '/' },
+          { label: 'Features', href: '/#features' },
+          { label: 'API', href: '/#api' },
+          { label: 'Integrations', href: '/#integrations' },
+          { label: 'Pricing', href: '/pricing' },
+          { label: 'Use Cases', href: '/use-cases' },
+          { label: 'Security', href: '/security' },
+          { label: 'Community', href: '/#community' },
+          { label: 'Contact', href: '/#contact' },
+        ]}
+        showQuickLinks={true}
+      />
     </>
   );
 }

@@ -42,10 +42,13 @@ const TermsAndConditionsPage: NextPage = () => {
           : 'bg-[#F7FAFC] text-[#1C1C1C]'
       }`}>
         <LandingHeader
-          navItems={['Home', 'Features', 'How It Works', 'Integrations', 'Community', 'Contact'].map((item) => ({
-            label: item,
-            href: `/#${item.toLowerCase().replace(/\s+/g, '')}`,
-          }))}
+          navItems={[
+            { label: 'Home', href: '/' },
+            { label: 'Features', href: '/#features' },
+            { label: 'API', href: '/#api' },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Use Cases', href: '/use-cases' },
+          ]}
         />
 
         <div className="pt-16">
@@ -322,7 +325,23 @@ const TermsAndConditionsPage: NextPage = () => {
         </div>
         </div>
 
-        <LandingFooter />
+        <LandingFooter
+          socialLinks={[
+            { name: 'LinkedIn', href: 'https://www.linkedin.com/company/auray-ai' },
+          ]}
+          quickLinks={[
+            { label: 'Home', href: '/' },
+            { label: 'Features', href: '/#features' },
+            { label: 'API', href: '/#api' },
+            { label: 'Integrations', href: '/#integrations' },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Use Cases', href: '/use-cases' },
+            { label: 'Security', href: '/security' },
+            { label: 'Community', href: '/#community' },
+            { label: 'Contact', href: '/#contact' },
+          ]}
+          showQuickLinks={true}
+        />
         </div>
       </div>
     </>
