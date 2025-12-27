@@ -394,25 +394,64 @@ meeting = client.meetings.create(
                     <MicrophoneIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
                     <span>Aurray joins meetings, listens, speaks and acts like you OR your Digital staff.</span>
                   </motion.li>
-                  {/* <motion.li
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6, duration: 0.6 }}
-                    className="flex items-start gap-3"
-                  >
-                    <DocumentTextIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
-                    <span>Provide Transcripts, Recordings and metadata from meetings</span>
-                  </motion.li> */}
-                  {/* <motion.li
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7, duration: 0.6 }}
-                    className="flex items-start gap-3"
-                  >
-                    <CpuChipIcon className="w-6 h-6 text-primary-500 mt-1 flex-shrink-0" />
-                    <span>APIs for developers to integrate meeting data into your applications</span>
-                  </motion.li> */}
                 </ul>
+                
+                {/* Platform Icons - Centered */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                  className="flex items-center justify-center gap-6 mt-6"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    className={`flex items-center justify-center w-14 h-14 rounded-xl ${
+                      theme === 'dark' 
+                        ? 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20' 
+                        : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
+                    } transition-all duration-300 shadow-sm`}
+                  >
+                    <Image
+                      src="/images/integrations/google_meet.png"
+                      alt="Google Meet"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    className={`flex items-center justify-center w-14 h-14 rounded-xl ${
+                      theme === 'dark' 
+                        ? 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20' 
+                        : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
+                    } transition-all duration-300 shadow-sm`}
+                  >
+                    <Image
+                      src="/images/integrations/microsoft-teams.png"
+                      alt="Microsoft Teams"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    className={`flex items-center justify-center w-14 h-14 rounded-xl ${
+                      theme === 'dark' 
+                        ? 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20' 
+                        : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
+                    } transition-all duration-300 shadow-sm`}
+                  >
+                    <Image
+                      src="/images/integrations/zoom.png"
+                      alt="Zoom"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  </motion.div>
+                </motion.div>
               </motion.div>
 
               <motion.div
